@@ -1,129 +1,192 @@
 {
-  "6": {
+  "9": {
     "inputs": {
-      "text": "She Lifting clothing With Mouth, revealing her breasts and nipples",
+      "text": [
+        "160",
+        0
+      ],
       "clip": [
-        "46",
+        "124",
         1
       ]
     },
     "class_type": "CLIPTextEncode",
     "_meta": {
-      "title": "CLIP Text Encode (Positive Prompt)"
+      "title": "CLIP Text Encode (Prompt)"
     }
   },
-  "8": {
+  "10": {
     "inputs": {
-      "samples": [
-        "31",
-        0
-      ],
-      "vae": [
-        "30",
-        2
+      "text": "bas quality, pixelated, low quality, saturated, animated, cartoon, unrealistic, text, watermark, ugly, fat, muscular, ribcage, open mouth, teeth, nsfw, nipples, naked, nude",
+      "clip": [
+        "124",
+        1
       ]
     },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "12": {
+    "inputs": {},
     "class_type": "VAEDecode",
     "_meta": {
       "title": "VAE Decode"
     }
   },
-  "9": {
+  "16": {
     "inputs": {
-      "filename_prefix": "ComfyUI",
-      "images": [
-        "8",
-        0
-      ]
-    },
-    "class_type": "SaveImage",
-    "_meta": {
-      "title": "Save Image"
-    }
-  },
-  "30": {
-    "inputs": {
-      "ckpt_name": "flux1-dev-fp8.safetensors"
-    },
-    "class_type": "CheckpointLoaderSimple",
-    "_meta": {
-      "title": "Load Checkpoint"
-    }
-  },
-  "31": {
-    "inputs": {
-      "seed": 91273427715889,
+      "upscale_by": 1.5000000000000002,
+      "seed": 691170693466652,
       "steps": 20,
-      "cfg": 1,
-      "sampler_name": "euler",
-      "scheduler": "simple",
-      "denoise": 0.55,
+      "cfg": 2,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "beta",
+      "denoise": 0.33000000000000007,
+      "mode_type": "Chess",
+      "tile_width": 1024,
+      "tile_height": 1024,
+      "mask_blur": 8,
+      "tile_padding": 32,
+      "seam_fix_mode": "None",
+      "seam_fix_denoise": 1,
+      "seam_fix_width": 64,
+      "seam_fix_mask_blur": 8,
+      "seam_fix_padding": 16,
+      "force_uniform_tiles": true,
+      "tiled_decode": false,
+      "image": [
+        "145",
+        0
+      ],
       "model": [
-        "46",
+        "49",
         0
       ],
       "positive": [
-        "35",
-        0
+        "33",
+        4
       ],
       "negative": [
         "33",
-        0
+        5
       ],
-      "latent_image": [
-        "45",
+      "vae": [
+        "33",
+        3
+      ],
+      "upscale_model": [
+        "19",
         0
       ]
     },
-    "class_type": "KSampler",
+    "class_type": "UltimateSDUpscale",
     "_meta": {
-      "title": "KSampler"
+      "title": "Ultimate SD Upscale"
     }
   },
-  "33": {
+  "17": {
     "inputs": {
-      "text": "",
+      "model": [
+        "81",
+        0
+      ],
       "clip": [
-        "30",
+        "124",
+        1
+      ],
+      "vae": [
+        "123",
+        0
+      ],
+      "positive": [
+        "9",
+        0
+      ],
+      "negative": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "ToBasicPipe",
+    "_meta": {
+      "title": "ToBasicPipe"
+    }
+  },
+  "18": {
+    "inputs": {
+      "basic_pipe": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "FromBasicPipe_v2",
+    "_meta": {
+      "title": "FromBasicPipe_v2"
+    }
+  },
+  "19": {
+    "inputs": {
+      "model_name": "4xLSDIR.pth"
+    },
+    "class_type": "Upscale Model Loader",
+    "_meta": {
+      "title": "Upscale Model Loader"
+    }
+  },
+  "23": {
+    "inputs": {
+      "face": false,
+      "hair": false,
+      "body": true,
+      "clothes": false,
+      "accessories": true,
+      "background": false,
+      "confidence": 0.3400000000000001,
+      "detail_method": "VITMatte",
+      "detail_erode": 6,
+      "detail_dilate": 6,
+      "black_point": 0.01,
+      "white_point": 0.99,
+      "process_detail": true,
+      "device": "cuda",
+      "max_megapixels": 2,
+      "images": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "LayerMask: PersonMaskUltra V2",
+    "_meta": {
+      "title": "LayerMask: PersonMaskUltra V2(Advance)"
+    }
+  },
+  "24": {
+    "inputs": {
+      "samples": [
+        "25",
+        0
+      ],
+      "mask": [
+        "23",
         1
       ]
     },
-    "class_type": "CLIPTextEncode",
+    "class_type": "SetLatentNoiseMask",
     "_meta": {
-      "title": "CLIP Text Encode (Negative Prompt)"
+      "title": "Set Latent Noise Mask"
     }
   },
-  "35": {
-    "inputs": {
-      "guidance": 3.5,
-      "conditioning": [
-        "6",
-        0
-      ]
-    },
-    "class_type": "FluxGuidance",
-    "_meta": {
-      "title": "FluxGuidance"
-    }
-  },
-  "44": {
-    "inputs": {
-      "image": "vid_00003.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Load Image"
-    }
-  },
-  "45": {
+  "25": {
     "inputs": {
       "pixels": [
-        "44",
+        "16",
         0
       ],
       "vae": [
-        "30",
-        2
+        "18",
+        3
       ]
     },
     "class_type": "VAEEncode",
@@ -131,23 +194,479 @@
       "title": "VAE Encode"
     }
   },
-  "46": {
+  "26": {
     "inputs": {
-      "lora_name": "liftingClothingWith.wAOP.safetensors",
-      "strength_model": 1,
-      "strength_clip": 1,
+      "add_noise": true,
+      "noise_seed": 433016648132835,
+      "cfg": 2.5,
       "model": [
-        "30",
+        "27",
+        1
+      ],
+      "positive": [
+        "28",
         0
       ],
+      "negative": [
+        "29",
+        0
+      ],
+      "sampler": [
+        "31",
+        0
+      ],
+      "sigmas": [
+        "37",
+        0
+      ],
+      "latent_image": [
+        "24",
+        0
+      ]
+    },
+    "class_type": "SamplerCustom",
+    "_meta": {
+      "title": "SamplerCustom"
+    }
+  },
+  "27": {
+    "inputs": {
+      "basic_pipe": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "FromBasicPipe_v2",
+    "_meta": {
+      "title": "FromBasicPipe_v2"
+    }
+  },
+  "28": {
+    "inputs": {
+      "text": "Detailed light skin, pores, blemishes, imperfections",
       "clip": [
+        "27",
+        2
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "29": {
+    "inputs": {
+      "text": "text, watermark, ugly, fat, muscular, ribcage, open mouth, teeth, nsfw, nipples, naked, nude",
+      "clip": [
+        "27",
+        2
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "30": {
+    "inputs": {
+      "sampler_name": "dpmpp_sde"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "31": {
+    "inputs": {
+      "detail_amount": 0.26000000000000006,
+      "start": 0.30000000000000004,
+      "end": 0.6000000000000001,
+      "bias": 0.5,
+      "exponent": 1,
+      "start_offset": 0,
+      "end_offset": 0,
+      "fade": 0,
+      "smooth": true,
+      "cfg_scale_override": 0,
+      "sampler": [
         "30",
+        0
+      ]
+    },
+    "class_type": "DetailDaemonSamplerNode",
+    "_meta": {
+      "title": "Detail Daemon Sampler"
+    }
+  },
+  "32": {
+    "inputs": {
+      "samples": [
+        "26",
+        1
+      ],
+      "vae": [
+        "27",
+        3
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "33": {
+    "inputs": {
+      "basic_pipe": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "FromBasicPipe_v2",
+    "_meta": {
+      "title": "FromBasicPipe_v2"
+    }
+  },
+  "37": {
+    "inputs": {
+      "scheduler": "karras",
+      "steps": 30,
+      "denoise": 0.33000000000000007,
+      "model": [
+        "27",
         1
       ]
     },
-    "class_type": "LoraLoader",
+    "class_type": "BasicScheduler",
     "_meta": {
-      "title": "Load LoRA"
+      "title": "BasicScheduler"
+    }
+  },
+  "49": {
+    "inputs": {
+      "lora_name": "Super_Eye_Detailer_By_Stable_Yogi_SDPD0.safetensors",
+      "strength_model": 0.3500000000000001,
+      "model": [
+        "33",
+        1
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "LoraLoaderModelOnly"
+    }
+  },
+  "81": {
+    "inputs": {
+      "model": [
+        "124",
+        0
+      ]
+    },
+    "class_type": "ModelPassThrough",
+    "_meta": {
+      "title": "ModelPass"
+    }
+  },
+  "116": {
+    "inputs": {
+      "weight": 1,
+      "start_at": 0,
+      "end_at": 0.8010000000000002,
+      "fusion": "mean",
+      "fusion_weight_max": 1,
+      "fusion_weight_min": 0,
+      "train_step": 1000,
+      "use_gray": true,
+      "model": [
+        "81",
+        0
+      ],
+      "pulid_flux": [
+        "119",
+        0
+      ],
+      "eva_clip": [
+        "118",
+        0
+      ],
+      "face_analysis": [
+        "117",
+        0
+      ],
+      "image": [
+        "199",
+        0
+      ]
+    },
+    "class_type": "ApplyPulidFlux",
+    "_meta": {
+      "title": "Apply PuLID Flux"
+    }
+  },
+  "117": {
+    "inputs": {
+      "provider": "CUDA"
+    },
+    "class_type": "PulidFluxInsightFaceLoader",
+    "_meta": {
+      "title": "Load InsightFace (PuLID Flux)"
+    }
+  },
+  "118": {
+    "inputs": {},
+    "class_type": "PulidFluxEvaClipLoader",
+    "_meta": {
+      "title": "Load Eva Clip (PuLID Flux)"
+    }
+  },
+  "119": {
+    "inputs": {
+      "pulid_file": "pulid_flux_v0.9.1.safetensors"
+    },
+    "class_type": "PulidFluxModelLoader",
+    "_meta": {
+      "title": "Load PuLID Flux Model"
+    }
+  },
+  "122": {
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "123": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "124": {
+    "inputs": {
+      "lora_01": "Breasts_PV.safetensors",
+      "strength_01": 0.9000000000000001,
+      "lora_02": "pussydiffusion-f1.safetensors",
+      "strength_02": 0.9,
+      "lora_03": "None",
+      "strength_03": 0.9000000000000001,
+      "lora_04": "None",
+      "strength_04": 1,
+      "model": [
+        "205",
+        0
+      ],
+      "clip": [
+        "122",
+        0
+      ]
+    },
+    "class_type": "Lora Loader Stack (rgthree)",
+    "_meta": {
+      "title": "Lora Loader Stack (rgthree)"
+    }
+  },
+  "131": {
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 45818218731248,
+      "cfg": 2.04,
+      "model": [
+        "116",
+        0
+      ],
+      "positive": [
+        "9",
+        0
+      ],
+      "negative": [
+        "10",
+        0
+      ],
+      "sampler": [
+        "133",
+        0
+      ],
+      "sigmas": [
+        "134",
+        0
+      ],
+      "latent_image": [
+        "204",
+        0
+      ]
+    },
+    "class_type": "SamplerCustom",
+    "_meta": {
+      "title": "SamplerCustom"
+    }
+  },
+  "132": {
+    "inputs": {
+      "sampler_name": "dpmpp_2m"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "133": {
+    "inputs": {
+      "detail_amount": 0.23000000000000004,
+      "start": 0.30000000000000004,
+      "end": 0.6000000000000001,
+      "bias": 0.5,
+      "exponent": 1,
+      "start_offset": 0,
+      "end_offset": 0,
+      "fade": 0,
+      "smooth": true,
+      "cfg_scale_override": 0,
+      "sampler": [
+        "132",
+        0
+      ]
+    },
+    "class_type": "DetailDaemonSamplerNode",
+    "_meta": {
+      "title": "Detail Daemon Sampler"
+    }
+  },
+  "134": {
+    "inputs": {
+      "scheduler": "sgm_uniform",
+      "steps": 40,
+      "denoise": 1,
+      "model": [
+        "116",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "137": {
+    "inputs": {
+      "anything": [
+        "131",
+        1
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "Clean VRAM Used"
+    }
+  },
+  "145": {
+    "inputs": {
+      "samples": [
+        "137",
+        0
+      ],
+      "vae": [
+        "123",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "160": {
+    "inputs": {
+      "text": "a young and pretty asian girl, pale white skin, flawless skin, completely naked, big eyes, small waist, big bust, exposing her extra large and naked breasts, exposing her pink pussy, seductive smile towards the camera, "
+    },
+    "class_type": "Text Multiline",
+    "_meta": {
+      "title": "Your Prompt"
+    }
+  },
+  "171": {
+    "inputs": {
+      "images": [
+        "32",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Upscaled + Detailed image"
+    }
+  },
+  "196": {
+    "inputs": {
+      "images": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Upscaled image"
+    }
+  },
+  "199": {
+    "inputs": {
+      "image": "screenshot-20250721-145936.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Your Influencer Portrait"
+    }
+  },
+  "201": {
+    "inputs": {
+      "images": [
+        "145",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Vanilla image"
+    }
+  },
+  "204": {
+    "inputs": {
+      "width": 480,
+      "height": 856,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "205": {
+    "inputs": {
+      "ckpt_name": "realDream_flux1V1.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "210": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "145",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
     }
   }
 }

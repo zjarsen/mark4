@@ -32,13 +32,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Check if this is the first time user connects
     if user_id not in user_states:
-        await update.message.reply_text('hello')
+        await update.message.reply_text('欢迎光临免费版脱衣bot!\n简单的使用说明：仅需选择“图片脱衣”，上传一张尽量正脸的照片，可以半身可以全身，AI就会直接帮你把衣服脱掉～')
         user_states[user_id] = {'first_contact': True}
 
     # Show menu with three options
     keyboard = [
         [KeyboardButton("1. 图片脱衣")],
-        [KeyboardButton("2. 图片转视频脱衣")],
+        [KeyboardButton("2. 图片转视频脱衣（暂未开放）")],
         [KeyboardButton("3. 查看队列")]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
@@ -311,12 +311,10 @@ async def monitor_processing(context, user_id, prompt_id, filename):
                             # Processing completed
                             outputs = history[prompt_id].get('outputs', {})
 
-                            # Find the output image (you may need to adjust this based on your workflow)
+                            # Find the output image from node "27"
                             output_image = None
-                            for node_id, output in outputs.items():
-                                if 'images' in output:
-                                    output_image = output['images'][0]
-                                    break
+                            if "27" in outputs and 'images' in outputs["27"]:
+                                output_image = outputs["27"]['images'][0]
 
                             if output_image:
                                 # Download the processed image
@@ -332,14 +330,6 @@ async def monitor_processing(context, user_id, prompt_id, filename):
                                         with open(output_path, 'wb') as f:
                                             f.write(await img_resp.read())
 
-                                # Delete queue message
-                                if user_id in user_queue_messages:
-                                    try:
-                                        await user_queue_messages[user_id].delete()
-                                        del user_queue_messages[user_id]
-                                    except:
-                                        pass
-
                                 # Send image first, then completion message
                                 msg = await context.bot.send_photo(
                                     chat_id=user_id,
@@ -350,6 +340,14 @@ async def monitor_processing(context, user_id, prompt_id, filename):
                                     chat_id=user_id,
                                     text="处理完成！请在5分钟内尽快储存"
                                 )
+
+                                # Delete queue message
+                                if user_id in user_queue_messages:
+                                    try:
+                                        await user_queue_messages[user_id].delete()
+                                        del user_queue_messages[user_id]
+                                    except:
+                                        pass
 
                                 # Schedule cleanup after 5 minutes
                                 cleanup_tasks[user_id] = asyncio.create_task(
@@ -368,20 +366,20 @@ async def cleanup_after_timeout(context, user_id, original_filename, output_path
     """Delete images and message after 5 minutes."""
     await asyncio.sleep(300)  # 5 minutes
 
-    # Delete user upload
-    original_path = os.path.join(USER_UPLOADS_DIR, original_filename)
-    if os.path.exists(original_path):
-        os.remove(original_path)
+    # # Delete user upload
+    # original_path = os.path.join(USER_UPLOADS_DIR, original_filename)
+    # if os.path.exists(original_path):
+    #     os.remove(original_path)
 
-    # Delete retrieved image
-    if os.path.exists(output_path):
-        os.remove(output_path)
+    # # Delete retrieved image
+    # if os.path.exists(output_path):
+    #     os.remove(output_path)
 
-    # Delete the image message from chat
-    try:
-        await context.bot.delete_message(chat_id=user_id, message_id=message_id)
-    except:
-        pass
+    # # Delete the image message from chat
+    # try:
+    #     await context.bot.delete_message(chat_id=user_id, message_id=message_id)
+    # except:
+    #     pass
 
     # Clean up task reference
     if user_id in cleanup_tasks:
@@ -389,14 +387,14 @@ async def cleanup_after_timeout(context, user_id, original_filename, output_path
 
 def create_comfyui_workflow(image_filename):
     """Load ComfyUI workflow from JSON file and update with the uploaded image filename."""
-    workflow_path = os.path.expanduser("~/mark4/workflows/i2i_1.json")
+    workflow_path = os.path.expanduser("~/mark4/workflows/qwen_image_edit_final.json")
 
     with open(workflow_path, 'r') as f:
         workflow = json.load(f)
 
-    # Update the LoadImage node (node "44") with the uploaded image filename
-    if "44" in workflow:
-        workflow["44"]["inputs"]["image"] = image_filename
+    # Update the LoadImage node (node "7") with the uploaded image filename
+    if "7" in workflow:
+        workflow["7"]["inputs"]["image"] = image_filename
 
     return workflow
 
@@ -413,6 +411,8 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_during_image_wait))
 
     print("Bot is starting...")
+    print("Bot username: declothing_free1_bot")
+    print("You can start chatting with the bot now!")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
