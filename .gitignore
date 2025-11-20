@@ -1,0 +1,79 @@
+# Environment Variables (IMPORTANT - contains sensitive data)
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# User uploaded files
+user_uploads/*.jpg
+user_uploads/*.png
+user_uploads/*.jpeg
+user_uploads/*.webp
+
+# Processed images
+comfyui_retrieve/*.jpg
+comfyui_retrieve/*.png
+
+# Keep directories but not their contents
+!user_uploads/.gitkeep
+!comfyui_retrieve/.gitkeep
+
+# Backup files
+*.backup
+*.bak
+telegram_bot.py.backup
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database (if added in future)
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+temp/
+tmp/

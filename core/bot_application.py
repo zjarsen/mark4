@@ -1,0 +1,209 @@
+"""Bot application initialization and handler registration."""
+
+from telegram import Update
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    filters
+)
+import logging
+
+# Import all handler modules
+from handlers import command_handlers, menu_handlers, media_handlers, callback_handlers
+
+# Import services
+from services.comfyui_service import ComfyUIService
+from services.file_service import FileService
+from services.notification_service import NotificationService
+from services.queue_service import QueueService
+from services.workflow_service import WorkflowService
+
+# Import core
+from core.state_manager import StateManager
+from core.constants import MENU_OPTION_IMAGE, MENU_OPTION_VIDEO, MENU_OPTION_CHECK_QUEUE
+
+logger = logging.getLogger('mark4_bot')
+
+
+class BotApplication:
+    """Main bot application with dependency injection and handler registration."""
+
+    def __init__(self, config):
+        """
+        Initialize bot application.
+
+        Args:
+            config: Configuration object
+        """
+        self.config = config
+
+        # Initialize state manager
+        self.state_manager = StateManager()
+
+        # Initialize services
+        self._initialize_services()
+
+        # Create Telegram application
+        self.app = Application.builder().token(config.BOT_TOKEN).build()
+
+        # Inject dependencies into handlers
+        self._inject_dependencies()
+
+        # Register all handlers
+        self._register_handlers()
+
+        logger.info("Bot application initialized successfully")
+
+    def _initialize_services(self):
+        """Initialize all service instances."""
+        # Core services
+        self.comfyui_service = ComfyUIService(self.config)
+        self.file_service = FileService(self.config)
+        self.notification_service = NotificationService(self.config)
+
+        # Queue service (depends on comfyui and notification services)
+        self.queue_service = QueueService(
+            self.config,
+            self.comfyui_service,
+            self.notification_service
+        )
+
+        # Workflow service (depends on multiple services)
+        self.workflow_service = WorkflowService(
+            self.config,
+            self.comfyui_service,
+            self.file_service,
+            self.notification_service,
+            self.queue_service,
+            self.state_manager
+        )
+
+        logger.debug("All services initialized")
+
+    def _inject_dependencies(self):
+        """Inject service instances into handler modules."""
+        # Inject into command_handlers
+        command_handlers.state_manager = self.state_manager
+        command_handlers.config = self.config
+
+        # Inject into menu_handlers
+        menu_handlers.state_manager = self.state_manager
+        menu_handlers.notification_service = self.notification_service
+        menu_handlers.queue_service = self.queue_service
+        menu_handlers.config = self.config
+
+        # Inject into media_handlers
+        media_handlers.state_manager = self.state_manager
+        media_handlers.file_service = self.file_service
+        media_handlers.workflow_service = self.workflow_service
+        media_handlers.config = self.config
+
+        # Inject into callback_handlers
+        callback_handlers.state_manager = self.state_manager
+        callback_handlers.queue_service = self.queue_service
+
+        # Store workflow_service in bot_data for access from handlers
+        self.app.bot_data['workflow_service'] = self.workflow_service
+        self.app.bot_data['state_manager'] = self.state_manager
+
+        logger.debug("Dependencies injected into handlers")
+
+    def _register_handlers(self):
+        """Register all handlers in correct priority order."""
+        # Command handlers (highest priority)
+        self.app.add_handler(CommandHandler("start", command_handlers.start))
+        self.app.add_handler(CommandHandler("help", command_handlers.help_command))
+        self.app.add_handler(CommandHandler("cancel", command_handlers.cancel_command))
+        self.app.add_handler(CommandHandler("status", command_handlers.status_command))
+
+        # Menu selection handlers
+        # Use regex to match menu options (including variations)
+        menu_pattern = r"^(1\. 图片脱衣|2\. 图片转视频脱衣|3\. 查看队列|.*图片转视频.*)"
+        self.app.add_handler(
+            MessageHandler(
+                filters.Regex(menu_pattern),
+                menu_handlers.handle_menu_selection
+            )
+        )
+
+        # Media upload handlers
+        self.app.add_handler(
+            MessageHandler(filters.PHOTO, media_handlers.handle_photo)
+        )
+        self.app.add_handler(
+            MessageHandler(filters.Document.ALL, media_handlers.handle_document)
+        )
+
+        # Callback query handlers (inline buttons)
+        self.app.add_handler(
+            CallbackQueryHandler(
+                callback_handlers.refresh_queue_callback,
+                pattern="^refresh_"
+            )
+        )
+        self.app.add_handler(
+            CallbackQueryHandler(
+                callback_handlers.cancel_callback,
+                pattern="^cancel_"
+            )
+        )
+        self.app.add_handler(
+            CallbackQueryHandler(
+                callback_handlers.payment_callback,
+                pattern="^payment_"
+            )
+        )
+
+        # Text message fallback (lowest priority)
+        # This catches any text that wasn't handled by other handlers
+        self.app.add_handler(
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND,
+                menu_handlers.handle_unexpected_text
+            )
+        )
+
+        logger.info("All handlers registered")
+
+    def run(self):
+        """Start the bot with polling."""
+        logger.info(f"Starting bot: {self.config.BOT_USERNAME}")
+        logger.info(f"ComfyUI server: {self.config.COMFYUI_SERVER}")
+
+        print("=" * 60)
+        print(f"🤖 Bot starting: @{self.config.BOT_USERNAME}")
+        print(f"🎨 ComfyUI server: {self.config.COMFYUI_SERVER}")
+        print(f"📁 Uploads directory: {self.config.USER_UPLOADS_DIR}")
+        print(f"📁 Retrieve directory: {self.config.COMFYUI_RETRIEVE_DIR}")
+        print(f"⏱️  Cleanup timeout: {self.config.CLEANUP_TIMEOUT}s")
+        print("=" * 60)
+        print("✅ Bot is running... Press Ctrl+C to stop")
+        print("=" * 60)
+
+        try:
+            # Run bot with polling
+            self.app.run_polling(
+                allowed_updates=Update.ALL_TYPES,
+                drop_pending_updates=True  # Ignore updates received while bot was offline
+            )
+
+        except KeyboardInterrupt:
+            logger.info("Bot stopped by user")
+            print("\n👋 Bot stopped gracefully")
+
+        except Exception as e:
+            logger.error(f"Error running bot: {str(e)}", exc_info=True)
+            print(f"\n❌ Bot stopped due to error: {str(e)}")
+            raise
+
+    def stop(self):
+        """Stop the bot gracefully."""
+        logger.info("Stopping bot...")
+
+        # Cancel all cleanup tasks
+        for user_id in self.state_manager.get_all_processing_users():
+            self.state_manager.cancel_cleanup_task(user_id)
+
+        logger.info("Bot stopped successfully")
