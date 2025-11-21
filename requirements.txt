@@ -7,6 +7,11 @@ aiohttp>=3.9.0
 # Environment Variables
 python-dotenv>=1.0.0
 
+# Payment Webhook Server (required for payment callbacks)
+flask>=3.0.0
+hypercorn>=0.14.0
+asgiref>=3.7.0
+
 # Payment Integrations (optional - uncomment when needed)
 # stripe>=7.0.0
 # alipay-sdk-python>=3.3.0

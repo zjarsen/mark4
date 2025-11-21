@@ -35,7 +35,9 @@ class ComfyUIService:
             Exception: If upload fails
         """
         try:
-            async with aiohttp.ClientSession() as session:
+            # Disable SSL verification for servers with certificate issues
+            connector = aiohttp.TCPConnector(ssl=False)
+            async with aiohttp.ClientSession(connector=connector) as session:
                 with open(local_path, 'rb') as f:
                     form = aiohttp.FormData()
                     form.add_field(
@@ -45,9 +47,17 @@ class ComfyUIService:
                         content_type='image/jpeg'
                     )
 
-                    async with session.post(self.config.COMFYUI_UPLOAD_URL, data=form) as resp:
+                    upload_url = self.config.COMFYUI_UPLOAD_URL
+                    logger.info(f"Uploading to: {upload_url}")
+
+                    async with session.post(upload_url, data=form) as resp:
                         if resp.status != 200:
                             error_text = await resp.text()
+                            logger.error(
+                                f"Upload failed - Status: {resp.status}, "
+                                f"URL: {upload_url}, "
+                                f"Response: {error_text[:200]}"
+                            )
                             raise Exception(
                                 f"Upload failed with status {resp.status}: {error_text}"
                             )
@@ -166,7 +176,7 @@ class ComfyUIService:
                 for item in queue_info['running']:
                     if len(item) > 1 and item[1] == prompt_id:
                         logger.debug(f"Prompt {prompt_id} is currently running")
-                        return 1, queue_info['total']
+                        return 0, queue_info['total']  # Return 0 to indicate running (not waiting in queue)
 
             # Not found - either completed or doesn't exist
             logger.debug(f"Prompt {prompt_id} not in queue (completed or not found)")

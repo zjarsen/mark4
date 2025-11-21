@@ -113,9 +113,18 @@ class QueueService:
                     prompt_id
                 )
             else:
-                # Processing started or completed
-                from core.constants import PROCESSING_IN_PROGRESS
-                await queue_message.edit_text(PROCESSING_IN_PROGRESS)
+                # Position = 0 means either running or completed
+                # Check completion status to determine which message to show
+                from core.constants import PROCESSING_RUNNING, PROCESSING_RETRIEVING
+
+                outputs = await self.comfyui_service.check_completion(prompt_id)
+
+                if outputs:
+                    # Processing is complete, image is being retrieved
+                    await queue_message.edit_text(PROCESSING_RETRIEVING)
+                else:
+                    # Still processing (running)
+                    await queue_message.edit_text(PROCESSING_RUNNING)
 
         except Exception as e:
             logger.error(f"Error refreshing queue position: {str(e)}")

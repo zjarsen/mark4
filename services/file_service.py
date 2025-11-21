@@ -79,19 +79,38 @@ class FileService:
         Returns:
             Local file path where photo was saved
         """
-        try:
-            file = await bot.get_file(photo.file_id)
-            filename = self.generate_filename(user_id, 'jpg')
-            local_path = self.config.USER_UPLOADS_DIR / filename
+        import asyncio
 
-            await file.download_to_drive(str(local_path))
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Getting file info for user {user_id} (attempt {attempt + 1}/{max_retries})")
+                file = await bot.get_file(photo.file_id)
 
-            logger.info(f"Downloaded photo for user {user_id} to {local_path}")
-            return str(local_path)
+                logger.info(f"File ID: {photo.file_id}, Size: {photo.file_size}, Path: {file.file_path}")
 
-        except Exception as e:
-            logger.error(f"Error downloading photo for user {user_id}: {str(e)}")
-            raise
+                filename = self.generate_filename(user_id, 'jpg')
+                local_path = self.config.USER_UPLOADS_DIR / filename
+
+                logger.info(f"Downloading to: {local_path}")
+                await file.download_to_drive(str(local_path))
+
+                logger.info(f"Successfully downloaded photo for user {user_id} to {local_path}")
+                return str(local_path)
+
+            except Exception as e:
+                logger.error(
+                    f"Error downloading photo for user {user_id} "
+                    f"(attempt {attempt + 1}/{max_retries}): {type(e).__name__}: {str(e)}"
+                )
+
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                    logger.info(f"Retrying in {wait_time} seconds...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(f"Failed to download photo after {max_retries} attempts")
+                    raise
 
     async def download_telegram_document(
         self,
@@ -113,24 +132,43 @@ class FileService:
         Raises:
             ValueError: If document format is invalid
         """
-        try:
-            # Validate format first
-            if not self.is_valid_image_format(document.file_name):
-                raise ValueError(f"Invalid image format: {document.file_name}")
+        import asyncio
 
-            file = await bot.get_file(document.file_id)
-            ext = Path(document.file_name).suffix.lstrip('.')
-            filename = self.generate_filename(user_id, ext)
-            local_path = self.config.USER_UPLOADS_DIR / filename
+        # Validate format first
+        if not self.is_valid_image_format(document.file_name):
+            raise ValueError(f"Invalid image format: {document.file_name}")
 
-            await file.download_to_drive(str(local_path))
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Getting document info for user {user_id} (attempt {attempt + 1}/{max_retries})")
+                file = await bot.get_file(document.file_id)
 
-            logger.info(f"Downloaded document for user {user_id} to {local_path}")
-            return str(local_path)
+                logger.info(f"File ID: {document.file_id}, Name: {document.file_name}, Size: {document.file_size}")
 
-        except Exception as e:
-            logger.error(f"Error downloading document for user {user_id}: {str(e)}")
-            raise
+                ext = Path(document.file_name).suffix.lstrip('.')
+                filename = self.generate_filename(user_id, ext)
+                local_path = self.config.USER_UPLOADS_DIR / filename
+
+                logger.info(f"Downloading to: {local_path}")
+                await file.download_to_drive(str(local_path))
+
+                logger.info(f"Successfully downloaded document for user {user_id} to {local_path}")
+                return str(local_path)
+
+            except Exception as e:
+                logger.error(
+                    f"Error downloading document for user {user_id} "
+                    f"(attempt {attempt + 1}/{max_retries}): {type(e).__name__}: {str(e)}"
+                )
+
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt
+                    logger.info(f"Retrying in {wait_time} seconds...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(f"Failed to download document after {max_retries} attempts")
+                    raise
 
     def get_output_path(self, original_filename: str) -> str:
         """

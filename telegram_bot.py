@@ -28,7 +28,7 @@ def main():
 
     # Setup logging
     try:
-        logger = setup_logger(config.LOG_LEVEL)
+        logger = setup_logger(config.LOG_LEVEL, config.LOG_FILE)
         logger.info("=" * 60)
         logger.info("Mark4 Telegram Bot Starting")
         logger.info("=" * 60)

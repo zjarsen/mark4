@@ -18,7 +18,8 @@ class WorkflowService:
         file_service,
         notification_service,
         queue_service,
-        state_manager
+        state_manager,
+        credit_service=None
     ):
         """
         Initialize workflow service.
@@ -30,6 +31,7 @@ class WorkflowService:
             notification_service: Notification service instance
             queue_service: Queue service instance
             state_manager: State manager instance
+            credit_service: CreditService instance (optional for backwards compatibility)
         """
         self.config = config
         self.comfyui_service = comfyui_service
@@ -37,6 +39,7 @@ class WorkflowService:
         self.notification_service = notification_service
         self.queue_service = queue_service
         self.state_manager = state_manager
+        self.credit_service = credit_service
 
         # Initialize workflow implementations
         self.image_workflow = ImageProcessingWorkflow(
@@ -64,11 +67,56 @@ class WorkflowService:
         try:
             filename = Path(local_path).name
 
+            # Check credits if credit service is available
+            if self.credit_service:
+                has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
+                    user_id,
+                    'image_processing'
+                )
+
+                if not has_sufficient:
+                    # Insufficient credits
+                    from core.constants import INSUFFICIENT_CREDITS_MESSAGE
+                    await update.message.reply_text(
+                        INSUFFICIENT_CREDITS_MESSAGE.format(
+                            balance=balance,
+                            required=cost
+                        )
+                    )
+                    logger.warning(
+                        f"User {user_id} has insufficient credits: "
+                        f"balance={balance}, required={cost}"
+                    )
+                    self.state_manager.reset_state(user_id)
+                    return
+
+                # Check if using free trial
+                has_free_trial = await self.credit_service.has_free_trial(user_id)
+                if has_free_trial:
+                    from core.constants import FREE_TRIAL_MESSAGE
+                    await update.message.reply_text(FREE_TRIAL_MESSAGE)
+                    logger.info(f"User {user_id} using free trial for image processing")
+
             # Upload image to ComfyUI
             await self.image_workflow.upload_image(local_path, filename)
 
             # Queue workflow
             prompt_id = await self.image_workflow.queue_workflow(filename=filename)
+
+            # Deduct credits after successful queue
+            if self.credit_service:
+                success, new_balance = await self.credit_service.deduct_credits(
+                    user_id,
+                    'image_processing',
+                    reference_id=prompt_id
+                )
+                if success:
+                    logger.info(
+                        f"Deducted credits for user {user_id}, "
+                        f"new balance: {new_balance}"
+                    )
+                else:
+                    logger.error(f"Failed to deduct credits for user {user_id}")
 
             # Update user state
             self.state_manager.update_state(

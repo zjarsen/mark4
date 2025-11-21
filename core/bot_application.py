@@ -19,10 +19,23 @@ from services.file_service import FileService
 from services.notification_service import NotificationService
 from services.queue_service import QueueService
 from services.workflow_service import WorkflowService
+from services.database_service import DatabaseService
+from services.credit_service import CreditService
+from services.payment_service import PaymentService
+
+# Import payment provider
+from payments.wechat_alipay_provider import WeChatAlipayProvider
 
 # Import core
 from core.state_manager import StateManager
-from core.constants import MENU_OPTION_IMAGE, MENU_OPTION_VIDEO, MENU_OPTION_CHECK_QUEUE
+from core.constants import (
+    MENU_OPTION_IMAGE,
+    MENU_OPTION_VIDEO,
+    MENU_OPTION_CHECK_QUEUE,
+    MENU_OPTION_CHECK_BALANCE,
+    MENU_OPTION_TOPUP,
+    MENU_OPTION_HISTORY
+)
 
 logger = logging.getLogger('mark4_bot')
 
@@ -63,6 +76,19 @@ class BotApplication:
         self.file_service = FileService(self.config)
         self.notification_service = NotificationService(self.config)
 
+        # Database and credit services
+        self.database_service = DatabaseService(self.config)
+        self.credit_service = CreditService(self.config, self.database_service)
+
+        # Payment services
+        self.payment_provider = WeChatAlipayProvider(self.config)
+        self.payment_service = PaymentService(
+            self.config,
+            self.database_service,
+            self.credit_service,
+            self.payment_provider
+        )
+
         # Queue service (depends on comfyui and notification services)
         self.queue_service = QueueService(
             self.config,
@@ -70,14 +96,15 @@ class BotApplication:
             self.notification_service
         )
 
-        # Workflow service (depends on multiple services)
+        # Workflow service (depends on multiple services, including credit_service)
         self.workflow_service = WorkflowService(
             self.config,
             self.comfyui_service,
             self.file_service,
             self.notification_service,
             self.queue_service,
-            self.state_manager
+            self.state_manager,
+            credit_service=self.credit_service
         )
 
         logger.debug("All services initialized")
@@ -104,6 +131,11 @@ class BotApplication:
         callback_handlers.state_manager = self.state_manager
         callback_handlers.queue_service = self.queue_service
 
+        # Inject into credit_handlers
+        from handlers import credit_handlers
+        credit_handlers.credit_service = self.credit_service
+        credit_handlers.payment_service = self.payment_service
+
         # Store workflow_service in bot_data for access from handlers
         self.app.bot_data['workflow_service'] = self.workflow_service
         self.app.bot_data['state_manager'] = self.state_manager
@@ -120,7 +152,7 @@ class BotApplication:
 
         # Menu selection handlers
         # Use regex to match menu options (including variations)
-        menu_pattern = r"^(1\. 图片脱衣|2\. 图片转视频脱衣|3\. 查看队列|.*图片转视频.*)"
+        menu_pattern = r"^(1\. 图片脱衣|2\. 图片转视频脱衣|3\. 查看队列|4\. 💰 查看积分余额|5\. 💳 充值积分|6\. 📊 消费记录|.*图片转视频.*)"
         self.app.add_handler(
             MessageHandler(
                 filters.Regex(menu_pattern),
@@ -153,6 +185,15 @@ class BotApplication:
             CallbackQueryHandler(
                 callback_handlers.payment_callback,
                 pattern="^payment_"
+            )
+        )
+
+        # Credit system callback handlers
+        from handlers.credit_handlers import handle_topup_callback
+        self.app.add_handler(
+            CallbackQueryHandler(
+                handle_topup_callback,
+                pattern="^topup_"
             )
         )
 

@@ -24,7 +24,7 @@ class Config:
     # Computed URLs
     @property
     def COMFYUI_UPLOAD_URL(self):
-        return f"{self.COMFYUI_SERVER}/upload/image"
+        return f"{self.COMFYUI_SERVER}/api/upload/image"
 
     @property
     def COMFYUI_PROMPT_URL(self):
@@ -65,12 +65,19 @@ class Config:
 
     # Logging Configuration
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    LOG_FILE = os.getenv('LOG_FILE')  # Optional: path to log file
 
-    # Payment Configuration (for future use)
-    STRIPE_API_KEY = os.getenv('STRIPE_API_KEY')
-    PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID')
-    ALIPAY_APP_ID = os.getenv('ALIPAY_APP_ID')
-    WECHAT_MERCHANT_ID = os.getenv('WECHAT_MERCHANT_ID')
+    # Database Configuration
+    DATABASE_PATH = os.getenv('DATABASE_PATH', 'data/mark4_bot.db')
+
+    # Payment Configuration (WeChat/Alipay 3rd party acquirer)
+    PAYMENT_GATEWAY_URL = os.getenv('PAYMENT_GATEWAY_URL')  # Base URL for payment gateway
+    PAYMENT_MERCHANT_ID = os.getenv('PAYMENT_MERCHANT_ID')  # pay_memberid
+    PAYMENT_SECRET_KEY = os.getenv('PAYMENT_SECRET_KEY')    # Secret key for MD5 signing
+    PAYMENT_NOTIFY_URL = os.getenv('PAYMENT_NOTIFY_URL')    # Server callback URL (pay_notifyurl)
+    PAYMENT_CALLBACK_URL = os.getenv('PAYMENT_CALLBACK_URL')  # User return URL (pay_callbackurl)
+    PAYMENT_BANKCODE_WECHAT = os.getenv('PAYMENT_BANKCODE_WECHAT', '998')  # Bank code for WeChat
+    PAYMENT_BANKCODE_ALIPAY = os.getenv('PAYMENT_BANKCODE_ALIPAY', '999')  # Bank code for Alipay
 
     def __init__(self):
         """Initialize configuration and validate required settings."""
