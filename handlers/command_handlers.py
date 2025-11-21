@@ -8,7 +8,10 @@ from core.constants import (
     SELECT_FUNCTION_MESSAGE,
     MENU_OPTION_IMAGE,
     MENU_OPTION_VIDEO,
-    MENU_OPTION_CHECK_QUEUE
+    MENU_OPTION_CHECK_QUEUE,
+    MENU_OPTION_CHECK_BALANCE,
+    MENU_OPTION_TOPUP,
+    MENU_OPTION_HISTORY
 )
 
 logger = logging.getLogger('mark4_bot')
@@ -158,7 +161,10 @@ async def show_main_menu(update: Update):
     keyboard = [
         [KeyboardButton(MENU_OPTION_IMAGE)],
         [KeyboardButton(MENU_OPTION_VIDEO)],
-        [KeyboardButton(MENU_OPTION_CHECK_QUEUE)]
+        [KeyboardButton(MENU_OPTION_CHECK_QUEUE)],
+        [KeyboardButton(MENU_OPTION_CHECK_BALANCE)],
+        [KeyboardButton(MENU_OPTION_TOPUP)],
+        [KeyboardButton(MENU_OPTION_HISTORY)]
     ]
     reply_markup = ReplyKeyboardMarkup(
         keyboard,
