@@ -290,7 +290,15 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             ]]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
-            await query.edit_message_text(message, reply_markup=reply_markup)
+            # Try to edit message, if fails (e.g., deleted by cleanup), send new message
+            try:
+                await query.edit_message_text(message, reply_markup=reply_markup)
+            except Exception as edit_error:
+                # Message was deleted (likely by cleanup middleware), send new message
+                logger.debug(f"Could not edit message, sending new message: {str(edit_error)}")
+                # Update message_id to the new message for timeout tracking
+                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup)
+                message_id = sent_msg.message_id
 
             logger.info(
                 f"Created payment {payment_info['payment_id']} for user {user_id}: "
@@ -338,7 +346,13 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
-            await query.edit_message_text(message, reply_markup=reply_markup)
+            # Try to edit message, if fails (e.g., deleted by cleanup), send new message
+            try:
+                await query.edit_message_text(message, reply_markup=reply_markup)
+            except Exception as edit_error:
+                # Message was deleted (likely by cleanup middleware), send new message
+                logger.debug(f"Could not edit message, sending new message: {str(edit_error)}")
+                await query.message.reply_text(message, reply_markup=reply_markup)
 
             logger.info(f"User {user_id} selected amount ¥{amount_cny}, showing payment methods")
 
