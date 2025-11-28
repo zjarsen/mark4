@@ -206,12 +206,13 @@ class WeChatAlipayProvider(PaymentProvider):
                     # Map status to our PaymentStatus
                     # Note: API query uses 'status' field (1=paid, 0=unpaid)
                     # Callback uses 'trade_status' field ('TRADE_SUCCESS'=paid)
+                    # API returns status as string "1" or "0", not integer
                     status = result.get('status')
 
-                    if status == 1:
+                    if status == 1 or status == "1":
                         logger.info(f"Payment {payment_id} confirmed as completed")
                         return PaymentStatus.COMPLETED
-                    elif status == 0:
+                    elif status == 0 or status == "0":
                         logger.info(f"Payment {payment_id} still pending")
                         return PaymentStatus.PENDING
                     else:
@@ -291,12 +292,14 @@ class WeChatAlipayProvider(PaymentProvider):
 
                     # Parse and return payment details
                     # Note: API query uses 'status' field (1=paid, 0=unpaid)
+                    # API returns status as string "1" or "0", not integer
+                    status = result.get('status')
                     return {
                         'payment_id': result.get('out_trade_no', payment_id),
-                        'status': 'COMPLETED' if result.get('status') == 1 else 'PENDING',
+                        'status': 'COMPLETED' if (status == 1 or status == "1") else 'PENDING',
                         'amount': result.get('money'),
                         'transaction_id': result.get('trade_no'),
-                        'vendor_status': result.get('status')
+                        'vendor_status': status
                     }
 
         except Exception as e:
