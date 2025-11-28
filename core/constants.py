@@ -32,9 +32,8 @@ class PaymentStatus(Enum):
 MENU_OPTION_IMAGE = "1. 图片脱衣"
 MENU_OPTION_VIDEO = "2. 图片转视频脱衣（暂未开放）"
 MENU_OPTION_CHECK_QUEUE = "3. 查看队列"
-MENU_OPTION_CHECK_BALANCE = "4. 💰 查看积分余额"
+MENU_OPTION_BALANCE_HISTORY = "4. 📊 积分余额 & 充值记录"
 MENU_OPTION_TOPUP = "5. 💳 充值积分"
-MENU_OPTION_HISTORY = "6. 📊 消费记录"
 
 # Message templates
 WELCOME_MESSAGE = """欢迎使用AI脱衣bot！
@@ -102,6 +101,7 @@ CREDITS_DEDUCTED_MESSAGE = "已扣除 {amount} 积分，当前余额：{balance}
 CREDITS_ADDED_MESSAGE = "充值成功！获得 {amount} 积分，当前余额：{balance} 积分"
 
 PAYMENT_PENDING_MESSAGE = """等待支付中...
+⏰ 请在3分钟内完成支付
 
 订单号：{payment_id}
 金额：¥{amount}
@@ -109,8 +109,13 @@ PAYMENT_PENDING_MESSAGE = """等待支付中...
 
 请在新窗口完成支付。"""
 
+PAYMENT_TIMEOUT_MESSAGE = "⏰ 支付超时，请重新选择充值套餐"
+
 PAYMENT_SUCCESS_MESSAGE = "支付成功！已到账 {credits} 积分"
 PAYMENT_FAILED_MESSAGE = "支付失败，请重试"
+
+# Payment timeout duration (in seconds)
+PAYMENT_TIMEOUT_SECONDS = 180  # 3 minutes
 
 # Button labels
 REFRESH_QUEUE_BUTTON = "刷新队列"

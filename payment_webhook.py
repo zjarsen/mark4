@@ -42,6 +42,10 @@ payment_service = PaymentService(
 # Initialize Telegram Bot for sending notifications
 bot = Bot(token=config.BOT_TOKEN)
 
+# Initialize payment timeout service
+from services.payment_timeout_service import PaymentTimeoutService
+timeout_service = PaymentTimeoutService(bot)
+
 
 async def send_payment_notification(user_id: int, payment_id: str, credits: float, new_balance: float, chat_id: int = None, message_id: int = None):
     """
@@ -133,6 +137,13 @@ async def payment_callback():
 
                     # Send notification (edit message if chat_id/message_id available)
                     await send_payment_notification(user_id, payment_id, credits, new_balance, chat_id, message_id)
+
+                    # Cancel timeout timer and cleanup timeout messages
+                    timeout_service.cancel_payment_timeout(user_id)
+                    if chat_id:
+                        await timeout_service.cleanup_timeout_messages(user_id, chat_id)
+                    logger.debug(f"Cancelled timeout and cleaned up messages for user {user_id}")
+
             except Exception as e:
                 # Don't fail the callback if notification fails
                 logger.error(f"Failed to send notification for payment {payment_id}: {str(e)}")

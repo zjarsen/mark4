@@ -7,9 +7,8 @@ from core.constants import (
     MENU_OPTION_IMAGE,
     MENU_OPTION_VIDEO,
     MENU_OPTION_CHECK_QUEUE,
-    MENU_OPTION_CHECK_BALANCE,
+    MENU_OPTION_BALANCE_HISTORY,
     MENU_OPTION_TOPUP,
-    MENU_OPTION_HISTORY,
     SEND_IMAGE_PROMPT,
     FEATURE_NOT_IMPLEMENTED,
     QUEUE_UNAVAILABLE,
@@ -48,17 +47,13 @@ async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TY
         elif text == MENU_OPTION_CHECK_QUEUE or "查看队列" in text:
             await handle_check_queue(update, context, user_id)
 
-        elif text == MENU_OPTION_CHECK_BALANCE:
-            from handlers.credit_handlers import check_balance
-            await check_balance(update, context)
+        elif text == MENU_OPTION_BALANCE_HISTORY:
+            from handlers.credit_handlers import show_balance_and_history
+            await show_balance_and_history(update, context)
 
         elif text == MENU_OPTION_TOPUP:
             from handlers.credit_handlers import show_topup_packages
             await show_topup_packages(update, context)
-
-        elif text == MENU_OPTION_HISTORY:
-            from handlers.credit_handlers import show_transaction_history
-            await show_transaction_history(update, context)
 
         else:
             # Unknown menu option

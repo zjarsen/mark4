@@ -6,6 +6,7 @@ from telegram.ext import (
     CommandHandler,
     MessageHandler,
     CallbackQueryHandler,
+    ContextTypes,
     filters
 )
 import logging
@@ -32,9 +33,8 @@ from core.constants import (
     MENU_OPTION_IMAGE,
     MENU_OPTION_VIDEO,
     MENU_OPTION_CHECK_QUEUE,
-    MENU_OPTION_CHECK_BALANCE,
-    MENU_OPTION_TOPUP,
-    MENU_OPTION_HISTORY
+    MENU_OPTION_BALANCE_HISTORY,
+    MENU_OPTION_TOPUP
 )
 
 logger = logging.getLogger('mark4_bot')
@@ -89,6 +89,14 @@ class BotApplication:
             self.payment_provider
         )
 
+        # Initialize bot instance (needed for timeout service)
+        from telegram import Bot
+        self.bot = Bot(token=self.config.BOT_TOKEN)
+
+        # Payment timeout service
+        from services.payment_timeout_service import PaymentTimeoutService
+        self.timeout_service = PaymentTimeoutService(self.bot)
+
         # Queue service (depends on comfyui and notification services)
         self.queue_service = QueueService(
             self.config,
@@ -135,6 +143,7 @@ class BotApplication:
         from handlers import credit_handlers
         credit_handlers.credit_service = self.credit_service
         credit_handlers.payment_service = self.payment_service
+        credit_handlers.timeout_service = self.timeout_service
 
         # Store workflow_service in bot_data for access from handlers
         self.app.bot_data['workflow_service'] = self.workflow_service
@@ -142,8 +151,35 @@ class BotApplication:
 
         logger.debug("Dependencies injected into handlers")
 
+    async def _cleanup_timeout_messages_middleware(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """
+        Middleware to cleanup timeout messages before processing any update.
+
+        This runs before every handler to delete any pending timeout messages
+        when user interacts with the bot.
+        """
+        if not update.effective_user:
+            return
+
+        user_id = update.effective_user.id
+        chat_id = update.effective_chat.id if update.effective_chat else None
+
+        # Check if user has pending timeout messages
+        if chat_id and self.timeout_service.has_timeout_messages(user_id):
+            try:
+                await self.timeout_service.cleanup_timeout_messages(user_id, chat_id)
+            except Exception as e:
+                logger.warning(f"Error cleaning up timeout messages for user {user_id}: {str(e)}")
+
     def _register_handlers(self):
         """Register all handlers in correct priority order."""
+        # Cleanup middleware (runs before all handlers)
+        from telegram.ext import TypeHandler
+        self.app.add_handler(
+            TypeHandler(Update, self._cleanup_timeout_messages_middleware),
+            group=-1
+        )
+
         # Command handlers (highest priority)
         self.app.add_handler(CommandHandler("start", command_handlers.start))
         self.app.add_handler(CommandHandler("help", command_handlers.help_command))
@@ -152,7 +188,7 @@ class BotApplication:
 
         # Menu selection handlers
         # Use regex to match menu options (including variations)
-        menu_pattern = r"^(1\. 图片脱衣|2\. 图片转视频脱衣|3\. 查看队列|4\. 💰 查看积分余额|5\. 💳 充值积分|6\. 📊 消费记录|.*图片转视频.*)"
+        menu_pattern = r"^(1\. 图片脱衣|2\. 图片转视频脱衣|3\. 查看队列|4\. 📊 积分余额 & 充值记录|5\. 💳 充值积分|.*图片转视频.*)"
         self.app.add_handler(
             MessageHandler(
                 filters.Regex(menu_pattern),

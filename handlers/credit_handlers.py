@@ -9,6 +9,7 @@ logger = logging.getLogger('mark4_bot')
 # Injected dependencies
 credit_service = None
 payment_service = None
+timeout_service = None
 
 
 async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -110,6 +111,126 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
         await update.message.reply_text("查询记录失败，请稍后重试")
 
 
+async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show user's balance and transaction history combined."""
+    try:
+        user_id = update.effective_user.id
+
+        # Get user stats
+        stats = await credit_service.get_user_stats(user_id)
+
+        # Get transactions
+        transactions = await credit_service.get_transaction_history(user_id, limit=10)
+
+        from core.constants import (
+            TRANSACTION_ITEM_TEMPLATE
+        )
+
+        # Build combined message
+        message = f"""📊 积分余额 & 充值记录
+
+💰 当前积分：{stats['balance']} 积分
+📈 累计消费：{stats['total_spent']} 积分
+
+图片脱衣：10 积分/次
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+📝 最近10笔记录：
+
+"""
+
+        if not transactions:
+            message += "暂无消费记录"
+        else:
+            # Format transactions
+            for tx in transactions:
+                date = tx['created_at'][:10]  # Extract date
+                tx_type = {
+                    'topup': '充值',
+                    'deduction': '消费',
+                    'refund': '退款'
+                }.get(tx['transaction_type'], tx['transaction_type'])
+
+                message += TRANSACTION_ITEM_TEMPLATE.format(
+                    date=date,
+                    type=tx_type,
+                    amount=tx['amount'],
+                    balance=tx['balance_after']
+                )
+
+        await update.message.reply_text(message)
+        logger.info(f"User {user_id} viewed balance and history")
+
+    except Exception as e:
+        logger.error(f"Error showing balance and history: {str(e)}")
+        await update.message.reply_text("查询失败，请稍后重试")
+
+
+async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, payment_id: str, amount_cny: int):
+    """
+    Handle payment timeout after 3 minutes.
+
+    Called by timeout service when payment timeout expires.
+    Edits the pending payment message to show timeout and sends new top-up menu.
+
+    Args:
+        user_id: Telegram user ID
+        chat_id: Chat ID where payment message is
+        message_id: Message ID of the payment pending message
+        payment_id: Payment ID that timed out
+        amount_cny: Payment amount in CNY
+    """
+    try:
+        from core.constants import (
+            PAYMENT_TIMEOUT_MESSAGE,
+            TOPUP_PACKAGES,
+            TOPUP_1_BUTTON,
+            TOPUP_10_BUTTON,
+            TOPUP_30_BUTTON,
+            TOPUP_50_BUTTON,
+            TOPUP_100_BUTTON
+        )
+
+        # Get bot instance from timeout_service
+        bot = timeout_service.bot
+
+        # Edit the payment pending message to show timeout
+        try:
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=PAYMENT_TIMEOUT_MESSAGE
+            )
+        except Exception as e:
+            logger.warning(f"Failed to edit timeout message {message_id}: {str(e)}")
+
+        # Send new message with top-up packages below
+        keyboard = [
+            [InlineKeyboardButton(TOPUP_1_BUTTON, callback_data="topup_1")],
+            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
+            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
+            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        from core.constants import TOPUP_PACKAGES_MESSAGE
+        menu_message = await bot.send_message(
+            chat_id=chat_id,
+            text=TOPUP_PACKAGES_MESSAGE,
+            reply_markup=reply_markup
+        )
+
+        # Store both message IDs for cleanup
+        timeout_service.add_timeout_messages(user_id, message_id, menu_message.message_id)
+
+        logger.info(f"Payment timeout displayed for user {user_id}, payment {payment_id}")
+
+    except Exception as e:
+        logger.error(f"Error handling payment timeout for user {user_id}: {str(e)}", exc_info=True)
+
+
 async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle top-up package selection (two-step process).
@@ -175,6 +296,20 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 f"Created payment {payment_info['payment_id']} for user {user_id}: "
                 f"¥{amount_cny} = {payment_info['credits_amount']} credits via {payment_method}"
             )
+
+            # Start payment timeout timer (3 minutes)
+            if timeout_service:
+                from core.constants import PAYMENT_TIMEOUT_SECONDS
+                timeout_service.start_payment_timeout(
+                    user_id=user_id,
+                    chat_id=chat_id,
+                    message_id=message_id,
+                    payment_id=payment_info['payment_id'],
+                    amount_cny=amount_cny,
+                    timeout_callback=handle_payment_timeout,
+                    delay_seconds=PAYMENT_TIMEOUT_SECONDS
+                )
+                logger.debug(f"Started {PAYMENT_TIMEOUT_SECONDS}s timeout timer for payment {payment_info['payment_id']}")
 
         else:
             # ===== STEP 1: Amount selected, show payment method options =====
