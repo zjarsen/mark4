@@ -89,7 +89,8 @@ class WeChatAlipayProvider(PaymentProvider):
                 'notify_url': self.notify_url,
                 'return_url': self.callback_url,
                 'name': '积分充值',
-                'money': f"{amount:.2f}"
+                'money': f"{amount:.2f}",
+                'clientip': '8.8.8.8'  # Required by vendor (TODO: use real user IP)
             }
 
             # Generate signature
@@ -202,7 +203,8 @@ class WeChatAlipayProvider(PaymentProvider):
                         logger.warning(f"Query failed for {payment_id}: {result.get('msg')}")
                         return PaymentStatus.PENDING
 
-                    # Map trade_status to our PaymentStatus
+                    # Map status to our PaymentStatus
+                    # Note: yzzhifu.me uses 'trade_status' field ('TRADE_SUCCESS'=paid)
                     trade_status = result.get('trade_status', '')
 
                     if trade_status == 'TRADE_SUCCESS':
@@ -210,7 +212,7 @@ class WeChatAlipayProvider(PaymentProvider):
                         return PaymentStatus.COMPLETED
                     else:
                         # Other status means pending or failed
-                        logger.warning(f"Payment {payment_id} has status: {trade_status}")
+                        logger.warning(f"Payment {payment_id} has trade_status: {trade_status}")
                         return PaymentStatus.PENDING
 
         except Exception as e:
@@ -284,12 +286,13 @@ class WeChatAlipayProvider(PaymentProvider):
                         return {}
 
                     # Parse and return payment details
+                    # Note: yzzhifu.me uses 'trade_status' field ('TRADE_SUCCESS'=paid)
                     return {
                         'payment_id': result.get('out_trade_no', payment_id),
                         'status': 'COMPLETED' if result.get('trade_status') == 'TRADE_SUCCESS' else 'PENDING',
                         'amount': result.get('money'),
                         'transaction_id': result.get('trade_no'),
-                        'trade_status': result.get('trade_status')
+                        'vendor_status': result.get('trade_status')
                     }
 
         except Exception as e:

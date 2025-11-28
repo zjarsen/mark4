@@ -39,25 +39,31 @@ payment_service = PaymentService(
 )
 
 
-@app.route('/payment/callback', methods=['POST'])
+@app.route('/payment/callback', methods=['GET', 'POST'])
 async def payment_callback():
     """
     Handle payment callback from payment provider.
 
-    The payment provider will send a POST request with form data containing:
-    - memberid: Merchant ID
-    - orderid: Order ID
-    - amount: Payment amount
-    - transaction_id: Platform transaction ID
-    - datetime: Payment completion time
-    - returncode: Status code ('00' = success)
+    Supports both GET and POST methods:
+    - yzzhifu.me sends GET requests with query parameters
+    - Other vendors may send POST requests with form data
+
+    Common parameters:
+    - pid: Merchant ID
+    - out_trade_no: Order ID
+    - trade_no: Platform transaction ID
+    - money: Payment amount
+    - trade_status: Payment status
     - sign: MD5 signature
     """
     try:
-        # Get callback data from form
-        callback_data = request.form.to_dict()
+        # Get callback data from either query params (GET) or form (POST)
+        if request.method == 'GET':
+            callback_data = request.args.to_dict()
+        else:
+            callback_data = request.form.to_dict()
 
-        logger.info(f"Received payment callback: {callback_data.get('orderid')}")
+        logger.info(f"Received payment callback via {request.method}: {callback_data.get('out_trade_no') or callback_data.get('orderid')}")
 
         # Process callback with payment service
         success, payment_id = await payment_service.process_payment_callback(callback_data)
