@@ -90,7 +90,8 @@ class WeChatAlipayProvider(PaymentProvider):
                 'return_url': self.callback_url,
                 'name': '积分充值',
                 'money': f"{amount:.2f}",
-                'clientip': '8.8.8.8'  # Required by vendor (TODO: use real user IP)
+                'clientip': '8.8.8.8',  # Required by vendor (TODO: use real user IP)
+                'device': 'mobile'  # Required for API payments - using 'mobile' for Telegram users
             }
 
             # Generate signature
