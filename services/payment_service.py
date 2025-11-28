@@ -50,30 +50,37 @@ class PaymentService:
     async def create_topup_payment(
         self,
         user_id: int,
-        amount_cny: int
+        amount_cny: int,
+        payment_method: str = 'alipay'
     ) -> Tuple[bool, Optional[Dict], Optional[str]]:
         """
         Create a top-up payment order.
 
         Args:
             user_id: User ID
-            amount_cny: Amount in CNY (must be a valid package: 10, 30, or 50)
+            amount_cny: Amount in CNY (must be a valid package: 1, 10, 30, 50, or 100)
+            payment_method: Payment method ('alipay' or 'wechat', default: 'alipay')
 
         Returns:
             Tuple of (success, payment_info, error_message)
             payment_info contains: payment_id, payment_url, credits_amount
         """
         try:
+            # Validate payment method
+            if payment_method not in ['alipay', 'wechat']:
+                return False, None, f"Invalid payment method: {payment_method}. Must be 'alipay' or 'wechat'."
+
             # Validate package
             credits_amount = self.calculate_credits_for_amount(amount_cny)
             if credits_amount is None:
-                return False, None, f"Invalid top-up amount: {amount_cny}. Must be 10, 30, or 50."
+                return False, None, f"Invalid top-up amount: {amount_cny}. Must be 1, 10, 30, 50, or 100."
 
             # Create payment with provider
             payment_result = await self.payment_provider.create_payment(
                 user_id=user_id,
                 amount=float(amount_cny),
-                currency='CNY'
+                currency='CNY',
+                payment_method=payment_method
             )
 
             payment_id = payment_result['payment_id']

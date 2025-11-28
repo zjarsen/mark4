@@ -38,6 +38,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
         from core.constants import (
             TOPUP_PACKAGES_MESSAGE,
+            TOPUP_1_BUTTON,
             TOPUP_10_BUTTON,
             TOPUP_30_BUTTON,
             TOPUP_50_BUTTON,
@@ -46,6 +47,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         # Create inline keyboard with package options
         keyboard = [
+            [InlineKeyboardButton(TOPUP_1_BUTTON, callback_data="topup_1")],
             [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
             [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
             [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
@@ -109,49 +111,95 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
 
 
 async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle top-up package selection."""
+    """
+    Handle top-up package selection (two-step process).
+
+    Step 1: User selects amount (callback_data: "topup_10", "topup_30", etc.)
+            → Show payment method selection
+    Step 2: User selects payment method (callback_data: "topup_10_alipay", "topup_10_wechat")
+            → Create payment
+    """
     try:
         query = update.callback_query
         await query.answer()
 
         user_id = update.effective_user.id
+        callback_data = query.data
 
-        # Extract amount from callback data (topup_10, topup_30, topup_50)
-        amount_str = query.data.replace("topup_", "")
-        amount_cny = int(amount_str)
+        # Check if this is Step 2 (payment method selected) or Step 1 (amount selected)
+        if callback_data.endswith('_alipay') or callback_data.endswith('_wechat'):
+            # ===== STEP 2: Payment method selected, create payment =====
+            # Extract amount and payment method (e.g., "topup_10_alipay" -> amount=10, method="alipay")
+            parts = callback_data.replace("topup_", "").rsplit("_", 1)
+            amount_cny = int(parts[0])
+            payment_method = parts[1]  # 'alipay' or 'wechat'
 
-        # Create payment
-        success, payment_info, error = await payment_service.create_topup_payment(
-            user_id,
-            amount_cny
-        )
-
-        if not success:
-            await query.edit_message_text(f"创建支付失败: {error}")
-            return
-
-        from core.constants import PAYMENT_PENDING_MESSAGE
-        message = PAYMENT_PENDING_MESSAGE.format(
-            payment_id=payment_info['payment_id'],
-            amount=payment_info['amount_cny'],
-            credits=payment_info['credits_amount']
-        )
-
-        # Add payment URL button
-        keyboard = [[
-            InlineKeyboardButton(
-                "前往支付",
-                url=payment_info['payment_url']
+            # Create payment
+            success, payment_info, error = await payment_service.create_topup_payment(
+                user_id,
+                amount_cny,
+                payment_method
             )
-        ]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
 
-        await query.edit_message_text(message, reply_markup=reply_markup)
+            if not success:
+                await query.edit_message_text(f"创建支付失败: {error}")
+                return
 
-        logger.info(
-            f"Created payment {payment_info['payment_id']} for user {user_id}: "
-            f"¥{amount_cny} = {payment_info['credits_amount']} credits"
-        )
+            from core.constants import PAYMENT_PENDING_MESSAGE
+            payment_method_cn = "支付宝" if payment_method == "alipay" else "微信支付"
+            message = PAYMENT_PENDING_MESSAGE.format(
+                payment_id=payment_info['payment_id'],
+                amount=payment_info['amount_cny'],
+                credits=payment_info['credits_amount']
+            )
+            message += f"\n支付方式：{payment_method_cn}"
+
+            # Add payment URL button
+            keyboard = [[
+                InlineKeyboardButton(
+                    "前往支付",
+                    url=payment_info['payment_url']
+                )
+            ]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await query.edit_message_text(message, reply_markup=reply_markup)
+
+            logger.info(
+                f"Created payment {payment_info['payment_id']} for user {user_id}: "
+                f"¥{amount_cny} = {payment_info['credits_amount']} credits via {payment_method}"
+            )
+
+        else:
+            # ===== STEP 1: Amount selected, show payment method options =====
+            # Extract amount (e.g., "topup_10" -> 10)
+            amount_str = callback_data.replace("topup_", "")
+            amount_cny = int(amount_str)
+
+            # Get credits for this amount
+            from core.constants import TOPUP_PACKAGES
+            credits = TOPUP_PACKAGES.get(amount_cny, 0)
+
+            # Show payment method selection
+            message = f"""💳 充值 ¥{amount_cny} = {credits}积分
+
+请选择支付方式："""
+
+            keyboard = [
+                [InlineKeyboardButton(
+                    "💰 支付宝支付",
+                    callback_data=f"topup_{amount_cny}_alipay"
+                )],
+                [InlineKeyboardButton(
+                    "💚 微信支付",
+                    callback_data=f"topup_{amount_cny}_wechat"
+                )]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await query.edit_message_text(message, reply_markup=reply_markup)
+
+            logger.info(f"User {user_id} selected amount ¥{amount_cny}, showing payment methods")
 
     except Exception as e:
         logger.error(f"Error handling top-up callback: {str(e)}")
