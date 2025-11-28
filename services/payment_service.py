@@ -51,7 +51,9 @@ class PaymentService:
         self,
         user_id: int,
         amount_cny: int,
-        payment_method: str = 'alipay'
+        payment_method: str = 'alipay',
+        chat_id: int = None,
+        message_id: int = None
     ) -> Tuple[bool, Optional[Dict], Optional[str]]:
         """
         Create a top-up payment order.
@@ -60,6 +62,8 @@ class PaymentService:
             user_id: User ID
             amount_cny: Amount in CNY (must be a valid package: 1, 10, 30, 50, or 100)
             payment_method: Payment method ('alipay' or 'wechat', default: 'alipay')
+            chat_id: Optional Telegram chat ID for message editing
+            message_id: Optional Telegram message ID for editing after payment
 
         Returns:
             Tuple of (success, payment_info, error_message)
@@ -96,7 +100,9 @@ class PaymentService:
                 currency='CNY',
                 credits_amount=float(credits_amount),
                 status=status.value,
-                payment_url=payment_url
+                payment_url=payment_url,
+                chat_id=chat_id,
+                message_id=message_id
             )
 
             if not success:

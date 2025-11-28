@@ -134,11 +134,17 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             amount_cny = int(parts[0])
             payment_method = parts[1]  # 'alipay' or 'wechat'
 
+            # Get chat_id and message_id for later editing
+            chat_id = query.message.chat_id
+            message_id = query.message.message_id
+
             # Create payment
             success, payment_info, error = await payment_service.create_topup_payment(
                 user_id,
                 amount_cny,
-                payment_method
+                payment_method,
+                chat_id=chat_id,
+                message_id=message_id
             )
 
             if not success:

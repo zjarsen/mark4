@@ -86,11 +86,26 @@ class DatabaseService:
                     credits_amount REAL NOT NULL,
                     status TEXT NOT NULL,
                     payment_url TEXT,
+                    chat_id INTEGER,
+                    message_id INTEGER,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     completed_at TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users(user_id)
                 )
             """)
+
+            # Migration: Add chat_id and message_id columns if they don't exist
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN chat_id INTEGER")
+                logger.info("Added chat_id column to payments table")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN message_id INTEGER")
+                logger.info("Added message_id column to payments table")
+            except Exception:
+                pass  # Column already exists
 
             # Feature pricing table
             cursor.execute("""
@@ -289,7 +304,9 @@ class DatabaseService:
         currency: str,
         credits_amount: float,
         status: str,
-        payment_url: str = None
+        payment_url: str = None,
+        chat_id: int = None,
+        message_id: int = None
     ) -> bool:
         """
         Create payment record.
@@ -303,6 +320,8 @@ class DatabaseService:
             credits_amount: Credits to be awarded
             status: Payment status
             payment_url: Optional payment URL
+            chat_id: Optional Telegram chat ID
+            message_id: Optional Telegram message ID
 
         Returns:
             True if successful
@@ -313,9 +332,9 @@ class DatabaseService:
 
             cursor.execute("""
                 INSERT INTO payments
-                (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url))
+                (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id))
 
             conn.commit()
             logger.info(f"Created payment record {payment_id} for user {user_id}")

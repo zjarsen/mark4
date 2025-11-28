@@ -43,15 +43,19 @@ payment_service = PaymentService(
 bot = Bot(token=config.BOT_TOKEN)
 
 
-async def send_payment_notification(user_id: int, payment_id: str, credits: float, new_balance: float):
+async def send_payment_notification(user_id: int, payment_id: str, credits: float, new_balance: float, chat_id: int = None, message_id: int = None):
     """
     Send payment success notification to user via Telegram.
+    If chat_id and message_id are provided, edit the existing message.
+    Otherwise, send a new message.
 
     Args:
         user_id: Telegram user ID
         payment_id: Payment ID
         credits: Credits added
         new_balance: New balance after payment
+        chat_id: Optional chat ID for editing existing message
+        message_id: Optional message ID for editing existing message
     """
     try:
         message = f"""✅ 支付成功！
@@ -63,11 +67,21 @@ async def send_payment_notification(user_id: int, payment_id: str, credits: floa
 
 感谢您的支持！"""
 
-        await bot.send_message(
-            chat_id=user_id,
-            text=message
-        )
-        logger.info(f"Sent payment notification to user {user_id}")
+        if chat_id and message_id:
+            # Edit the existing "等待支付中" message
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=message
+            )
+            logger.info(f"Edited payment message for user {user_id} (msg: {message_id})")
+        else:
+            # Send new message if no message_id provided
+            await bot.send_message(
+                chat_id=user_id,
+                text=message
+            )
+            logger.info(f"Sent payment notification to user {user_id}")
     except Exception as e:
         logger.error(f"Failed to send payment notification to user {user_id}: {str(e)}")
 
@@ -110,13 +124,15 @@ async def payment_callback():
                 if payment:
                     user_id = payment['user_id']
                     credits = payment['credits_amount']
+                    chat_id = payment.get('chat_id')
+                    message_id = payment.get('message_id')
 
                     # Get user's new balance
                     user_stats = await credit_service.get_user_stats(user_id)
                     new_balance = user_stats['balance']
 
-                    # Send notification
-                    await send_payment_notification(user_id, payment_id, credits, new_balance)
+                    # Send notification (edit message if chat_id/message_id available)
+                    await send_payment_notification(user_id, payment_id, credits, new_balance, chat_id, message_id)
             except Exception as e:
                 # Don't fail the callback if notification fails
                 logger.error(f"Failed to send notification for payment {payment_id}: {str(e)}")
