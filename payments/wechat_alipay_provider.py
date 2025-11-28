@@ -165,7 +165,7 @@ class WeChatAlipayProvider(PaymentProvider):
 
     async def check_payment_status(self, payment_id: str) -> PaymentStatus:
         """
-        Check payment status with the new vendor.
+        Check payment status via API query.
 
         Args:
             payment_id: Payment ID to check
@@ -204,16 +204,20 @@ class WeChatAlipayProvider(PaymentProvider):
                         return PaymentStatus.PENDING
 
                     # Map status to our PaymentStatus
-                    # Note: yzzhifu.me uses 'trade_status' field ('TRADE_SUCCESS'=paid)
-                    trade_status = result.get('trade_status', '')
+                    # Note: API query uses 'status' field (1=paid, 0=unpaid)
+                    # Callback uses 'trade_status' field ('TRADE_SUCCESS'=paid)
+                    status = result.get('status')
 
-                    if trade_status == 'TRADE_SUCCESS':
+                    if status == 1:
                         logger.info(f"Payment {payment_id} confirmed as completed")
                         return PaymentStatus.COMPLETED
-                    else:
-                        # Other status means pending or failed
-                        logger.warning(f"Payment {payment_id} has trade_status: {trade_status}")
+                    elif status == 0:
+                        logger.info(f"Payment {payment_id} still pending")
                         return PaymentStatus.PENDING
+                    else:
+                        # Unknown status
+                        logger.warning(f"Payment {payment_id} has unknown status: {status}")
+                        return PaymentStatus.FAILED
 
         except Exception as e:
             logger.error(f"Error checking payment status {payment_id}: {str(e)}")
@@ -286,13 +290,13 @@ class WeChatAlipayProvider(PaymentProvider):
                         return {}
 
                     # Parse and return payment details
-                    # Note: yzzhifu.me uses 'trade_status' field ('TRADE_SUCCESS'=paid)
+                    # Note: API query uses 'status' field (1=paid, 0=unpaid)
                     return {
                         'payment_id': result.get('out_trade_no', payment_id),
-                        'status': 'COMPLETED' if result.get('trade_status') == 'TRADE_SUCCESS' else 'PENDING',
+                        'status': 'COMPLETED' if result.get('status') == 1 else 'PENDING',
                         'amount': result.get('money'),
                         'transaction_id': result.get('trade_no'),
-                        'vendor_status': result.get('trade_status')
+                        'vendor_status': result.get('status')
                     }
 
         except Exception as e:
@@ -303,7 +307,7 @@ class WeChatAlipayProvider(PaymentProvider):
         """
         Generate MD5 signature for API requests.
 
-        Algorithm per new vendor (taitaitai.xyz) documentation:
+        Algorithm per payment vendor documentation:
         1. Filter out empty values, 'sign', and 'sign_type'
         2. Sort parameters alphabetically by key (ASCII)
         3. Format as key1=value1&key2=value2&...
@@ -340,12 +344,12 @@ class WeChatAlipayProvider(PaymentProvider):
 
     async def handle_callback(self, callback_data: Dict) -> Dict:
         """
-        Handle payment callback/webhook from new vendor.
+        Handle payment callback/webhook from payment vendor.
 
         Verifies signature and processes payment notification.
 
         Args:
-            callback_data: Callback data from new vendor containing:
+            callback_data: Callback data from payment vendor containing:
                 - pid: Merchant ID
                 - trade_no: Platform transaction ID
                 - out_trade_no: Our order ID

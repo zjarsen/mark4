@@ -45,8 +45,8 @@ async def payment_callback():
     Handle payment callback from payment provider.
 
     Supports both GET and POST methods:
-    - yzzhifu.me sends GET requests with query parameters
-    - Other vendors may send POST requests with form data
+    - taitaitai.xyz sends POST requests with form data
+    - Some vendors may send GET requests with query parameters
 
     Common parameters:
     - pid: Merchant ID
@@ -70,7 +70,7 @@ async def payment_callback():
 
         if success:
             logger.info(f"Successfully processed payment callback: {payment_id}")
-            # CRITICAL: New vendor requires exactly "success" (lowercase)
+            # CRITICAL: Vendor requires exactly "success" (lowercase)
             return "success", 200
         else:
             logger.error(f"Failed to process payment callback: {payment_id}")
