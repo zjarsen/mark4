@@ -40,14 +40,16 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             TOPUP_PACKAGES_MESSAGE,
             TOPUP_10_BUTTON,
             TOPUP_30_BUTTON,
-            TOPUP_50_BUTTON
+            TOPUP_50_BUTTON,
+            TOPUP_100_BUTTON
         )
 
         # Create inline keyboard with package options
         keyboard = [
             [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
             [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")]
+            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 

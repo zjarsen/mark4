@@ -89,6 +89,7 @@ TOPUP_PACKAGES_MESSAGE = """💳 充值套餐
 1️⃣ ¥10 = 30积分
 2️⃣ ¥30 = 120积分
 3️⃣ ¥50 = 250积分
+4️⃣ ¥100 = 600积分
 
 充值后积分永久有效，无过期时间限制。"""
 
@@ -115,6 +116,7 @@ REFRESH_QUEUE_BUTTON = "刷新队列"
 TOPUP_10_BUTTON = "¥10 = 30积分"
 TOPUP_30_BUTTON = "¥30 = 120积分"
 TOPUP_50_BUTTON = "¥50 = 250积分"
+TOPUP_100_BUTTON = "¥100 = 600积分"
 
 # Workflow file names
 WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final.json"
@@ -127,7 +129,8 @@ NODE_SAVE_IMAGE = "27"
 
 # Top-up packages (amount in CNY: credits)
 TOPUP_PACKAGES = {
-    10: 30,    # ¥10 = 30积分
-    30: 120,   # ¥30 = 120积分
-    50: 250    # ¥50 = 250积分
+    10: 30,     # ¥10 = 30积分
+    30: 120,    # ¥30 = 120积分
+    50: 250,    # ¥50 = 250积分
+    100: 600    # ¥100 = 600积分
 }

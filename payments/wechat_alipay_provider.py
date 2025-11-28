@@ -77,26 +77,34 @@ class WeChatAlipayProvider(PaymentProvider):
             # Generate unique payment ID (max 20 chars as per API spec)
             payment_id = f"{int(datetime.now().timestamp())}{user_id}"[:20]
 
-            # Select bank code based on payment method
-            bankcode = self.bankcode_alipay if payment_method == 'alipay' else self.bankcode_wechat
+            # Select payment type based on payment method
+            # New vendor uses: 'alipay' or 'wxpay'
+            payment_type = self.bankcode_alipay if payment_method == 'alipay' else self.bankcode_wechat
 
-            # Prepare request parameters
-            params = {
-                'pay_memberid': self.merchant_id,
-                'pay_orderid': payment_id,
-                'pay_amount': f"{amount:.2f}",
-                'pay_bankcode': bankcode,
-                'pay_notifyurl': self.notify_url,
-                'pay_callbackurl': self.callback_url
+            # Prepare SIGNATURE parameters (all signed for new vendor)
+            signature_params = {
+                'pid': self.merchant_id,
+                'type': payment_type,
+                'out_trade_no': payment_id,
+                'notify_url': self.notify_url,
+                'return_url': self.callback_url,
+                'name': '积分充值',
+                'money': f"{amount:.2f}"
             }
 
             # Generate signature
-            signature = self._generate_signature(params)
-            params['pay_md5sign'] = signature
+            signature = self._generate_signature(signature_params)
+
+            # Prepare FULL request parameters
+            params = {
+                **signature_params,
+                'sign': signature,
+                'sign_type': 'MD5'
+            }
 
             # Make API request
             async with aiohttp.ClientSession() as session:
-                url = f"{self.gateway_url}/Pay_Index.html"
+                url = f"{self.gateway_url}/mapi.php"
 
                 async with session.post(
                     url,
@@ -110,10 +118,27 @@ class WeChatAlipayProvider(PaymentProvider):
                             f"Response: {error_text}"
                         )
 
-                    result = await resp.json()
+                    # Get response text and try to parse as JSON
+                    # Note: API returns Content-Type: text/html but body is actually JSON
+                    response_text = await resp.text()
 
-                    # Check response status
-                    if result.get('status') != 1:
+                    try:
+                        import json
+                        result = json.loads(response_text)
+                    except json.JSONDecodeError as e:
+                        # Only log error if it's not actually JSON
+                        content_type = resp.headers.get('Content-Type', '')
+                        logger.error(
+                            f"API returned invalid JSON. Content-Type: {content_type}. "
+                            f"Parse error: {str(e)}. Response preview: {response_text[:300]}"
+                        )
+                        raise Exception(
+                            f"API returned invalid response. Preview: {response_text[:150]}"
+                        )
+
+                    # Check response status (new vendor returns code=1 for success)
+                    code = result.get('code')
+                    if code != 1:
                         raise Exception(
                             f"Payment creation failed: {result.get('msg', 'Unknown error')}"
                         )
@@ -123,10 +148,13 @@ class WeChatAlipayProvider(PaymentProvider):
                         f"¥{amount} via {payment_method}"
                     )
 
+                    # New vendor returns 'payurl', 'qrcode', or 'urlscheme'
+                    payment_url = result.get('payurl') or result.get('qrcode') or result.get('urlscheme')
+
                     return {
                         'payment_id': payment_id,
-                        'payment_url': result.get('h5_url'),
-                        'platform_order_id': result.get('mch_order_id'),
+                        'payment_url': payment_url,
+                        'platform_order_id': result.get('trade_no'),
                         'status': PaymentStatus.PENDING
                     }
 
@@ -136,7 +164,7 @@ class WeChatAlipayProvider(PaymentProvider):
 
     async def check_payment_status(self, payment_id: str) -> PaymentStatus:
         """
-        Check payment status with the acquirer.
+        Check payment status with the new vendor.
 
         Args:
             payment_id: Payment ID to check
@@ -151,43 +179,39 @@ class WeChatAlipayProvider(PaymentProvider):
 
             # Prepare query parameters
             params = {
-                'pay_memberid': self.merchant_id,
-                'pay_orderid': payment_id
+                'act': 'order',
+                'pid': self.merchant_id,
+                'key': self.secret_key,
+                'out_trade_no': payment_id
             }
 
-            # Generate signature
-            signature = self._generate_signature(params)
-            params['pay_md5sign'] = signature
-
-            # Make API request
+            # Make API request (GET request to /api.php)
             async with aiohttp.ClientSession() as session:
-                url = f"{self.gateway_url}/Pay_Trade_query.html"
+                url = f"{self.gateway_url}/api.php"
 
-                async with session.post(
-                    url,
-                    data=params,
-                    headers={'Content-Type': 'application/x-www-form-urlencoded'}
-                ) as resp:
+                async with session.get(url, params=params) as resp:
                     if resp.status != 200:
                         logger.error(f"Status check failed: HTTP {resp.status}")
                         return PaymentStatus.FAILED
 
                     result = await resp.json()
 
-                    # Map API status to our PaymentStatus
-                    # returncode: '00' = success, others = pending/failed
-                    returncode = result.get('returncode', '')
+                    # Check response code
+                    code = result.get('code')
+                    if code != 1:
+                        logger.warning(f"Query failed for {payment_id}: {result.get('msg')}")
+                        return PaymentStatus.PENDING
 
-                    if returncode == '00':
+                    # Map trade_status to our PaymentStatus
+                    trade_status = result.get('trade_status', '')
+
+                    if trade_status == 'TRADE_SUCCESS':
                         logger.info(f"Payment {payment_id} confirmed as completed")
                         return PaymentStatus.COMPLETED
-                    elif returncode == '':
-                        # No status yet - still pending
-                        return PaymentStatus.PENDING
                     else:
-                        # Any other code means failed or cancelled
-                        logger.warning(f"Payment {payment_id} has status code: {returncode}")
-                        return PaymentStatus.FAILED
+                        # Other status means pending or failed
+                        logger.warning(f"Payment {payment_id} has status: {trade_status}")
+                        return PaymentStatus.PENDING
 
         except Exception as e:
             logger.error(f"Error checking payment status {payment_id}: {str(e)}")
@@ -230,7 +254,6 @@ class WeChatAlipayProvider(PaymentProvider):
                 - status: Payment status
                 - amount: Payment amount
                 - transaction_id: Platform transaction ID (if completed)
-                - datetime: Payment completion time (if completed)
         """
         try:
             # Validate configuration
@@ -239,37 +262,34 @@ class WeChatAlipayProvider(PaymentProvider):
 
             # Prepare query parameters
             params = {
-                'pay_memberid': self.merchant_id,
-                'pay_orderid': payment_id
+                'act': 'order',
+                'pid': self.merchant_id,
+                'key': self.secret_key,
+                'out_trade_no': payment_id
             }
-
-            # Generate signature
-            signature = self._generate_signature(params)
-            params['pay_md5sign'] = signature
 
             # Make API request
             async with aiohttp.ClientSession() as session:
-                url = f"{self.gateway_url}/Pay_Trade_query.html"
+                url = f"{self.gateway_url}/api.php"
 
-                async with session.post(
-                    url,
-                    data=params,
-                    headers={'Content-Type': 'application/x-www-form-urlencoded'}
-                ) as resp:
+                async with session.get(url, params=params) as resp:
                     if resp.status != 200:
                         logger.error(f"Query failed: HTTP {resp.status}")
                         return {}
 
                     result = await resp.json()
 
+                    # Check response code
+                    if result.get('code') != 1:
+                        return {}
+
                     # Parse and return payment details
                     return {
-                        'payment_id': result.get('orderid', payment_id),
-                        'status': 'COMPLETED' if result.get('returncode') == '00' else 'PENDING',
-                        'amount': result.get('amount'),
-                        'transaction_id': result.get('transaction_id'),
-                        'datetime': result.get('datetime'),
-                        'returncode': result.get('returncode')
+                        'payment_id': result.get('out_trade_no', payment_id),
+                        'status': 'COMPLETED' if result.get('trade_status') == 'TRADE_SUCCESS' else 'PENDING',
+                        'amount': result.get('money'),
+                        'transaction_id': result.get('trade_no'),
+                        'trade_status': result.get('trade_status')
                     }
 
         except Exception as e:
@@ -280,23 +300,23 @@ class WeChatAlipayProvider(PaymentProvider):
         """
         Generate MD5 signature for API requests.
 
-        Algorithm per API documentation:
-        1. Filter out empty values and 'pay_md5sign' if present
+        Algorithm per new vendor (taitaitai.xyz) documentation:
+        1. Filter out empty values, 'sign', and 'sign_type'
         2. Sort parameters alphabetically by key (ASCII)
         3. Format as key1=value1&key2=value2&...
-        4. Append &key=SECRET_KEY
-        5. Generate MD5 hash and convert to uppercase
+        4. Append SECRET_KEY directly (no &key=)
+        5. Generate MD5 hash and convert to lowercase
 
         Args:
             params: Request parameters (dict)
 
         Returns:
-            MD5 signature string (uppercase)
+            MD5 signature string (lowercase)
         """
-        # Filter out empty values and the sign field itself
+        # Filter out empty values and the sign fields
         filtered_params = {
             k: v for k, v in params.items()
-            if v is not None and v != '' and k != 'pay_md5sign'
+            if v is not None and v != '' and k not in ['sign', 'sign_type']
         }
 
         # Sort parameters alphabetically by key
@@ -305,11 +325,11 @@ class WeChatAlipayProvider(PaymentProvider):
         # Create signature string
         sign_str = '&'.join([f"{k}={v}" for k, v in sorted_params])
 
-        # Append secret key
-        sign_str += f"&key={self.secret_key}"
+        # Append secret key directly (no &key= prefix)
+        sign_str += self.secret_key
 
-        # Generate MD5 hash and convert to uppercase
-        signature = hashlib.md5(sign_str.encode('utf-8')).hexdigest().upper()
+        # Generate MD5 hash and convert to lowercase
+        signature = hashlib.md5(sign_str.encode('utf-8')).hexdigest().lower()
 
         logger.debug(f"Generated signature for params: {list(filtered_params.keys())}")
 
@@ -317,19 +337,22 @@ class WeChatAlipayProvider(PaymentProvider):
 
     async def handle_callback(self, callback_data: Dict) -> Dict:
         """
-        Handle payment callback/webhook from acquirer.
+        Handle payment callback/webhook from new vendor.
 
         Verifies signature and processes payment notification.
 
         Args:
-            callback_data: Callback data from acquirer containing:
-                - memberid: Merchant ID
-                - orderid: Order ID
-                - amount: Payment amount
-                - transaction_id: Platform transaction ID
-                - datetime: Payment completion time
-                - returncode: Status code ('00' = success)
+            callback_data: Callback data from new vendor containing:
+                - pid: Merchant ID
+                - trade_no: Platform transaction ID
+                - out_trade_no: Our order ID
+                - type: Payment method (alipay/wxpay)
+                - name: Product name
+                - money: Payment amount
+                - trade_status: Status ('TRADE_SUCCESS' = success)
+                - param: Custom parameter (echoed back)
                 - sign: MD5 signature
+                - sign_type: Signature type (MD5)
 
         Returns:
             Dictionary with:
@@ -342,15 +365,15 @@ class WeChatAlipayProvider(PaymentProvider):
             # 1. Verify signature
             received_signature = callback_data.get('sign', '')
 
-            # Create params dict without the signature field
+            # Create params dict without sign and sign_type
             params_to_verify = {
                 k: v for k, v in callback_data.items()
-                if k != 'sign' and k != 'attach'  # attach is not signed
+                if k not in ['sign', 'sign_type']
             }
 
             calculated_signature = self._generate_signature(params_to_verify)
 
-            if received_signature.upper() != calculated_signature.upper():
+            if received_signature.lower() != calculated_signature.lower():
                 logger.error(
                     f"Invalid callback signature! "
                     f"Received: {received_signature[:10]}..., "
@@ -362,31 +385,31 @@ class WeChatAlipayProvider(PaymentProvider):
                 }
 
             # 2. Extract payment information
-            payment_id = callback_data.get('orderid')
-            amount = callback_data.get('amount')
-            transaction_id = callback_data.get('transaction_id')
-            returncode = callback_data.get('returncode')
-            payment_time = callback_data.get('datetime')
+            payment_id = callback_data.get('out_trade_no')
+            amount = callback_data.get('money')
+            transaction_id = callback_data.get('trade_no')
+            trade_status = callback_data.get('trade_status')
+            payment_type = callback_data.get('type')
 
             if not payment_id:
-                logger.error("Missing orderid in callback data")
+                logger.error("Missing out_trade_no in callback data")
                 return {
                     'status': 'error',
                     'message': 'Missing order ID'
                 }
 
-            # 3. Determine payment status based on returncode
-            if returncode == '00':
+            # 3. Determine payment status based on trade_status
+            if trade_status == 'TRADE_SUCCESS':
                 payment_status = 'PAID'
                 logger.info(
                     f"Payment callback received: {payment_id} = ¥{amount}, "
-                    f"transaction_id: {transaction_id}, time: {payment_time}"
+                    f"transaction_id: {transaction_id}, type: {payment_type}"
                 )
             else:
                 payment_status = 'FAILED'
                 logger.warning(
-                    f"Payment callback with non-success code: {payment_id}, "
-                    f"returncode: {returncode}"
+                    f"Payment callback with non-success status: {payment_id}, "
+                    f"trade_status: {trade_status}"
                 )
 
             # 4. Return result
@@ -396,7 +419,7 @@ class WeChatAlipayProvider(PaymentProvider):
                 'payment_status': payment_status,
                 'amount': amount,
                 'transaction_id': transaction_id,
-                'payment_time': payment_time
+                'payment_time': None  # New vendor doesn't provide timestamp in callback
             }
 
         except Exception as e:

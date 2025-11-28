@@ -64,11 +64,11 @@ async def payment_callback():
 
         if success:
             logger.info(f"Successfully processed payment callback: {payment_id}")
-            # CRITICAL: Must respond with exactly "OK" (uppercase)
-            return "OK", 200
+            # CRITICAL: New vendor requires exactly "success" (lowercase)
+            return "success", 200
         else:
             logger.error(f"Failed to process payment callback: {payment_id}")
-            return "FAIL", 400
+            return "fail", 400
 
     except Exception as e:
         logger.error(f"Error handling payment callback: {str(e)}", exc_info=True)
