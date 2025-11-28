@@ -10,6 +10,7 @@ Run with: python payment_webhook.py
 from flask import Flask, request, jsonify
 import asyncio
 import logging
+from telegram import Bot
 from config import Config
 from services.database_service import DatabaseService
 from services.credit_service import CreditService
@@ -37,6 +38,38 @@ payment_service = PaymentService(
     credit_service,
     payment_provider
 )
+
+# Initialize Telegram Bot for sending notifications
+bot = Bot(token=config.BOT_TOKEN)
+
+
+async def send_payment_notification(user_id: int, payment_id: str, credits: float, new_balance: float):
+    """
+    Send payment success notification to user via Telegram.
+
+    Args:
+        user_id: Telegram user ID
+        payment_id: Payment ID
+        credits: Credits added
+        new_balance: New balance after payment
+    """
+    try:
+        message = f"""✅ 支付成功！
+
+💰 充值积分：{credits}
+📊 当前余额：{new_balance} 积分
+
+订单号：{payment_id}
+
+感谢您的支持！"""
+
+        await bot.send_message(
+            chat_id=user_id,
+            text=message
+        )
+        logger.info(f"Sent payment notification to user {user_id}")
+    except Exception as e:
+        logger.error(f"Failed to send payment notification to user {user_id}: {str(e)}")
 
 
 @app.route('/payment/callback', methods=['GET', 'POST'])
@@ -70,6 +103,24 @@ async def payment_callback():
 
         if success:
             logger.info(f"Successfully processed payment callback: {payment_id}")
+
+            # Send notification to user
+            try:
+                payment = database_service.get_payment(payment_id)
+                if payment:
+                    user_id = payment['user_id']
+                    credits = payment['credits_amount']
+
+                    # Get user's new balance
+                    user_stats = credit_service.get_user_stats(user_id)
+                    new_balance = user_stats['balance']
+
+                    # Send notification
+                    await send_payment_notification(user_id, payment_id, credits, new_balance)
+            except Exception as e:
+                # Don't fail the callback if notification fails
+                logger.error(f"Failed to send notification for payment {payment_id}: {str(e)}")
+
             # CRITICAL: Vendor requires exactly "success" (lowercase)
             return "success", 200
         else:
