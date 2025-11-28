@@ -91,7 +91,7 @@ class WeChatAlipayProvider(PaymentProvider):
                 'name': '积分充值',
                 'money': f"{amount:.2f}",
                 'clientip': '8.8.8.8',  # Required by vendor (TODO: use real user IP)
-                'device': 'mobile'  # Required for API payments - using 'mobile' for Telegram users
+                'device': 'jump'  # Required for API payments - using 'jump' for WeChat Pay
             }
 
             # Generate signature
