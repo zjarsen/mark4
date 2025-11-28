@@ -112,7 +112,7 @@ async def payment_callback():
                     credits = payment['credits_amount']
 
                     # Get user's new balance
-                    user_stats = credit_service.get_user_stats(user_id)
+                    user_stats = await credit_service.get_user_stats(user_id)
                     new_balance = user_stats['balance']
 
                     # Send notification
