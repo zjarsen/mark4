@@ -112,13 +112,41 @@ class WorkflowService:
                             return
 
                     # Insufficient credits (no trial available or other reason)
-                    from core.constants import INSUFFICIENT_CREDITS_MESSAGE
+                    from core.constants import (
+                        INSUFFICIENT_CREDITS_MESSAGE,
+                        TOPUP_PACKAGES_MESSAGE,
+                        TOPUP_1_BUTTON,
+                        TOPUP_10_BUTTON,
+                        TOPUP_30_BUTTON,
+                        TOPUP_50_BUTTON,
+                        TOPUP_100_BUTTON
+                    )
+                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+                    # Send insufficient credits message
                     await update.message.reply_text(
                         INSUFFICIENT_CREDITS_MESSAGE.format(
                             balance=balance,
                             required=cost
                         )
                     )
+
+                    # Show topup packages inline keyboard
+                    keyboard = [
+                        [InlineKeyboardButton(TOPUP_1_BUTTON, callback_data="topup_1")],
+                        [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
+                        [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
+                        [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+                        [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+
+                    await context.bot.send_message(
+                        chat_id=user_id,
+                        text=TOPUP_PACKAGES_MESSAGE,
+                        reply_markup=reply_markup
+                    )
+
                     logger.warning(
                         f"User {user_id} has insufficient credits: "
                         f"balance={balance}, required={cost}"
@@ -425,13 +453,41 @@ class WorkflowService:
                 )
 
                 if not has_sufficient:
-                    from core.constants import INSUFFICIENT_CREDITS_MESSAGE
+                    from core.constants import (
+                        INSUFFICIENT_CREDITS_MESSAGE,
+                        TOPUP_PACKAGES_MESSAGE,
+                        TOPUP_1_BUTTON,
+                        TOPUP_10_BUTTON,
+                        TOPUP_30_BUTTON,
+                        TOPUP_50_BUTTON,
+                        TOPUP_100_BUTTON
+                    )
+                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+                    # Send insufficient credits message
                     await update.message.reply_text(
                         INSUFFICIENT_CREDITS_MESSAGE.format(
                             balance=balance,
                             required=cost
                         )
                     )
+
+                    # Show topup packages inline keyboard
+                    keyboard = [
+                        [InlineKeyboardButton(TOPUP_1_BUTTON, callback_data="topup_1")],
+                        [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
+                        [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
+                        [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+                        [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+
+                    await context.bot.send_message(
+                        chat_id=user_id,
+                        text=TOPUP_PACKAGES_MESSAGE,
+                        reply_markup=reply_markup
+                    )
+
                     logger.warning(
                         f"User {user_id} has insufficient credits for video: "
                         f"balance={balance}, required={cost}"
