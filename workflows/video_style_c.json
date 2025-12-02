@@ -1,0 +1,24 @@
+{
+  "7": {
+    "inputs": {
+      "image": "placeholder.jpeg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "加载图像"
+    }
+  },
+  "27": {
+    "inputs": {
+      "filename_prefix": "video_style_c",
+      "images": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存视频 - Style C (Placeholder)"
+    }
+  }
+}

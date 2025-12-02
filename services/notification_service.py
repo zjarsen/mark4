@@ -158,6 +158,29 @@ class NotificationService:
             logger.error(f"Error sending processed image: {str(e)}")
             raise
 
+    async def send_processed_video(self, bot, chat_id: int, video_path: str):
+        """
+        Send processed video to user.
+
+        Args:
+            bot: Telegram Bot instance
+            chat_id: Chat ID to send to
+            video_path: Path to video file
+
+        Returns:
+            Sent Message object
+        """
+        try:
+            with open(video_path, 'rb') as video:
+                message = await bot.send_video(chat_id=chat_id, video=video)
+
+            logger.info(f"Sent processed video to user {chat_id}")
+            return message
+
+        except Exception as e:
+            logger.error(f"Error sending processed video: {str(e)}")
+            raise
+
     async def send_error_message(self, bot, chat_id: int, error_text: str = None):
         """
         Send error message to user.

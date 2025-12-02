@@ -103,7 +103,7 @@ async def handle_video_processing(
     user_id: int
 ):
     """
-    Handle 'Video Processing' menu selection (not implemented).
+    Handle 'Video Processing' menu selection - show style selection.
 
     Args:
         update: Telegram Update
@@ -111,9 +111,36 @@ async def handle_video_processing(
         user_id: User ID
     """
     try:
-        await update.message.reply_text(FEATURE_NOT_IMPLEMENTED)
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        from core.constants import (
+            VIDEO_STYLE_SELECTION_MESSAGE,
+            VIDEO_STYLE_A_BUTTON,
+            VIDEO_STYLE_B_BUTTON,
+            VIDEO_STYLE_C_BUTTON,
+            BACK_TO_MENU_BUTTON,
+            ALREADY_PROCESSING_MESSAGE
+        )
 
-        logger.info(f"User {user_id} requested video processing (not implemented)")
+        # Check if user is already processing
+        if state_manager.is_state(user_id, 'processing'):
+            await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
+            return
+
+        # Show style selection keyboard
+        keyboard = [
+            [InlineKeyboardButton(VIDEO_STYLE_A_BUTTON, callback_data="video_style_a")],
+            [InlineKeyboardButton(VIDEO_STYLE_B_BUTTON, callback_data="video_style_b")],
+            [InlineKeyboardButton(VIDEO_STYLE_C_BUTTON, callback_data="video_style_c")],
+            [InlineKeyboardButton(BACK_TO_MENU_BUTTON, callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            VIDEO_STYLE_SELECTION_MESSAGE,
+            reply_markup=reply_markup
+        )
+
+        logger.info(f"User {user_id} requested video processing - showing style selection")
 
     except Exception as e:
         logger.error(f"Error in handle_video_processing: {str(e)}")

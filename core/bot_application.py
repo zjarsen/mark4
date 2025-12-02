@@ -225,6 +225,14 @@ class BotApplication:
             )
         )
 
+        # Video style selection callback handler
+        self.app.add_handler(
+            CallbackQueryHandler(
+                callback_handlers.video_style_callback,
+                pattern="^video_style_|^back_to_menu"
+            )
+        )
+
         # Credit system callback handlers
         from handlers.credit_handlers import handle_topup_callback
         self.app.add_handler(

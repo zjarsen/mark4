@@ -31,8 +31,12 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_id = update.effective_user.id
 
+        # Check user state
+        is_waiting_image = state_manager.is_state(user_id, 'waiting_for_image')
+        is_waiting_video = state_manager.is_state(user_id, 'waiting_for_video')
+
         # Validate user state
-        if not state_manager.is_state(user_id, 'waiting_for_image'):
+        if not (is_waiting_image or is_waiting_video):
             await update.message.reply_text(INVALID_STATE_MESSAGE)
             return
 
@@ -54,15 +58,34 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.bot
         )
 
-        # Start workflow
-        await workflow_service.start_image_workflow(
-            update,
-            context,
-            local_path,
-            user_id
-        )
+        # Start appropriate workflow
+        if is_waiting_image:
+            await workflow_service.start_image_workflow(
+                update,
+                context,
+                local_path,
+                user_id
+            )
+            logger.info(f"Photo processed for user {user_id} (image workflow)")
 
-        logger.info(f"Photo processed for user {user_id}")
+        elif is_waiting_video:
+            # Get video style from state
+            state = state_manager.get_state(user_id)
+            video_style = state.get('video_style')
+
+            if not video_style:
+                await update.message.reply_text("风格选择错误，请重新开始")
+                state_manager.reset_state(user_id)
+                return
+
+            await workflow_service.start_video_workflow(
+                update,
+                context,
+                local_path,
+                user_id,
+                video_style
+            )
+            logger.info(f"Photo processed for user {user_id} (video workflow, style: {video_style})")
 
     except Exception as e:
         logger.error(f"Error handling photo from user {user_id}: {str(e)}")
@@ -81,8 +104,12 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_id = update.effective_user.id
 
+        # Check user state
+        is_waiting_image = state_manager.is_state(user_id, 'waiting_for_image')
+        is_waiting_video = state_manager.is_state(user_id, 'waiting_for_video')
+
         # Validate user state
-        if not state_manager.is_state(user_id, 'waiting_for_image'):
+        if not (is_waiting_image or is_waiting_video):
             return
 
         # Check if already processing
@@ -107,15 +134,34 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.bot
         )
 
-        # Start workflow
-        await workflow_service.start_image_workflow(
-            update,
-            context,
-            local_path,
-            user_id
-        )
+        # Start appropriate workflow
+        if is_waiting_image:
+            await workflow_service.start_image_workflow(
+                update,
+                context,
+                local_path,
+                user_id
+            )
+            logger.info(f"Document processed for user {user_id} (image workflow)")
 
-        logger.info(f"Document processed for user {user_id}")
+        elif is_waiting_video:
+            # Get video style from state
+            state = state_manager.get_state(user_id)
+            video_style = state.get('video_style')
+
+            if not video_style:
+                await update.message.reply_text("风格选择错误，请重新开始")
+                state_manager.reset_state(user_id)
+                return
+
+            await workflow_service.start_video_workflow(
+                update,
+                context,
+                local_path,
+                user_id,
+                video_style
+            )
+            logger.info(f"Document processed for user {user_id} (video workflow, style: {video_style})")
 
     except Exception as e:
         logger.error(f"Error handling document from user {user_id}: {str(e)}")

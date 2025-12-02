@@ -104,3 +104,64 @@ async def cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         logger.error(f"Error handling cancel callback: {str(e)}")
+
+
+async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle video style selection button clicks.
+
+    Args:
+        update: Telegram Update
+        context: Telegram Context
+    """
+    try:
+        query = update.callback_query
+        await query.answer()  # Acknowledge button click
+
+        user_id = update.effective_user.id
+
+        # Handle back to menu
+        if query.data == "back_to_menu":
+            await query.edit_message_text("已取消")
+            return
+
+        # Extract style from callback data (video_style_a, video_style_b, video_style_c)
+        if not query.data.startswith("video_"):
+            await query.edit_message_text("无效的选择")
+            return
+
+        style = query.data  # Keep full format: "video_style_a"
+        style_name = style.replace("video_", "").replace("_", " ").title()  # "Style A"
+
+        # Check if already processing
+        if state_manager.is_state(user_id, 'processing'):
+            from core.constants import ALREADY_PROCESSING_MESSAGE
+            await query.edit_message_text(ALREADY_PROCESSING_MESSAGE)
+            return
+
+        # Validate style
+        valid_styles = ['video_style_a', 'video_style_b', 'video_style_c']
+        if style not in valid_styles:
+            await query.edit_message_text("无效的风格选择")
+            return
+
+        # Convert to internal format: "style_a", "style_b", "style_c"
+        internal_style = style.replace("video_", "")
+
+        # Update state to waiting for video with selected style
+        state_manager.update_state(
+            user_id,
+            state='waiting_for_video',
+            video_style=internal_style,
+            retry_count=0
+        )
+
+        from core.constants import VIDEO_SEND_IMAGE_PROMPT
+        await query.edit_message_text(
+            f"已选择 {style_name}\n\n{VIDEO_SEND_IMAGE_PROMPT}"
+        )
+
+        logger.info(f"User {user_id} selected video style: {internal_style}")
+
+    except Exception as e:
+        logger.error(f"Error handling video style callback: {str(e)}")
