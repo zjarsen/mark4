@@ -10,6 +10,7 @@ class UserState(Enum):
     PROCESSING = "processing"
     WAITING_FOR_PAYMENT = "waiting_for_payment"
     WAITING_FOR_VIDEO = "waiting_for_video"
+    WAITING_FOR_CREDIT_CONFIRMATION = "waiting_for_credit_confirmation"
 
 
 class WorkflowType(Enum):
@@ -113,6 +114,37 @@ NO_TRANSACTIONS_MESSAGE = "暂无消费记录"
 CREDITS_DEDUCTED_MESSAGE = "已扣除 {amount} 积分，当前余额：{balance} 积分"
 CREDITS_ADDED_MESSAGE = "充值成功！获得 {amount} 积分，当前余额：{balance} 积分"
 
+# Credit confirmation messages
+CREDIT_CONFIRMATION_MESSAGE = """📋 确认使用积分
+
+{workflow_name}
+
+当前余额：{balance} 积分
+本次消费：{cost} 积分
+确认后余额：{remaining} 积分
+
+请确认是否继续？"""
+
+CREDIT_CONFIRMATION_FREE_TRIAL_MESSAGE = """🎁 免费体验
+
+{workflow_name}
+
+本次使用：免费
+当前余额：{balance} 积分
+
+{cooldown_info}
+
+请确认是否继续？"""
+
+CREDIT_CONFIRMATION_CANCELLED_MESSAGE = "已取消操作"
+
+CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE = """❌ 积分不足
+
+当前余额：{balance} 积分
+所需积分：{cost} 积分
+
+请选择充值套餐："""
+
 PAYMENT_PENDING_MESSAGE = """等待支付中...
 ⏰ 请在3分钟内完成支付
 
@@ -132,6 +164,8 @@ PAYMENT_TIMEOUT_SECONDS = 180  # 3 minutes
 
 # Button labels
 REFRESH_QUEUE_BUTTON = "刷新队列"
+CONFIRM_CREDITS_BUTTON = "✅ 确认"
+CANCEL_CREDITS_BUTTON = "❌ 取消"
 TOPUP_1_BUTTON = "¥1 = 2积分"
 TOPUP_10_BUTTON = "¥10 = 30积分"
 TOPUP_30_BUTTON = "¥30 = 120积分"
@@ -162,6 +196,12 @@ VIDEO_STYLE_A_BUTTON = "风格 A"
 VIDEO_STYLE_B_BUTTON = "风格 B"
 VIDEO_STYLE_C_BUTTON = "风格 C"
 BACK_TO_MENU_BUTTON = "🏠 返回主菜单"
+
+# Workflow display names for confirmation
+WORKFLOW_NAME_IMAGE = "图片脱衣"
+WORKFLOW_NAME_VIDEO_A = "图片转视频 - 风格 A"
+WORKFLOW_NAME_VIDEO_B = "图片转视频 - 风格 B"
+WORKFLOW_NAME_VIDEO_C = "图片转视频 - 风格 C"
 
 # Top-up packages (amount in CNY: credits)
 TOPUP_PACKAGES = {

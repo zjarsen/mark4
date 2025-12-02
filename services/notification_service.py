@@ -181,6 +181,92 @@ class NotificationService:
             logger.error(f"Error sending processed video: {str(e)}")
             raise
 
+    async def send_credit_confirmation(
+        self,
+        bot,
+        chat_id: int,
+        workflow_name: str,
+        workflow_type: str,
+        balance: float,
+        cost: float,
+        is_free_trial: bool = False,
+        cooldown_info: str = None
+    ):
+        """
+        Send credit confirmation message with confirm/cancel buttons.
+
+        Args:
+            bot: Telegram Bot instance
+            chat_id: Chat ID to send to
+            workflow_name: Display name of the workflow (e.g., "图片脱衣")
+            workflow_type: Type of workflow ('image' or 'video_a'/'video_b'/'video_c')
+            balance: Current credit balance
+            cost: Cost of this operation
+            is_free_trial: Whether this is a free trial use
+            cooldown_info: Optional cooldown information text
+
+        Returns:
+            Sent Message object
+        """
+        try:
+            from core.constants import (
+                CREDIT_CONFIRMATION_MESSAGE,
+                CREDIT_CONFIRMATION_FREE_TRIAL_MESSAGE,
+                CONFIRM_CREDITS_BUTTON,
+                CANCEL_CREDITS_BUTTON
+            )
+
+            # Build message text
+            if is_free_trial:
+                if not cooldown_info:
+                    cooldown_info = ""
+                text = CREDIT_CONFIRMATION_FREE_TRIAL_MESSAGE.format(
+                    workflow_name=workflow_name,
+                    balance=int(balance),
+                    cooldown_info=cooldown_info
+                )
+            else:
+                remaining = balance - cost
+                text = CREDIT_CONFIRMATION_MESSAGE.format(
+                    workflow_name=workflow_name,
+                    balance=int(balance),
+                    cost=int(cost),
+                    remaining=int(remaining)
+                )
+
+            # Build inline keyboard
+            keyboard = [
+                [
+                    InlineKeyboardButton(
+                        CONFIRM_CREDITS_BUTTON,
+                        callback_data=f"confirm_credits_{workflow_type}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        CANCEL_CREDITS_BUTTON,
+                        callback_data="cancel_credits"
+                    )
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            message = await bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                reply_markup=reply_markup
+            )
+
+            logger.info(
+                f"Sent credit confirmation to user {chat_id}: "
+                f"{workflow_name}, free_trial={is_free_trial}"
+            )
+            return message
+
+        except Exception as e:
+            logger.error(f"Error sending credit confirmation: {str(e)}")
+            raise
+
     async def send_error_message(self, bot, chat_id: int, error_text: str = None):
         """
         Send error message to user.

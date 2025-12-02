@@ -69,7 +69,8 @@ class WorkflowService:
         user_id: int
     ):
         """
-        Start image processing workflow.
+        Upload image and show credit confirmation (NEW FLOW).
+        Actual processing starts after user confirms via proceed_with_image_workflow().
 
         Args:
             update: Telegram Update object
@@ -127,56 +128,55 @@ class WorkflowService:
 
                 # Check if using free trial
                 has_free_trial = await self.credit_service.has_free_trial(user_id)
+
+                # Calculate cooldown info for free trial users
+                cooldown_info = None
                 if has_free_trial:
-                    from core.constants import FREE_TRIAL_MESSAGE
-                    await update.message.reply_text(FREE_TRIAL_MESSAGE)
-                    logger.info(f"User {user_id} using free trial for image processing")
+                    next_available = await self.credit_service.get_next_free_trial_time(user_id)
+                    if next_available:
+                        # Calculate time difference
+                        from datetime import datetime
+                        import pytz
+                        now = datetime.now(pytz.timezone('Asia/Shanghai'))
+                        if next_available.tzinfo is None:
+                            next_available = pytz.utc.localize(next_available).astimezone(pytz.timezone('Asia/Shanghai'))
+
+                        delta = next_available - now
+                        days = delta.days
+                        hours = delta.seconds // 3600
+                        cooldown_info = f"使用后 {days}天{hours}小时 后可再次免费使用"
 
             # Upload image to ComfyUI
             await self.image_workflow.upload_image(local_path, filename)
 
-            # Queue workflow
-            prompt_id = await self.image_workflow.queue_workflow(filename=filename)
-
-            # Deduct credits after successful queue
-            if self.credit_service:
-                success, new_balance = await self.credit_service.deduct_credits(
-                    user_id,
-                    'image_processing',
-                    reference_id=prompt_id
-                )
-                if success:
-                    logger.info(
-                        f"Deducted credits for user {user_id}, "
-                        f"new balance: {new_balance}"
-                    )
-                else:
-                    logger.error(f"Failed to deduct credits for user {user_id}")
-
-            # Update user state
+            # Store workflow details in state and show confirmation
             self.state_manager.update_state(
                 user_id,
-                state='processing',
-                prompt_id=prompt_id,
-                filename=filename
+                state='waiting_for_credit_confirmation',
+                uploaded_file_path=local_path,
+                filename=filename,
+                workflow_type='image'
             )
 
-            # Show initial queue position
-            await self._show_queue_position(update, user_id, prompt_id)
-
-            # Start monitoring in background
-            asyncio.create_task(
-                self._monitor_and_complete(
-                    context.bot,
-                    user_id,
-                    prompt_id,
-                    filename
-                )
+            # Show credit confirmation
+            from core.constants import WORKFLOW_NAME_IMAGE
+            message = await self.notification_service.send_credit_confirmation(
+                context.bot,
+                user_id,
+                workflow_name=WORKFLOW_NAME_IMAGE,
+                workflow_type='image',
+                balance=balance,
+                cost=cost,
+                is_free_trial=has_free_trial,
+                cooldown_info=cooldown_info
             )
+
+            # Store confirmation message for cleanup
+            self.state_manager.set_confirmation_message(user_id, message)
 
             logger.info(
-                f"Started image workflow for user {user_id}, "
-                f"prompt_id: {prompt_id}"
+                f"Uploaded image and showed confirmation for user {user_id}, "
+                f"free_trial={has_free_trial}"
             )
 
         except Exception as e:
@@ -249,6 +249,135 @@ class WorkflowService:
             completion_callback
         )
 
+    async def proceed_with_image_workflow(self, bot, user_id: int):
+        """
+        Proceed with image workflow after user confirms credit deduction.
+        Called from credit_confirmation_callback handler.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+
+        Returns:
+            True if successful, False if failed
+        """
+        try:
+            state = self.state_manager.get_state(user_id)
+            filename = state.get('filename')
+            local_path = state.get('uploaded_file_path')
+
+            if not filename or not local_path:
+                logger.error(f"Missing filename or path in state for user {user_id}")
+                return False
+
+            # Re-check credits (in case balance changed)
+            if self.credit_service:
+                has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
+                    user_id,
+                    'image_processing'
+                )
+
+                if not has_sufficient:
+                    # Check if user has free trial
+                    has_trial = await self.credit_service.has_free_trial(user_id)
+
+                    if not has_trial:
+                        # Insufficient credits - show error and topup menu
+                        from core.constants import CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE
+                        await bot.send_message(
+                            chat_id=user_id,
+                            text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
+                                balance=int(balance),
+                                cost=int(cost)
+                            )
+                        )
+
+                        # Show topup packages
+                        from handlers.credit_handlers import show_topup_packages
+                        from telegram import Update
+                        # Create a minimal update object for showing packages
+                        class FakeMessage:
+                            def __init__(self, chat_id):
+                                self.chat_id = chat_id
+                                self.from_user = type('obj', (object,), {'id': chat_id})
+
+                        fake_update = type('obj', (object,), {
+                            'effective_user': type('obj', (object,), {'id': user_id}),
+                            'message': FakeMessage(user_id)
+                        })()
+
+                        from telegram.ext import ContextTypes
+                        fake_context = type('obj', (object,), {'bot': bot})()
+
+                        await show_topup_packages(fake_update, fake_context)
+                        self.state_manager.reset_state(user_id)
+                        return False
+
+            # Queue workflow
+            prompt_id = await self.image_workflow.queue_workflow(filename=filename)
+
+            # Deduct credits after successful queue
+            if self.credit_service:
+                success, new_balance = await self.credit_service.deduct_credits(
+                    user_id,
+                    'image_processing',
+                    reference_id=prompt_id
+                )
+                if success:
+                    logger.info(
+                        f"Deducted credits for user {user_id}, "
+                        f"new balance: {new_balance}"
+                    )
+                else:
+                    logger.error(f"Failed to deduct credits for user {user_id}")
+
+            # Update user state
+            self.state_manager.update_state(
+                user_id,
+                state='processing',
+                prompt_id=prompt_id,
+                filename=filename
+            )
+
+            # Show initial queue position
+            position, total = await self.queue_service.get_queue_position(prompt_id)
+            message = await self.notification_service.send_queue_position(
+                bot,
+                user_id,
+                position,
+                total,
+                prompt_id
+            )
+
+            # Store message for later updates/deletion
+            self.state_manager.set_queue_message(user_id, message)
+
+            # Start monitoring in background
+            asyncio.create_task(
+                self._monitor_and_complete(
+                    bot,
+                    user_id,
+                    prompt_id,
+                    filename
+                )
+            )
+
+            logger.info(
+                f"Proceeded with image workflow for user {user_id}, "
+                f"prompt_id: {prompt_id}"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"Error proceeding with image workflow for user {user_id}: {str(e)}")
+            await self.notification_service.send_error_message(
+                bot,
+                user_id,
+                "处理失败，请稍后重试"
+            )
+            self.state_manager.reset_state(user_id)
+            return False
+
     async def start_video_workflow(
         self,
         update,
@@ -258,8 +387,8 @@ class WorkflowService:
         style: str
     ):
         """
-        Start video processing workflow with NO REFUND policy.
-        CRITICAL: Credits deducted BEFORE queueing, no refund on failure.
+        Upload image and show credit confirmation for video processing (NEW FLOW).
+        Actual processing starts after user confirms via proceed_with_video_workflow().
 
         Args:
             update: Telegram Update object
@@ -301,60 +430,51 @@ class WorkflowService:
                     self.state_manager.reset_state(user_id)
                     return
 
-                # DEDUCT CREDITS BEFORE QUEUEING (no refund policy)
-                success, new_balance = await self.credit_service.deduct_credits(
-                    user_id,
-                    'video_processing',
-                    reference_id=None  # No reference ID yet - deducting before queue
-                )
-
-                if not success:
-                    await update.message.reply_text("扣除积分失败，请重试")
-                    self.state_manager.reset_state(user_id)
-                    return
-
-                from core.constants import CREDITS_DEDUCTED_MESSAGE
-                await update.message.reply_text(
-                    CREDITS_DEDUCTED_MESSAGE.format(amount=cost, balance=new_balance)
-                )
-                logger.info(
-                    f"Deducted {cost} credits from user {user_id} for video, "
-                    f"new balance: {new_balance}"
-                )
-
             # Upload image to ComfyUI
             await video_workflow.upload_image(local_path, filename)
 
-            # Queue workflow
-            prompt_id = await video_workflow.queue_workflow(filename=filename)
+            # Determine workflow name based on style
+            from core.constants import (
+                WORKFLOW_NAME_VIDEO_A,
+                WORKFLOW_NAME_VIDEO_B,
+                WORKFLOW_NAME_VIDEO_C
+            )
 
-            # Update user state
+            workflow_name_map = {
+                'style_a': WORKFLOW_NAME_VIDEO_A,
+                'style_b': WORKFLOW_NAME_VIDEO_B,
+                'style_c': WORKFLOW_NAME_VIDEO_C
+            }
+            workflow_name = workflow_name_map.get(style, "图片转视频")
+
+            # Store workflow details in state and show confirmation
             self.state_manager.update_state(
                 user_id,
-                state='processing',
-                prompt_id=prompt_id,
+                state='waiting_for_credit_confirmation',
+                uploaded_file_path=local_path,
                 filename=filename,
-                workflow_type='video',
+                workflow_type=f'video_{style}',  # e.g., 'video_style_a'
                 video_style=style
             )
 
-            # Show initial queue position
-            await self._show_queue_position(update, user_id, prompt_id)
-
-            # Start monitoring in background
-            asyncio.create_task(
-                self._monitor_and_complete_video(
-                    context.bot,
-                    user_id,
-                    prompt_id,
-                    filename,
-                    style
-                )
+            # Show credit confirmation (NO free trial for video)
+            message = await self.notification_service.send_credit_confirmation(
+                context.bot,
+                user_id,
+                workflow_name=workflow_name,
+                workflow_type=f'video_{style}',
+                balance=balance,
+                cost=cost,
+                is_free_trial=False,
+                cooldown_info=None
             )
 
+            # Store confirmation message for cleanup
+            self.state_manager.set_confirmation_message(user_id, message)
+
             logger.info(
-                f"Started video workflow ({style}) for user {user_id}, "
-                f"prompt_id: {prompt_id}"
+                f"Uploaded image and showed confirmation for user {user_id}, "
+                f"video style: {style}"
             )
 
         except Exception as e:
@@ -403,6 +523,139 @@ class WorkflowService:
             prompt_id,
             completion_callback
         )
+
+    async def proceed_with_video_workflow(self, bot, user_id: int):
+        """
+        Proceed with video workflow after user confirms credit deduction.
+        Called from credit_confirmation_callback handler.
+        NO REFUND POLICY: Credits deducted before queueing.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+
+        Returns:
+            True if successful, False if failed
+        """
+        try:
+            state = self.state_manager.get_state(user_id)
+            filename = state.get('filename')
+            local_path = state.get('uploaded_file_path')
+            style = state.get('video_style')
+
+            if not filename or not local_path or not style:
+                logger.error(f"Missing required data in state for user {user_id}")
+                return False
+
+            video_workflow = self.video_workflows[style]
+
+            # Re-check credits (in case balance changed)
+            if self.credit_service:
+                has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
+                    user_id,
+                    'video_processing'
+                )
+
+                if not has_sufficient:
+                    # Insufficient credits - show error and topup menu
+                    from core.constants import CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE
+                    await bot.send_message(
+                        chat_id=user_id,
+                        text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
+                            balance=int(balance),
+                            cost=int(cost)
+                        )
+                    )
+
+                    # Show topup packages
+                    from handlers.credit_handlers import show_topup_packages
+                    class FakeMessage:
+                        def __init__(self, chat_id):
+                            self.chat_id = chat_id
+                            self.from_user = type('obj', (object,), {'id': chat_id})
+
+                    fake_update = type('obj', (object,), {
+                        'effective_user': type('obj', (object,), {'id': user_id}),
+                        'message': FakeMessage(user_id)
+                    })()
+                    fake_context = type('obj', (object,), {'bot': bot})()
+
+                    await show_topup_packages(fake_update, fake_context)
+                    self.state_manager.reset_state(user_id)
+                    return False
+
+                # DEDUCT CREDITS BEFORE QUEUEING (no refund policy)
+                success, new_balance = await self.credit_service.deduct_credits(
+                    user_id,
+                    'video_processing',
+                    reference_id=None
+                )
+
+                if not success:
+                    await bot.send_message(
+                        chat_id=user_id,
+                        text="扣除积分失败，请重试"
+                    )
+                    self.state_manager.reset_state(user_id)
+                    return False
+
+                logger.info(
+                    f"Deducted {cost} credits from user {user_id} for video, "
+                    f"new balance: {new_balance}"
+                )
+
+            # Queue workflow
+            prompt_id = await video_workflow.queue_workflow(filename=filename)
+
+            # Update user state
+            self.state_manager.update_state(
+                user_id,
+                state='processing',
+                prompt_id=prompt_id,
+                filename=filename,
+                workflow_type='video',
+                video_style=style
+            )
+
+            # Show initial queue position
+            position, total = await self.queue_service.get_queue_position(prompt_id)
+            message = await self.notification_service.send_queue_position(
+                bot,
+                user_id,
+                position,
+                total,
+                prompt_id
+            )
+
+            # Store message for later updates/deletion
+            self.state_manager.set_queue_message(user_id, message)
+
+            # Start monitoring in background
+            asyncio.create_task(
+                self._monitor_and_complete_video(
+                    bot,
+                    user_id,
+                    prompt_id,
+                    filename,
+                    style
+                )
+            )
+
+            logger.info(
+                f"Proceeded with video workflow for user {user_id}, "
+                f"style: {style}, prompt_id: {prompt_id}"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"Error proceeding with video workflow for user {user_id}: {str(e)}")
+            await self.notification_service.send_error_message(
+                bot,
+                user_id,
+                "处理失败，请稍后重试"
+            )
+            self.state_manager.reset_state(user_id)
+            return False
 
     async def cancel_user_workflow(self, user_id: int) -> bool:
         """

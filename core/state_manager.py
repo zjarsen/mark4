@@ -18,6 +18,7 @@ class StateManager:
         """Initialize state storage."""
         self._user_states: Dict[int, Dict[str, Any]] = {}
         self._user_queue_messages: Dict[int, Any] = {}
+        self._user_confirmation_messages: Dict[int, Any] = {}
         self._cleanup_tasks: Dict[int, Any] = {}
 
     # User State Management
@@ -155,6 +156,54 @@ class StateManager:
         """
         return user_id in self._user_queue_messages
 
+    # Confirmation Message Management
+
+    def set_confirmation_message(self, user_id: int, message: Any):
+        """
+        Store credit confirmation message for later deletion.
+
+        Args:
+            user_id: Telegram user ID
+            message: Telegram Message object
+        """
+        self._user_confirmation_messages[user_id] = message
+        logger.debug(f"Set confirmation message for user {user_id}")
+
+    def get_confirmation_message(self, user_id: int) -> Optional[Any]:
+        """
+        Get stored confirmation message.
+
+        Args:
+            user_id: Telegram user ID
+
+        Returns:
+            Message object or None
+        """
+        return self._user_confirmation_messages.get(user_id)
+
+    def remove_confirmation_message(self, user_id: int):
+        """
+        Remove confirmation message from storage.
+
+        Args:
+            user_id: Telegram user ID
+        """
+        if user_id in self._user_confirmation_messages:
+            del self._user_confirmation_messages[user_id]
+            logger.debug(f"Removed confirmation message for user {user_id}")
+
+    def has_confirmation_message(self, user_id: int) -> bool:
+        """
+        Check if user has a confirmation message stored.
+
+        Args:
+            user_id: Telegram user ID
+
+        Returns:
+            True if confirmation message exists
+        """
+        return user_id in self._user_confirmation_messages
+
     # Cleanup Task Management
 
     def set_cleanup_task(self, user_id: int, task: Any):
@@ -224,6 +273,7 @@ class StateManager:
         """
         self.reset_state(user_id)
         self.remove_queue_message(user_id)
+        self.remove_confirmation_message(user_id)
         self.cancel_cleanup_task(user_id)
         logger.info(f"Cleared all data for user {user_id}")
 

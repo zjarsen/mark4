@@ -165,3 +165,128 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
     except Exception as e:
         logger.error(f"Error handling video style callback: {str(e)}")
+
+
+async def credit_confirmation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle credit confirmation button clicks (confirm or cancel).
+
+    Callback data format:
+    - confirm_credits_image
+    - confirm_credits_video_style_a
+    - confirm_credits_video_style_b
+    - confirm_credits_video_style_c
+    - cancel_credits
+    """
+    query = update.callback_query
+    await query.answer()
+
+    user_id = update.effective_user.id
+
+    try:
+        # Handle cancellation
+        if query.data == "cancel_credits":
+            # Delete confirmation message
+            await query.delete_message()
+
+            # Remove from state storage
+            if state_manager.has_confirmation_message(user_id):
+                state_manager.remove_confirmation_message(user_id)
+
+            # Get uploaded file path and delete it
+            state = state_manager.get_state(user_id)
+            uploaded_file = state.get('uploaded_file_path')
+            if uploaded_file:
+                try:
+                    import os
+                    if os.path.exists(uploaded_file):
+                        os.remove(uploaded_file)
+                        logger.debug(f"Deleted uploaded file: {uploaded_file}")
+                except Exception as e:
+                    logger.error(f"Error deleting uploaded file: {e}")
+
+            # Reset state
+            state_manager.reset_state(user_id)
+
+            # Send cancelled message and show main menu
+            from core.constants import CREDIT_CONFIRMATION_CANCELLED_MESSAGE
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=CREDIT_CONFIRMATION_CANCELLED_MESSAGE
+            )
+
+            # Show main menu
+            from handlers.command_handlers import show_main_menu
+            class FakeMessage:
+                def __init__(self, user_id):
+                    self.chat = type('obj', (object,), {'id': user_id})
+                    self.from_user = type('obj', (object,), {'id': user_id})
+
+            fake_update = type('obj', (object,), {
+                'effective_user': type('obj', (object,), {'id': user_id}),
+                'message': FakeMessage(user_id)
+            })()
+
+            await show_main_menu(fake_update)
+
+            logger.info(f"User {user_id} cancelled credit confirmation")
+            return
+
+        # Handle confirmation
+        if query.data.startswith("confirm_credits_"):
+            workflow_type = query.data.replace("confirm_credits_", "")
+
+            # Delete confirmation message
+            await query.delete_message()
+
+            # Remove from state storage
+            if state_manager.has_confirmation_message(user_id):
+                state_manager.remove_confirmation_message(user_id)
+
+            # Get workflow service from bot_data
+            workflow_service = context.bot_data.get('workflow_service')
+            if not workflow_service:
+                logger.error("workflow_service not found in bot_data")
+                await context.bot.send_message(
+                    chat_id=user_id,
+                    text="系统错误，请稍后重试"
+                )
+                state_manager.reset_state(user_id)
+                return
+
+            # Proceed with appropriate workflow
+            if workflow_type == "image":
+                success = await workflow_service.proceed_with_image_workflow(
+                    context.bot,
+                    user_id
+                )
+                logger.info(
+                    f"User {user_id} confirmed image workflow, "
+                    f"success: {success}"
+                )
+
+            elif workflow_type.startswith("video_"):
+                success = await workflow_service.proceed_with_video_workflow(
+                    context.bot,
+                    user_id
+                )
+                logger.info(
+                    f"User {user_id} confirmed video workflow, "
+                    f"success: {success}"
+                )
+
+            else:
+                logger.error(f"Unknown workflow type: {workflow_type}")
+                await context.bot.send_message(
+                    chat_id=user_id,
+                    text="系统错误，请稍后重试"
+                )
+                state_manager.reset_state(user_id)
+
+    except Exception as e:
+        logger.error(f"Error handling credit confirmation callback: {str(e)}")
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="处理确认时发生错误，请稍后重试"
+        )
+        state_manager.reset_state(user_id)

@@ -154,10 +154,17 @@ class BotApplication:
 
     async def _cleanup_timeout_messages_middleware(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
-        Middleware to cleanup timeout messages before processing any update.
+        Middleware to cleanup timeout messages and handle abandoned confirmations.
 
-        This runs before every handler to delete any pending timeout messages
-        when user interacts with the bot.
+        This runs before every handler to:
+        1. Delete any pending timeout messages when user interacts
+        2. Cancel credit confirmations if user sends other input
+
+        Abandoned confirmation detection:
+        - If user is in 'waiting_for_credit_confirmation' state
+        - AND user sends ANY input (text, command, photo, etc.)
+        - EXCEPT callback queries (button clicks)
+        - Then auto-cancel the confirmation
         """
         if not update.effective_user:
             return
@@ -171,6 +178,40 @@ class BotApplication:
                 await self.timeout_service.cleanup_timeout_messages(user_id, chat_id)
             except Exception as e:
                 logger.warning(f"Error cleaning up timeout messages for user {user_id}: {str(e)}")
+
+        # Check for abandoned credit confirmations
+        # Don't trigger on callback queries (button clicks)
+        if not update.callback_query:
+            if self.state_manager.is_state(user_id, 'waiting_for_credit_confirmation'):
+                try:
+                    # Delete confirmation message if exists
+                    if self.state_manager.has_confirmation_message(user_id):
+                        conf_msg = self.state_manager.get_confirmation_message(user_id)
+                        try:
+                            await conf_msg.delete()
+                        except Exception as e:
+                            logger.debug(f"Could not delete confirmation message: {e}")
+                        self.state_manager.remove_confirmation_message(user_id)
+
+                    # Delete uploaded file
+                    state = self.state_manager.get_state(user_id)
+                    uploaded_file = state.get('uploaded_file_path')
+                    if uploaded_file:
+                        try:
+                            import os
+                            if os.path.exists(uploaded_file):
+                                os.remove(uploaded_file)
+                                logger.debug(f"Deleted abandoned upload: {uploaded_file}")
+                        except Exception as e:
+                            logger.error(f"Error deleting uploaded file: {e}")
+
+                    # Reset state
+                    self.state_manager.reset_state(user_id)
+
+                    logger.info(f"Auto-cancelled abandoned confirmation for user {user_id}")
+
+                except Exception as e:
+                    logger.error(f"Error handling abandoned confirmation: {str(e)}")
 
     def _register_handlers(self):
         """Register all handlers in correct priority order."""
@@ -230,6 +271,14 @@ class BotApplication:
             CallbackQueryHandler(
                 callback_handlers.video_style_callback,
                 pattern="^video_style_|^back_to_menu"
+            )
+        )
+
+        # Credit confirmation callback handler
+        self.app.add_handler(
+            CallbackQueryHandler(
+                callback_handlers.credit_confirmation_callback,
+                pattern="^confirm_credits_|^cancel_credits"
             )
         )
 
