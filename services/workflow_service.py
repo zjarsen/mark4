@@ -48,6 +48,19 @@ class WorkflowService:
             file_service
         )
 
+        # Initialize video workflow implementations
+        from workflows_processing.video_processing import (
+            VideoProcessingStyleA,
+            VideoProcessingStyleB,
+            VideoProcessingStyleC
+        )
+
+        self.video_workflows = {
+            'style_a': VideoProcessingStyleA(config, comfyui_service, file_service),
+            'style_b': VideoProcessingStyleB(config, comfyui_service, file_service),
+            'style_c': VideoProcessingStyleC(config, comfyui_service, file_service)
+        }
+
     async def start_image_workflow(
         self,
         update,
@@ -75,7 +88,29 @@ class WorkflowService:
                 )
 
                 if not has_sufficient:
-                    # Insufficient credits
+                    # Check if user is on cooldown for free trial
+                    has_trial = await self.credit_service.has_free_trial(user_id)
+
+                    if not has_trial:
+                        # User is on cooldown - show next available time
+                        next_available = await self.credit_service.get_next_free_trial_time(user_id)
+
+                        if next_available:
+                            from core.constants import FREE_TRIAL_COOLDOWN_MESSAGE
+                            next_time_str = next_available.strftime('%Y-%m-%d %H:%M GMT+8')
+                            await update.message.reply_text(
+                                FREE_TRIAL_COOLDOWN_MESSAGE.format(
+                                    next_available=next_time_str,
+                                    balance=balance
+                                )
+                            )
+                            logger.info(
+                                f"User {user_id} on free trial cooldown until {next_time_str}"
+                            )
+                            self.state_manager.reset_state(user_id)
+                            return
+
+                    # Insufficient credits (no trial available or other reason)
                     from core.constants import INSUFFICIENT_CREDITS_MESSAGE
                     await update.message.reply_text(
                         INSUFFICIENT_CREDITS_MESSAGE.format(
@@ -219,21 +254,155 @@ class WorkflowService:
         update,
         context,
         local_path: str,
-        user_id: int
+        user_id: int,
+        style: str
     ):
         """
-        Start video processing workflow (future implementation).
+        Start video processing workflow with NO REFUND policy.
+        CRITICAL: Credits deducted BEFORE queueing, no refund on failure.
 
         Args:
             update: Telegram Update object
             context: Telegram Context object
             local_path: Path to uploaded file
             user_id: User ID
+            style: Video style ('style_a', 'style_b', or 'style_c')
         """
-        # TODO: Implement video workflow
-        from core.constants import FEATURE_NOT_IMPLEMENTED
-        await update.message.reply_text(FEATURE_NOT_IMPLEMENTED)
-        logger.info(f"Video workflow requested by user {user_id} (not implemented)")
+        try:
+            filename = Path(local_path).name
+
+            # Validate style
+            if style not in self.video_workflows:
+                await update.message.reply_text("选择的风格无效")
+                self.state_manager.reset_state(user_id)
+                return
+
+            video_workflow = self.video_workflows[style]
+
+            # Check credits (NO free trial for video)
+            if self.credit_service:
+                has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
+                    user_id,
+                    'video_processing'
+                )
+
+                if not has_sufficient:
+                    from core.constants import INSUFFICIENT_CREDITS_MESSAGE
+                    await update.message.reply_text(
+                        INSUFFICIENT_CREDITS_MESSAGE.format(
+                            balance=balance,
+                            required=cost
+                        )
+                    )
+                    logger.warning(
+                        f"User {user_id} has insufficient credits for video: "
+                        f"balance={balance}, required={cost}"
+                    )
+                    self.state_manager.reset_state(user_id)
+                    return
+
+                # DEDUCT CREDITS BEFORE QUEUEING (no refund policy)
+                success, new_balance = await self.credit_service.deduct_credits(
+                    user_id,
+                    'video_processing',
+                    reference_id=None  # No reference ID yet - deducting before queue
+                )
+
+                if not success:
+                    await update.message.reply_text("扣除积分失败，请重试")
+                    self.state_manager.reset_state(user_id)
+                    return
+
+                from core.constants import CREDITS_DEDUCTED_MESSAGE
+                await update.message.reply_text(
+                    CREDITS_DEDUCTED_MESSAGE.format(amount=cost, balance=new_balance)
+                )
+                logger.info(
+                    f"Deducted {cost} credits from user {user_id} for video, "
+                    f"new balance: {new_balance}"
+                )
+
+            # Upload image to ComfyUI
+            await video_workflow.upload_image(local_path, filename)
+
+            # Queue workflow
+            prompt_id = await video_workflow.queue_workflow(filename=filename)
+
+            # Update user state
+            self.state_manager.update_state(
+                user_id,
+                state='processing',
+                prompt_id=prompt_id,
+                filename=filename,
+                workflow_type='video',
+                video_style=style
+            )
+
+            # Show initial queue position
+            await self._show_queue_position(update, user_id, prompt_id)
+
+            # Start monitoring in background
+            asyncio.create_task(
+                self._monitor_and_complete_video(
+                    context.bot,
+                    user_id,
+                    prompt_id,
+                    filename,
+                    style
+                )
+            )
+
+            logger.info(
+                f"Started video workflow ({style}) for user {user_id}, "
+                f"prompt_id: {prompt_id}"
+            )
+
+        except Exception as e:
+            logger.error(f"Error starting video workflow for user {user_id}: {str(e)}")
+            await self.notification_service.send_error_message(
+                context.bot,
+                user_id,
+                "上传失败，请稍后重试"
+            )
+            self.state_manager.reset_state(user_id)
+
+    async def _monitor_and_complete_video(
+        self,
+        bot,
+        user_id: int,
+        prompt_id: str,
+        filename: str,
+        style: str
+    ):
+        """
+        Monitor video processing and handle completion.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+            prompt_id: Prompt ID to monitor
+            filename: Original filename
+            style: Video style
+        """
+        async def completion_callback(outputs):
+            """Called when video processing completes."""
+            video_workflow = self.video_workflows[style]
+            await video_workflow.handle_completion(
+                bot,
+                user_id,
+                filename,
+                outputs,
+                self.state_manager,
+                self.notification_service
+            )
+
+        # Start monitoring
+        await self.queue_service.monitor_processing(
+            bot,
+            user_id,
+            prompt_id,
+            completion_callback
+        )
 
     async def cancel_user_workflow(self, user_id: int) -> bool:
         """

@@ -107,6 +107,25 @@ class DatabaseService:
             except Exception:
                 pass  # Column already exists
 
+            # Migration: Add last_free_trial_used_at column for recurring free trial system
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN last_free_trial_used_at TIMESTAMP")
+                logger.info("Added last_free_trial_used_at column to users table")
+
+                # Migration Strategy: Reset all existing users' trials (Option A)
+                # Set last_free_trial_used_at = NULL for all users
+                # This gives everyone immediate access to the new recurring trial system
+                cursor.execute("""
+                    UPDATE users
+                    SET last_free_trial_used_at = NULL,
+                        free_image_processing_used = 0
+                    WHERE 1=1
+                """)
+                logger.info("Reset all users' free trials for recurring system migration")
+
+            except Exception as e:
+                logger.debug(f"Migration already applied or error: {e}")
+
             # Feature pricing table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS feature_pricing (
@@ -121,6 +140,12 @@ class DatabaseService:
             cursor.execute("""
                 INSERT OR IGNORE INTO feature_pricing (feature_name, credit_cost, description)
                 VALUES ('image_processing', 10.0, '图片脱衣')
+            """)
+
+            # Insert video processing feature pricing (图片转视频脱衣 = 30 积分)
+            cursor.execute("""
+                INSERT OR IGNORE INTO feature_pricing (feature_name, credit_cost, description)
+                VALUES ('video_processing', 30.0, '图片转视频脱衣')
             """)
 
             conn.commit()
@@ -208,7 +233,9 @@ class DatabaseService:
 
             cursor.execute("""
                 UPDATE users
-                SET free_image_processing_used = 1, updated_at = CURRENT_TIMESTAMP
+                SET free_image_processing_used = 1,
+                    last_free_trial_used_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ?
             """, (user_id,))
 

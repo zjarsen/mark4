@@ -122,6 +122,7 @@ class BotApplication:
         # Inject into command_handlers
         command_handlers.state_manager = self.state_manager
         command_handlers.config = self.config
+        command_handlers.credit_service = self.credit_service
 
         # Inject into menu_handlers
         menu_handlers.state_manager = self.state_manager

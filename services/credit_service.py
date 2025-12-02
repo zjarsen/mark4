@@ -1,7 +1,9 @@
 """Credit management service."""
 
 import logging
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
+import pytz
 
 logger = logging.getLogger('mark4_bot')
 
@@ -19,6 +21,102 @@ class CreditService:
         """
         self.config = config
         self.db = database_service
+
+    async def _is_free_trial_available(self, user_id: int) -> bool:
+        """
+        Check if free trial is available based on 2-day reset at midnight GMT+8.
+
+        Logic:
+        - New users: Available immediately
+        - Used before: Available if >= 2 days since last use at midnight GMT+8
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            True if free trial is available
+        """
+        try:
+            user = self.db.get_user(user_id)
+            if not user:
+                return True  # New user gets free trial
+
+            last_used = user.get('last_free_trial_used_at')
+            if not last_used:
+                return True  # Never used
+
+            # Parse timestamp (SQLite stores as string)
+            if isinstance(last_used, str):
+                last_used_dt = datetime.strptime(last_used, '%Y-%m-%d %H:%M:%S')
+            else:
+                last_used_dt = last_used
+
+            # Localize to UTC (SQLite stores in UTC)
+            if last_used_dt.tzinfo is None:
+                last_used_dt = pytz.utc.localize(last_used_dt)
+
+            # Convert to GMT+8
+            gmt8 = pytz.timezone('Asia/Shanghai')
+            last_used_gmt8 = last_used_dt.astimezone(gmt8)
+            now_gmt8 = datetime.now(gmt8)
+
+            # Calculate reset time: 2 days after last use at midnight
+            last_used_date = last_used_gmt8.date()
+            reset_date = last_used_date + timedelta(days=2)
+            reset_datetime = gmt8.localize(datetime.combine(reset_date, datetime.min.time()))
+
+            return now_gmt8 >= reset_datetime
+
+        except Exception as e:
+            logger.error(f"Error checking free trial availability for user {user_id}: {str(e)}")
+            return False  # Fail safe - require credits on error
+
+    async def get_next_free_trial_time(self, user_id: int) -> Optional[datetime]:
+        """
+        Get next trial availability time in GMT+8.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            datetime object of next availability, or None if currently available
+        """
+        try:
+            if await self._is_free_trial_available(user_id):
+                return None  # Currently available
+
+            user = self.db.get_user(user_id)
+            if not user:
+                return None  # New user - available now
+
+            last_used = user.get('last_free_trial_used_at')
+            if not last_used:
+                return None  # Never used - available now
+
+            # Parse timestamp
+            if isinstance(last_used, str):
+                last_used_dt = datetime.strptime(last_used, '%Y-%m-%d %H:%M:%S')
+            else:
+                last_used_dt = last_used
+
+            # Localize to UTC
+            if last_used_dt.tzinfo is None:
+                last_used_dt = pytz.utc.localize(last_used_dt)
+
+            # Convert to GMT+8
+            gmt8 = pytz.timezone('Asia/Shanghai')
+            last_used_gmt8 = last_used_dt.astimezone(gmt8)
+
+            # Calculate reset time: 2 days after last use at midnight
+            last_used_date = last_used_gmt8.date()
+            reset_date = last_used_date + timedelta(days=2)
+            reset_datetime = gmt8.localize(datetime.combine(reset_date, datetime.min.time()))
+
+            return reset_datetime
+
+        except Exception as e:
+            logger.error(f"Error getting next free trial time for user {user_id}: {str(e)}")
+            return None
 
     async def get_balance(self, user_id: int) -> float:
         """
@@ -41,6 +139,7 @@ class CreditService:
     async def has_free_trial(self, user_id: int) -> bool:
         """
         Check if user has free trial available.
+        Uses recurring 2-day reset system with GMT+8 timezone.
 
         Args:
             user_id: User ID
@@ -48,20 +147,12 @@ class CreditService:
         Returns:
             True if free trial is available
         """
-        try:
-            user = self.db.get_user(user_id)
-            if not user:
-                return True  # New user gets free trial
-
-            return not user['free_image_processing_used']
-
-        except Exception as e:
-            logger.error(f"Error checking free trial for user {user_id}: {str(e)}")
-            return False
+        return await self._is_free_trial_available(user_id)
 
     async def use_free_trial(self, user_id: int) -> bool:
         """
         Mark free trial as used.
+        Validates availability first to prevent race conditions.
 
         Args:
             user_id: User ID
@@ -70,6 +161,11 @@ class CreditService:
             True if successful
         """
         try:
+            # Validate trial is available before using
+            if not await self._is_free_trial_available(user_id):
+                logger.warning(f"Attempted to use unavailable trial for user {user_id}")
+                return False
+
             success = self.db.mark_free_trial_used(user_id)
             if success:
                 logger.info(f"User {user_id} used free trial")

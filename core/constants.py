@@ -30,7 +30,7 @@ class PaymentStatus(Enum):
 
 # Menu text constants
 MENU_OPTION_IMAGE = "1. 图片脱衣"
-MENU_OPTION_VIDEO = "2. 图片转视频脱衣（暂未开放）"
+MENU_OPTION_VIDEO = "2. 图片转视频脱衣（花费30积分）"
 MENU_OPTION_CHECK_QUEUE = "3. 查看队列"
 MENU_OPTION_BALANCE_HISTORY = "4. 📊 积分余额 & 充值记录"
 MENU_OPTION_TOPUP = "5. 💳 充值积分"
@@ -38,7 +38,7 @@ MENU_OPTION_TOPUP = "5. 💳 充值积分"
 # Message templates
 WELCOME_MESSAGE = """欢迎使用AI脱衣bot！
 
-🎁 新用户福利：免费体验1次图片脱衣功能
+🎁 新用户福利：每2天可免费体验1次图片脱衣功能
 
 使用说明：
 选择"图片脱衣"，上传一张正脸照片（可半身或全身），AI会自动处理。
@@ -70,10 +70,23 @@ INSUFFICIENT_CREDITS_MESSAGE = """积分不足！
 
 请充值后再使用此功能。"""
 
-FREE_TRIAL_MESSAGE = """这是您的免费体验！
-下次使用需要 10 积分。
+FREE_TRIAL_MESSAGE = """🎁 免费体验可用！
+这是您的免费次数，处理完成后将在2天后重置。
 
 请上传图片开始处理～"""
+
+FREE_TRIAL_AVAILABLE_MESSAGE = """🎁 免费体验可用！
+这是您的免费次数，处理完成后将在2天后重置。
+
+请上传图片开始处理～"""
+
+FREE_TRIAL_COOLDOWN_MESSAGE = """免费体验冷却中...
+下次可用时间：{next_available}
+
+当前余额：{balance} 积分
+本次需要：10 积分
+
+您可以充值积分立即使用，或等待免费次数重置。"""
 
 BALANCE_MESSAGE = """💰 您的积分余额
 
@@ -130,9 +143,25 @@ WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final.json"
 WORKFLOW_VIDEO_PROCESSING = "video_processing.json"  # Future
 WORKFLOW_I2I_OLD = "i2i_1.json"  # Old workflow (deprecated)
 
+# Video workflow file names
+WORKFLOW_VIDEO_STYLE_A = "video_style_a.json"
+WORKFLOW_VIDEO_STYLE_B = "video_style_b.json"
+WORKFLOW_VIDEO_STYLE_C = "video_style_c.json"
+
 # Node IDs in workflows
 NODE_LOAD_IMAGE = "7"
 NODE_SAVE_IMAGE = "27"
+NODE_SAVE_VIDEO = "27"  # Update based on actual workflow
+
+# Video processing messages
+VIDEO_SEND_IMAGE_PROMPT = "请上传图片，我们将生成视频"
+VIDEO_STYLE_SELECTION_MESSAGE = "请选择视频风格："
+
+# Video processing button labels
+VIDEO_STYLE_A_BUTTON = "风格 A"
+VIDEO_STYLE_B_BUTTON = "风格 B"
+VIDEO_STYLE_C_BUTTON = "风格 C"
+BACK_TO_MENU_BUTTON = "🏠 返回主菜单"
 
 # Top-up packages (amount in CNY: credits)
 TOPUP_PACKAGES = {

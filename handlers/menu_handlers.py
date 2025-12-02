@@ -38,20 +38,21 @@ async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TY
 
         logger.debug(f"User {user_id} selected: {text}")
 
-        if text == MENU_OPTION_IMAGE:
+        # Use partial matching since menu text is dynamic
+        if text.startswith("1.") or "图片脱衣" in text:
             await handle_image_processing(update, context, user_id)
 
-        elif text == MENU_OPTION_VIDEO or "图片转视频" in text:
+        elif text.startswith("2.") or "图片转视频" in text:
             await handle_video_processing(update, context, user_id)
 
-        elif text == MENU_OPTION_CHECK_QUEUE or "查看队列" in text:
+        elif text.startswith("3.") or "查看队列" in text:
             await handle_check_queue(update, context, user_id)
 
-        elif text == MENU_OPTION_BALANCE_HISTORY:
+        elif text.startswith("4.") or "积分余额" in text or "充值记录" in text:
             from handlers.credit_handlers import show_balance_and_history
             await show_balance_and_history(update, context)
 
-        elif text == MENU_OPTION_TOPUP:
+        elif text.startswith("5.") or "充值积分" in text:
             from handlers.credit_handlers import show_topup_packages
             await show_topup_packages(update, context)
 

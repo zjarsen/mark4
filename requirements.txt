@@ -7,6 +7,9 @@ aiohttp>=3.9.0
 # Environment Variables
 python-dotenv>=1.0.0
 
+# Timezone Handling
+pytz>=2024.1
+
 # Payment Webhook Server (required for payment callbacks)
 flask>=3.0.0
 hypercorn>=0.14.0
