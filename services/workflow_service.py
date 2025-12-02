@@ -283,7 +283,18 @@ class WorkflowService:
 
                     if not has_trial:
                         # Insufficient credits - show error and topup menu
-                        from core.constants import CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE
+                        from core.constants import (
+                            CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
+                            TOPUP_PACKAGES_MESSAGE,
+                            TOPUP_1_BUTTON,
+                            TOPUP_10_BUTTON,
+                            TOPUP_30_BUTTON,
+                            TOPUP_50_BUTTON,
+                            TOPUP_100_BUTTON
+                        )
+                        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+                        # Send insufficient credits message
                         await bot.send_message(
                             chat_id=user_id,
                             text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
@@ -292,24 +303,22 @@ class WorkflowService:
                             )
                         )
 
-                        # Show topup packages
-                        from handlers.credit_handlers import show_topup_packages
-                        from telegram import Update
-                        # Create a minimal update object for showing packages
-                        class FakeMessage:
-                            def __init__(self, chat_id):
-                                self.chat_id = chat_id
-                                self.from_user = type('obj', (object,), {'id': chat_id})
+                        # Show topup packages inline keyboard
+                        keyboard = [
+                            [InlineKeyboardButton(TOPUP_1_BUTTON, callback_data="topup_1")],
+                            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
+                            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
+                            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+                            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                        ]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
 
-                        fake_update = type('obj', (object,), {
-                            'effective_user': type('obj', (object,), {'id': user_id}),
-                            'message': FakeMessage(user_id)
-                        })()
+                        await bot.send_message(
+                            chat_id=user_id,
+                            text=TOPUP_PACKAGES_MESSAGE,
+                            reply_markup=reply_markup
+                        )
 
-                        from telegram.ext import ContextTypes
-                        fake_context = type('obj', (object,), {'bot': bot})()
-
-                        await show_topup_packages(fake_update, fake_context)
                         self.state_manager.reset_state(user_id)
                         return False
 
@@ -558,7 +567,18 @@ class WorkflowService:
 
                 if not has_sufficient:
                     # Insufficient credits - show error and topup menu
-                    from core.constants import CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE
+                    from core.constants import (
+                        CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
+                        TOPUP_PACKAGES_MESSAGE,
+                        TOPUP_1_BUTTON,
+                        TOPUP_10_BUTTON,
+                        TOPUP_30_BUTTON,
+                        TOPUP_50_BUTTON,
+                        TOPUP_100_BUTTON
+                    )
+                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+                    # Send insufficient credits message
                     await bot.send_message(
                         chat_id=user_id,
                         text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
@@ -567,20 +587,22 @@ class WorkflowService:
                         )
                     )
 
-                    # Show topup packages
-                    from handlers.credit_handlers import show_topup_packages
-                    class FakeMessage:
-                        def __init__(self, chat_id):
-                            self.chat_id = chat_id
-                            self.from_user = type('obj', (object,), {'id': chat_id})
+                    # Show topup packages inline keyboard
+                    keyboard = [
+                        [InlineKeyboardButton(TOPUP_1_BUTTON, callback_data="topup_1")],
+                        [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
+                        [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
+                        [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+                        [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
 
-                    fake_update = type('obj', (object,), {
-                        'effective_user': type('obj', (object,), {'id': user_id}),
-                        'message': FakeMessage(user_id)
-                    })()
-                    fake_context = type('obj', (object,), {'bot': bot})()
+                    await bot.send_message(
+                        chat_id=user_id,
+                        text=TOPUP_PACKAGES_MESSAGE,
+                        reply_markup=reply_markup
+                    )
 
-                    await show_topup_packages(fake_update, fake_context)
                     self.state_manager.reset_state(user_id)
                     return False
 
