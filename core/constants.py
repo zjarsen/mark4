@@ -263,13 +263,13 @@ VIDEO_STYLE_SELECTION_MESSAGE = """🎬 选择视频风格
 模型效果展示：
 
 1. 视频模型1示例：✨✨脱衣+抖胸✨✨：
-[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/21)
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/13)
 
 2. 视频模型2示例：✨✨脱衣+下体流精✨✨：
-[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/21)
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/15)
 
 3. 视频模型3示例：✨✨脱衣+吃吊喝精✨✨：
-[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/21)
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/19)
 
 请选择您想要的动态效果："""
 
