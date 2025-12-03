@@ -10,15 +10,30 @@ logger = logging.getLogger('mark4_bot')
 class ComfyUIService:
     """Service for interacting with ComfyUI server API."""
 
-    def __init__(self, config):
+    def __init__(self, config, workflow_type: str):
         """
         Initialize ComfyUI service.
 
         Args:
             config: Configuration object
+            workflow_type: Workflow type ('image_undress', 'video_douxiong', 'video_liujing', 'video_shejing')
         """
         self.config = config
-        self.server_url = config.COMFYUI_SERVER
+        self.workflow_type = workflow_type
+
+        # Get workflow-specific URLs
+        urls = config.get_workflow_urls(workflow_type)
+        self.upload_url = urls['upload_url']
+        self.prompt_url = urls['prompt_url']
+        self.queue_url = urls['queue_url']
+        self.history_url = urls['history_url']
+        self.view_url = urls['view_url']
+
+        # Extract base server URL for other endpoints
+        self.server_url = config.COMFYUI_IMAGE_UNDRESS_SERVER if workflow_type == 'image_undress' else \
+                         config.COMFYUI_VIDEO_DOUXIONG_SERVER if workflow_type == 'video_douxiong' else \
+                         config.COMFYUI_VIDEO_LIUJING_SERVER if workflow_type == 'video_liujing' else \
+                         config.COMFYUI_VIDEO_SHEJING_SERVER
 
     async def upload_image(self, local_path: str, filename: str) -> Dict:
         """
@@ -47,15 +62,14 @@ class ComfyUIService:
                         content_type='image/jpeg'
                     )
 
-                    upload_url = self.config.COMFYUI_UPLOAD_URL
-                    logger.info(f"Uploading to: {upload_url}")
+                    logger.info(f"Uploading to: {self.upload_url}")
 
-                    async with session.post(upload_url, data=form) as resp:
+                    async with session.post(self.upload_url, data=form) as resp:
                         if resp.status != 200:
                             error_text = await resp.text()
                             logger.error(
                                 f"Upload failed - Status: {resp.status}, "
-                                f"URL: {upload_url}, "
+                                f"URL: {self.upload_url}, "
                                 f"Response: {error_text[:200]}"
                             )
                             raise Exception(
@@ -87,7 +101,7 @@ class ComfyUIService:
                 prompt_data = {"prompt": workflow}
 
                 async with session.post(
-                    self.config.COMFYUI_PROMPT_URL,
+                    self.prompt_url,
                     json=prompt_data
                 ) as resp:
                     if resp.status != 200:
@@ -124,7 +138,7 @@ class ComfyUIService:
         """
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(self.config.COMFYUI_QUEUE_URL) as resp:
+                async with session.get(self.queue_url) as resp:
                     if resp.status != 200:
                         raise Exception(f"Failed to get queue info: {resp.status}")
 
@@ -202,7 +216,7 @@ class ComfyUIService:
         """
         try:
             async with aiohttp.ClientSession() as session:
-                url = f"{self.config.COMFYUI_HISTORY_URL}/{prompt_id}"
+                url = f"{self.history_url}/{prompt_id}"
 
                 async with session.get(url) as resp:
                     if resp.status != 200:
@@ -237,7 +251,7 @@ class ComfyUIService:
         """
         try:
             async with aiohttp.ClientSession() as session:
-                url = f"{self.config.COMFYUI_VIEW_URL}?filename={filename}"
+                url = f"{self.view_url}?filename={filename}"
 
                 async with session.get(url) as resp:
                     if resp.status != 200:

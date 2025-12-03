@@ -18,29 +18,41 @@ class Config:
     BOT_TOKEN = os.getenv('BOT_TOKEN')
     BOT_USERNAME = os.getenv('BOT_USERNAME', 'declothing_free1_bot')
 
-    # ComfyUI Server Configuration
-    COMFYUI_SERVER = os.getenv('COMFYUI_SERVER', 'http://20.196.153.126:8188')
+    # ComfyUI Server Configuration - Workflow-specific servers
+    COMFYUI_IMAGE_UNDRESS_SERVER = os.getenv('COMFYUI_IMAGE_UNDRESS_SERVER')
+    COMFYUI_VIDEO_DOUXIONG_SERVER = os.getenv('COMFYUI_VIDEO_DOUXIONG_SERVER')
+    COMFYUI_VIDEO_LIUJING_SERVER = os.getenv('COMFYUI_VIDEO_LIUJING_SERVER')
+    COMFYUI_VIDEO_SHEJING_SERVER = os.getenv('COMFYUI_VIDEO_SHEJING_SERVER')
 
-    # Computed URLs
-    @property
-    def COMFYUI_UPLOAD_URL(self):
-        return f"{self.COMFYUI_SERVER}/api/upload/image"
+    # Helper method to get workflow server URLs
+    def get_workflow_urls(self, workflow_type: str):
+        """
+        Get all ComfyUI URLs for a specific workflow type.
 
-    @property
-    def COMFYUI_PROMPT_URL(self):
-        return f"{self.COMFYUI_SERVER}/prompt"
+        Args:
+            workflow_type: One of 'image_undress', 'video_douxiong', 'video_liujing', 'video_shejing'
 
-    @property
-    def COMFYUI_QUEUE_URL(self):
-        return f"{self.COMFYUI_SERVER}/queue"
+        Returns:
+            Dict with upload_url, prompt_url, queue_url, history_url, view_url
+        """
+        server_map = {
+            'image_undress': self.COMFYUI_IMAGE_UNDRESS_SERVER,
+            'video_douxiong': self.COMFYUI_VIDEO_DOUXIONG_SERVER,
+            'video_liujing': self.COMFYUI_VIDEO_LIUJING_SERVER,
+            'video_shejing': self.COMFYUI_VIDEO_SHEJING_SERVER
+        }
 
-    @property
-    def COMFYUI_HISTORY_URL(self):
-        return f"{self.COMFYUI_SERVER}/history"
+        server = server_map.get(workflow_type)
+        if not server:
+            raise ValueError(f"Unknown workflow type: {workflow_type}")
 
-    @property
-    def COMFYUI_VIEW_URL(self):
-        return f"{self.COMFYUI_SERVER}/view"
+        return {
+            'upload_url': f"{server}/api/upload/image",
+            'prompt_url': f"{server}/prompt",
+            'queue_url': f"{server}/queue",
+            'history_url': f"{server}/history",
+            'view_url': f"{server}/view"
+        }
 
     # Directory Configuration
     USER_UPLOADS_DIR = Path(
@@ -102,5 +114,5 @@ class Config:
         """String representation of config (without sensitive data)."""
         return (
             f"Config(bot_username={self.BOT_USERNAME}, "
-            f"comfyui_server={self.COMFYUI_SERVER})"
+            f"workflows=4)"
         )

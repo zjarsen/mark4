@@ -54,7 +54,8 @@ class QueueService:
         bot,
         user_id: int,
         prompt_id: str,
-        completion_callback
+        completion_callback,
+        comfyui_service=None
     ):
         """
         Monitor processing until complete and call callback.
@@ -65,15 +66,20 @@ class QueueService:
             prompt_id: Prompt ID to monitor
             completion_callback: Async function to call when complete
                                  Should accept (outputs) parameter
+            comfyui_service: Optional ComfyUI service instance to use for this workflow.
+                           If not provided, uses the default instance.
         """
         logger.info(f"Started monitoring prompt {prompt_id} for user {user_id}")
+
+        # Use provided comfyui_service or fall back to default
+        service = comfyui_service if comfyui_service is not None else self.comfyui_service
 
         while True:
             await asyncio.sleep(self.config.QUEUE_POLL_INTERVAL)
 
             try:
                 # Check if processing is complete
-                outputs = await self.comfyui_service.check_completion(prompt_id)
+                outputs = await service.check_completion(prompt_id)
 
                 if outputs:
                     logger.info(f"Processing complete for prompt {prompt_id}")

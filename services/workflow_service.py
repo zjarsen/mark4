@@ -26,7 +26,7 @@ class WorkflowService:
 
         Args:
             config: Configuration object
-            comfyui_service: ComfyUI service instance
+            comfyui_service: Legacy ComfyUI service instance (deprecated, will be removed)
             file_service: File service instance
             notification_service: Notification service instance
             queue_service: Queue service instance
@@ -34,17 +34,24 @@ class WorkflowService:
             credit_service: CreditService instance (optional for backwards compatibility)
         """
         self.config = config
-        self.comfyui_service = comfyui_service
         self.file_service = file_service
         self.notification_service = notification_service
         self.queue_service = queue_service
         self.state_manager = state_manager
         self.credit_service = credit_service
 
-        # Initialize workflow implementations
+        # Create workflow-specific ComfyUI service instances
+        from services.comfyui_service import ComfyUIService
+
+        image_comfyui = ComfyUIService(config, 'image_undress')
+        video_douxiong_comfyui = ComfyUIService(config, 'video_douxiong')
+        video_liujing_comfyui = ComfyUIService(config, 'video_liujing')
+        video_shejing_comfyui = ComfyUIService(config, 'video_shejing')
+
+        # Initialize workflow implementations with their specific ComfyUI services
         self.image_workflow = ImageProcessingWorkflow(
             config,
-            comfyui_service,
+            image_comfyui,
             file_service
         )
 
@@ -56,10 +63,13 @@ class WorkflowService:
         )
 
         self.video_workflows = {
-            'style_a': VideoProcessingStyleA(config, comfyui_service, file_service),
-            'style_b': VideoProcessingStyleB(config, comfyui_service, file_service),
-            'style_c': VideoProcessingStyleC(config, comfyui_service, file_service)
+            'style_a': VideoProcessingStyleA(config, video_douxiong_comfyui, file_service),
+            'style_b': VideoProcessingStyleB(config, video_liujing_comfyui, file_service),
+            'style_c': VideoProcessingStyleC(config, video_shejing_comfyui, file_service)
         }
+
+        # Store ComfyUI services for queue service (uses image_undress by default)
+        self.comfyui_service = image_comfyui
 
     async def start_image_workflow(
         self,
@@ -273,12 +283,13 @@ class WorkflowService:
                 self.notification_service
             )
 
-        # Start monitoring
+        # Start monitoring (pass image workflow's ComfyUI service)
         await self.queue_service.monitor_processing(
             bot,
             user_id,
             prompt_id,
-            completion_callback
+            completion_callback,
+            comfyui_service=self.image_workflow.comfyui_service
         )
 
     async def proceed_with_image_workflow(self, bot, user_id: int):
@@ -585,12 +596,14 @@ class WorkflowService:
                 self.notification_service
             )
 
-        # Start monitoring
+        # Start monitoring (pass video workflow's ComfyUI service)
+        video_workflow = self.video_workflows[style]
         await self.queue_service.monitor_processing(
             bot,
             user_id,
             prompt_id,
-            completion_callback
+            completion_callback,
+            comfyui_service=video_workflow.comfyui_service
         )
 
     async def proceed_with_video_workflow(self, bot, user_id: int):

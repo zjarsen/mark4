@@ -33,14 +33,14 @@ class VideoProcessingWorkflowBase(BaseWorkflow):
         # Load base workflow
         workflow = self.load_workflow_json()
 
-        # Inject image filename into LoadImage node
-        from core.constants import NODE_LOAD_IMAGE
-        if NODE_LOAD_IMAGE in workflow:
-            workflow[NODE_LOAD_IMAGE]["inputs"]["image"] = filename
-            logger.debug(f"Injected filename '{filename}' into node {NODE_LOAD_IMAGE}")
+        # Inject image filename into LoadImage node (video workflows use node 267)
+        from core.constants import NODE_LOAD_IMAGE_VIDEO
+        if NODE_LOAD_IMAGE_VIDEO in workflow:
+            workflow[NODE_LOAD_IMAGE_VIDEO]["inputs"]["image"] = filename
+            logger.debug(f"Injected filename '{filename}' into node {NODE_LOAD_IMAGE_VIDEO}")
         else:
             logger.warning(
-                f"LoadImage node '{NODE_LOAD_IMAGE}' not found in workflow"
+                f"LoadImage node '{NODE_LOAD_IMAGE_VIDEO}' not found in workflow"
             )
 
         return workflow

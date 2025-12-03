@@ -72,7 +72,9 @@ class BotApplication:
     def _initialize_services(self):
         """Initialize all service instances."""
         # Core services
-        self.comfyui_service = ComfyUIService(self.config)
+        # Note: ComfyUIService now requires workflow_type parameter
+        # This default instance is used by QueueService for backwards compatibility
+        self.comfyui_service = ComfyUIService(self.config, 'image_undress')
         self.file_service = FileService(self.config)
         self.notification_service = NotificationService(self.config)
 

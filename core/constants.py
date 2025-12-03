@@ -178,30 +178,31 @@ WORKFLOW_VIDEO_PROCESSING = "video_processing.json"  # Future
 WORKFLOW_I2I_OLD = "i2i_1.json"  # Old workflow (deprecated)
 
 # Video workflow file names
-WORKFLOW_VIDEO_STYLE_A = "video_style_a.json"
-WORKFLOW_VIDEO_STYLE_B = "video_style_b.json"
-WORKFLOW_VIDEO_STYLE_C = "video_style_c.json"
+WORKFLOW_VIDEO_STYLE_A = "i2v_undress_douxiong.json"
+WORKFLOW_VIDEO_STYLE_B = "i2v_undress_liujing.json"
+WORKFLOW_VIDEO_STYLE_C = "i2v_undress_shejing.json"
 
 # Node IDs in workflows
-NODE_LOAD_IMAGE = "7"
-NODE_SAVE_IMAGE = "27"
-NODE_SAVE_VIDEO = "27"  # Update based on actual workflow
+NODE_LOAD_IMAGE = "7"  # Image workflow
+NODE_SAVE_IMAGE = "27"  # Image workflow
+NODE_LOAD_IMAGE_VIDEO = "267"  # Video workflows
+NODE_SAVE_VIDEO = "245"  # Video workflows
 
 # Video processing messages
 VIDEO_SEND_IMAGE_PROMPT = "请上传图片，我们将生成视频"
 VIDEO_STYLE_SELECTION_MESSAGE = "请选择视频风格："
 
 # Video processing button labels
-VIDEO_STYLE_A_BUTTON = "风格 A"
-VIDEO_STYLE_B_BUTTON = "风格 B"
-VIDEO_STYLE_C_BUTTON = "风格 C"
+VIDEO_STYLE_A_BUTTON = "脱衣+抖胸"
+VIDEO_STYLE_B_BUTTON = "脱衣+下体流精"
+VIDEO_STYLE_C_BUTTON = "脱衣+ 吃吊喝精"
 BACK_TO_MENU_BUTTON = "🏠 返回主菜单"
 
 # Workflow display names for confirmation
 WORKFLOW_NAME_IMAGE = "图片脱衣"
-WORKFLOW_NAME_VIDEO_A = "图片转视频 - 风格 A"
-WORKFLOW_NAME_VIDEO_B = "图片转视频 - 风格 B"
-WORKFLOW_NAME_VIDEO_C = "图片转视频 - 风格 C"
+WORKFLOW_NAME_VIDEO_A = "脱衣+抖胸"
+WORKFLOW_NAME_VIDEO_B = "脱衣+下体流精"
+WORKFLOW_NAME_VIDEO_C = "脱衣+ 吃吊喝精"
 
 # Top-up packages (amount in CNY: credits)
 TOPUP_PACKAGES = {
