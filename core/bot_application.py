@@ -316,11 +316,12 @@ class BotApplication:
     def run(self):
         """Start the bot with polling."""
         logger.info(f"Starting bot: {self.config.BOT_USERNAME}")
-        logger.info(f"ComfyUI server: {self.config.COMFYUI_SERVER}")
+        logger.info(f"ComfyUI servers: Image={self.config.COMFYUI_IMAGE_UNDRESS_SERVER}, Video={self.config.COMFYUI_VIDEO_DOUXIONG_SERVER}")
 
         print("=" * 60)
         print(f"🤖 Bot starting: @{self.config.BOT_USERNAME}")
-        print(f"🎨 ComfyUI server: {self.config.COMFYUI_SERVER}")
+        print(f"🎨 ComfyUI Image: {self.config.COMFYUI_IMAGE_UNDRESS_SERVER}")
+        print(f"🎨 ComfyUI Video: {self.config.COMFYUI_VIDEO_DOUXIONG_SERVER}")
         print(f"📁 Uploads directory: {self.config.USER_UPLOADS_DIR}")
         print(f"📁 Retrieve directory: {self.config.COMFYUI_RETRIEVE_DIR}")
         print(f"⏱️  Cleanup timeout: {self.config.CLEANUP_TIMEOUT}s")
