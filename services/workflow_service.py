@@ -157,6 +157,10 @@ class WorkflowService:
                 # Check if using free trial
                 has_free_trial = await self.credit_service.has_free_trial(user_id)
 
+                # Get real balance for display (check_sufficient_credits returns 0.0 for free trial)
+                if has_free_trial:
+                    balance = await self.credit_service.get_balance(user_id)
+
                 # Calculate cooldown info for free trial users
                 cooldown_info = None
                 if has_free_trial:
