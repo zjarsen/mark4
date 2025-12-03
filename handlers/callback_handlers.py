@@ -131,7 +131,15 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             return
 
         style = query.data  # Keep full format: "video_style_a"
-        style_name = style.replace("video_", "").replace("_", " ").title()  # "Style A"
+
+        # Map callback data to proper Chinese style names
+        from core.constants import WORKFLOW_NAME_VIDEO_A, WORKFLOW_NAME_VIDEO_B, WORKFLOW_NAME_VIDEO_C
+        style_map = {
+            'video_style_a': WORKFLOW_NAME_VIDEO_A,
+            'video_style_b': WORKFLOW_NAME_VIDEO_B,
+            'video_style_c': WORKFLOW_NAME_VIDEO_C
+        }
+        style_name = style_map.get(style, style)
 
         # Check if already processing
         if state_manager.is_state(user_id, 'processing'):
