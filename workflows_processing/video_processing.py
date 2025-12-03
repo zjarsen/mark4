@@ -12,6 +12,39 @@ logger = logging.getLogger('mark4_bot')
 class VideoProcessingWorkflowBase(BaseWorkflow):
     """Base class for all video processing workflows."""
 
+    def extract_output_image(self, outputs: Dict) -> Dict:
+        """
+        Extract output video info from outputs dictionary.
+        Overrides base class to handle video output structure.
+
+        Args:
+            outputs: Outputs dictionary from ComfyUI
+
+        Returns:
+            Dictionary with video file info
+
+        Raises:
+            ValueError: If output node or video not found
+        """
+        node_id = self.get_output_node_id()
+
+        if node_id not in outputs:
+            raise ValueError(f"Output node '{node_id}' not found in outputs")
+
+        node_output = outputs[node_id]
+
+        # VHS_VideoCombine can output videos in different keys
+        # Try common keys: 'gifs', 'videos', or fall back to 'images'
+        for key in ['gifs', 'videos', 'images']:
+            if key in node_output and node_output[key]:
+                logger.debug(f"Found video output in key '{key}'")
+                return node_output[key][0]
+
+        # If no standard keys found, log the available keys for debugging
+        available_keys = list(node_output.keys())
+        logger.error(f"No video output found. Available keys: {available_keys}")
+        raise ValueError(f"No video output in node '{node_id}'. Available keys: {available_keys}")
+
     async def prepare_workflow(self, **params) -> Dict:
         """
         Load workflow and inject image filename.
