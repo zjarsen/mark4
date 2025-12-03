@@ -262,14 +262,12 @@ NODE_SAVE_VIDEO = "245"  # Video workflows
 VIDEO_SEND_IMAGE_PROMPT = "📸 请上传照片\n\n💡 视频生成需要一些时间，请耐心等待～"
 VIDEO_STYLE_SELECTION_MESSAGE = """🎬 选择视频风格
 
-💳 每次消费：30积分
-
 请选择您想要的动态效果："""
 
 # Video processing button labels
-VIDEO_STYLE_A_BUTTON = "脱衣+抖胸"
-VIDEO_STYLE_B_BUTTON = "脱衣+下体流精"
-VIDEO_STYLE_C_BUTTON = "脱衣+ 吃吊喝精"
+VIDEO_STYLE_A_BUTTON = "脱衣+抖胸（30积分）"
+VIDEO_STYLE_B_BUTTON = "脱衣+下体流精（30积分）"
+VIDEO_STYLE_C_BUTTON = "脱衣+ 吃吊喝精（30积分）"
 BACK_TO_MENU_BUTTON = "🏠 返回主菜单"
 
 # Workflow display names for confirmation
