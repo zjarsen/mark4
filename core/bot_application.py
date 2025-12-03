@@ -230,10 +230,18 @@ class BotApplication:
         self.app.add_handler(CommandHandler("cancel", command_handlers.cancel_command))
         self.app.add_handler(CommandHandler("status", command_handlers.status_command))
 
-        # Admin top-up handler (high priority, runs before menu handlers)
+        # Admin top-up handler (high priority, only matches exact password)
+        # Custom filter that only matches the admin password
+        def admin_password_filter(update):
+            if not update.message or not update.message.text:
+                return False
+            if not self.config.ADMIN_TOPUP_PASSWORD:
+                return False
+            return update.message.text.strip() == self.config.ADMIN_TOPUP_PASSWORD
+
         self.app.add_handler(
             MessageHandler(
-                filters.TEXT & ~filters.COMMAND,
+                filters.TEXT & ~filters.COMMAND & filters.UpdateType.MESSAGE & filters.ALL(admin_password_filter),
                 command_handlers.admin_topup_handler
             ),
             group=0
