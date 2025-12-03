@@ -156,7 +156,6 @@ BALANCE_MESSAGE = """💰 我的积分
 TOPUP_PACKAGES_MESSAGE = """💳 充值套餐
 
 🔥 超值套餐推荐：
-0️⃣ ¥1 = 2积分（体验装）
 1️⃣ ¥10 = 30积分 ⭐
 2️⃣ ¥30 = 120积分 🔥 性价比最高
 3️⃣ ¥50 = 250积分 💎
@@ -236,7 +235,6 @@ PAYMENT_TIMEOUT_SECONDS = 180  # 3 minutes
 REFRESH_QUEUE_BUTTON = "刷新队列"
 CONFIRM_CREDITS_BUTTON = "✅ 确认"
 CANCEL_CREDITS_BUTTON = "❌ 取消"
-TOPUP_1_BUTTON = "¥1 = 2积分"
 TOPUP_10_BUTTON = "¥10 = 30积分"
 TOPUP_30_BUTTON = "¥30 = 120积分"
 TOPUP_50_BUTTON = "¥50 = 250积分"
@@ -278,7 +276,6 @@ WORKFLOW_NAME_VIDEO_C = "脱衣+ 吃吊喝精"
 
 # Top-up packages (amount in CNY: credits)
 TOPUP_PACKAGES = {
-    1: 2,       # ¥1 = 2积分
     10: 30,     # ¥10 = 30积分
     30: 120,    # ¥30 = 120积分
     50: 250,    # ¥50 = 250积分
