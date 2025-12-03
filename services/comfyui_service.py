@@ -238,20 +238,29 @@ class ComfyUIService:
             logger.error(f"Error checking completion for {prompt_id}: {str(e)}")
             return None
 
-    async def download_image(self, filename: str, output_path: str):
+    async def download_image(
+        self,
+        filename: str,
+        output_path: str,
+        subfolder: str = "",
+        file_type: str = "output"
+    ):
         """
-        Download processed image from ComfyUI server.
+        Download processed image/video from ComfyUI server.
 
         Args:
             filename: Filename on ComfyUI server
-            output_path: Local path to save image
+            output_path: Local path to save file
+            subfolder: Subfolder location (default: "")
+            file_type: File type - "output" or "temp" (default: "output")
 
         Raises:
             Exception: If download fails
         """
         try:
             async with aiohttp.ClientSession() as session:
-                url = f"{self.view_url}?filename={filename}"
+                # Include subfolder and type in URL for ComfyUI compatibility
+                url = f"{self.view_url}?filename={filename}&subfolder={subfolder}&type={file_type}"
 
                 async with session.get(url) as resp:
                     if resp.status != 200:
@@ -262,10 +271,13 @@ class ComfyUIService:
                     with open(output_path, 'wb') as f:
                         f.write(await resp.read())
 
-                    logger.info(f"Downloaded image {filename} to {output_path}")
+                    logger.info(
+                        f"Downloaded {filename} (subfolder={subfolder}, type={file_type}) "
+                        f"to {output_path}"
+                    )
 
         except Exception as e:
-            logger.error(f"Error downloading image {filename}: {str(e)}")
+            logger.error(f"Error downloading {filename}: {str(e)}")
             raise
 
     async def get_system_stats(self) -> Optional[Dict]:

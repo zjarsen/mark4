@@ -173,11 +173,11 @@ class BaseWorkflow(ABC):
         output_path: str
     ):
         """
-        Download processed output image.
+        Download processed output file (image or video).
 
         Args:
-            output_image_info: Dictionary with 'filename' key
-            output_path: Local path to save image
+            output_image_info: Dictionary with 'filename', 'subfolder', 'type' keys
+            output_path: Local path to save file
 
         Raises:
             KeyError: If 'filename' not in output_image_info
@@ -186,6 +186,14 @@ class BaseWorkflow(ABC):
             raise KeyError("'filename' not found in output image info")
 
         filename = output_image_info['filename']
-        await self.comfyui_service.download_image(filename, output_path)
+        subfolder = output_image_info.get('subfolder', '')  # Default to empty string
+        file_type = output_image_info.get('type', 'output')  # Default to 'output'
 
-        logger.info(f"Downloaded output image to {output_path}")
+        await self.comfyui_service.download_image(
+            filename,
+            output_path,
+            subfolder=subfolder,
+            file_type=file_type
+        )
+
+        logger.info(f"Downloaded output to {output_path}")
