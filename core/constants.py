@@ -50,7 +50,12 @@ WELCOME_MESSAGE = """✨ 欢迎体验AI智能脱衣！
 准备好了吗？选择功能开始体验～"""
 
 SELECT_FUNCTION_MESSAGE = ""
-SEND_IMAGE_PROMPT = "📸 请上传您的照片，让AI开始创作～"
+SEND_IMAGE_PROMPT = """📸 请上传您的照片，让AI开始创作～
+
+图片脱衣模型展示✨✨✨：
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/5)
+
+💡 上传照片后，AI将自动开始处理"""
 FEATURE_NOT_IMPLEMENTED = "此功能仍在开发中"
 INVALID_FORMAT_MESSAGE = """❌ 图片格式不支持
 

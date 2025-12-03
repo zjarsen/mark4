@@ -88,7 +88,7 @@ async def handle_image_processing(
         )
 
         # Prompt user to send image
-        await update.message.reply_text(SEND_IMAGE_PROMPT)
+        await update.message.reply_text(SEND_IMAGE_PROMPT, parse_mode='Markdown')
 
         logger.info(f"User {user_id} started image processing workflow")
 
