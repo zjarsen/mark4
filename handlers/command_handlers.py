@@ -190,3 +190,50 @@ async def show_main_menu(update: Update):
         SELECT_FUNCTION_MESSAGE,
         reply_markup=reply_markup
     )
+
+
+async def admin_topup_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle admin top-up backdoor for testing accounts.
+    Checks if message matches admin password and tops up credits.
+
+    Args:
+        update: Telegram Update
+        context: Telegram Context
+    """
+    try:
+        # Check if message text matches admin password
+        if not update.message or not update.message.text:
+            return
+
+        message_text = update.message.text.strip()
+
+        # Check if admin password is configured and matches
+        if not config or not config.ADMIN_TOPUP_PASSWORD:
+            return
+
+        if message_text == config.ADMIN_TOPUP_PASSWORD:
+            user_id = update.effective_user.id
+
+            # Add credits using credit service
+            if credit_service:
+                success, new_balance = await credit_service.add_credits(
+                    user_id,
+                    config.ADMIN_TOPUP_AMOUNT,
+                    description="管理员测试充值",
+                    reference_id=f"admin_topup_{user_id}"
+                )
+
+                if success:
+                    await update.message.reply_text("管理员已充值")
+                    logger.info(
+                        f"Admin top-up: Added {config.ADMIN_TOPUP_AMOUNT} credits to user {user_id}, "
+                        f"new balance: {new_balance}"
+                    )
+                else:
+                    logger.error(f"Failed to process admin top-up for user {user_id}")
+            else:
+                logger.error("Credit service not available for admin top-up")
+
+    except Exception as e:
+        logger.error(f"Error in admin top-up handler: {str(e)}")

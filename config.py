@@ -91,6 +91,10 @@ class Config:
     PAYMENT_BANKCODE_WECHAT = os.getenv('PAYMENT_BANKCODE_WECHAT', '998')  # Bank code for WeChat
     PAYMENT_BANKCODE_ALIPAY = os.getenv('PAYMENT_BANKCODE_ALIPAY', '999')  # Bank code for Alipay
 
+    # Admin Testing Configuration
+    ADMIN_TOPUP_PASSWORD = os.getenv('ADMIN_TOPUP_PASSWORD')  # Admin password for testing top-ups
+    ADMIN_TOPUP_AMOUNT = int(os.getenv('ADMIN_TOPUP_AMOUNT', '100000'))  # Credits to add for admin top-up
+
     def __init__(self):
         """Initialize configuration and validate required settings."""
         self.validate()

@@ -230,6 +230,15 @@ class BotApplication:
         self.app.add_handler(CommandHandler("cancel", command_handlers.cancel_command))
         self.app.add_handler(CommandHandler("status", command_handlers.status_command))
 
+        # Admin top-up handler (high priority, runs before menu handlers)
+        self.app.add_handler(
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND,
+                command_handlers.admin_topup_handler
+            ),
+            group=0
+        )
+
         # Menu selection handlers
         # Use regex to match menu options (including variations)
         menu_pattern = r"^(1\. 图片脱衣|2\. 图片转视频脱衣|3\. 查看队列|4\. 📊 积分余额 & 充值记录|5\. 💳 充值积分|.*图片转视频.*)"
