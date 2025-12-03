@@ -137,7 +137,8 @@ async def handle_video_processing(
 
         await update.message.reply_text(
             VIDEO_STYLE_SELECTION_MESSAGE,
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
         )
 
         logger.info(f"User {user_id} requested video processing - showing style selection")

@@ -49,7 +49,7 @@ WELCOME_MESSAGE = """✨ 欢迎体验AI智能脱衣！
 
 准备好了吗？选择功能开始体验～"""
 
-SELECT_FUNCTION_MESSAGE = "请选择功能："
+SELECT_FUNCTION_MESSAGE = ""
 SEND_IMAGE_PROMPT = "📸 请上传您的照片，让AI开始创作～"
 FEATURE_NOT_IMPLEMENTED = "此功能仍在开发中"
 INVALID_FORMAT_MESSAGE = """❌ 图片格式不支持
@@ -259,6 +259,17 @@ NODE_SAVE_VIDEO = "245"  # Video workflows
 # Video processing messages
 VIDEO_SEND_IMAGE_PROMPT = "📸 请上传照片\n\n💡 视频生成需要一些时间，请耐心等待～"
 VIDEO_STYLE_SELECTION_MESSAGE = """🎬 选择视频风格
+
+模型效果展示：
+
+1. 视频模型1示例：✨✨脱衣+抖胸✨✨：
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/21)
+
+2. 视频模型2示例：✨✨脱衣+下体流精✨✨：
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/21)
+
+3. 视频模型3示例：✨✨脱衣+吃吊喝精✨✨：
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/21)
 
 请选择您想要的动态效果："""
 
