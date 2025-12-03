@@ -160,21 +160,8 @@ async def show_main_menu(update: Update):
     """
     user_id = update.effective_user.id
 
-    # Dynamically generate image processing menu text based on trial availability
-    image_option = MENU_OPTION_IMAGE
-    if credit_service:
-        try:
-            has_trial = await credit_service.has_free_trial(user_id)
-            if has_trial:
-                image_option = "1. 图片脱衣（免费可用）"
-            else:
-                image_option = "1. 图片脱衣（花费10积分）"
-        except Exception as e:
-            logger.error(f"Error checking trial availability: {e}")
-            # Fallback to default text on error
-
     keyboard = [
-        [KeyboardButton(image_option)],
+        [KeyboardButton(MENU_OPTION_IMAGE)],
         [KeyboardButton(MENU_OPTION_VIDEO)],
         [KeyboardButton(MENU_OPTION_CHECK_QUEUE)],
         [KeyboardButton(MENU_OPTION_BALANCE_HISTORY)],

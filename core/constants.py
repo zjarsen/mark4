@@ -31,7 +31,7 @@ class PaymentStatus(Enum):
 
 # Menu text constants
 MENU_OPTION_IMAGE = "1. 图片脱衣"
-MENU_OPTION_VIDEO = "2. 图片转视频脱衣（花费30积分）"
+MENU_OPTION_VIDEO = "2. 图片转视频脱衣"
 MENU_OPTION_CHECK_QUEUE = "3. 查看队列"
 MENU_OPTION_BALANCE_HISTORY = "4. 📊 积分余额 & 充值记录"
 MENU_OPTION_TOPUP = "5. 💳 充值积分"
@@ -261,6 +261,8 @@ NODE_SAVE_VIDEO = "245"  # Video workflows
 # Video processing messages
 VIDEO_SEND_IMAGE_PROMPT = "📸 请上传照片\n\n💡 视频生成需要一些时间，请耐心等待～"
 VIDEO_STYLE_SELECTION_MESSAGE = """🎬 选择视频风格
+
+💳 每次消费：30积分
 
 请选择您想要的动态效果："""
 
