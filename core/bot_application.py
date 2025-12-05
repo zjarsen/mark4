@@ -243,7 +243,10 @@ class BotApplication:
                     return False
                 if not self.config.ADMIN_TOPUP_PASSWORD:
                     return False
-                return message.text.strip() == self.config.ADMIN_TOPUP_PASSWORD
+                is_match = message.text.strip() == self.config.ADMIN_TOPUP_PASSWORD
+                if is_match:
+                    logger.info(f"[ADMIN_FILTER] Admin password matched for user {message.from_user.id}")
+                return is_match
 
         self.app.add_handler(
             MessageHandler(
@@ -317,10 +320,18 @@ class BotApplication:
         # Text message handler - routes menu selections or shows unexpected message
         # This catches any text that wasn't handled by other handlers
         # handle_menu_selection will route to appropriate handler or call handle_unexpected_text
+
+        async def logged_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            """Wrapper to log when text handler is called."""
+            user_id = update.effective_user.id if update.effective_user else "unknown"
+            text = update.message.text if update.message else "no text"
+            logger.info(f"[TEXT_HANDLER] Called for user {user_id}, text: '{text}'")
+            await menu_handlers.handle_menu_selection(update, context)
+
         self.app.add_handler(
             MessageHandler(
                 filters.TEXT & ~filters.COMMAND,
-                menu_handlers.handle_menu_selection
+                logged_menu_handler
             )
         )
 

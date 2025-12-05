@@ -37,29 +37,36 @@ async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TY
         user_id = update.effective_user.id
         text = update.message.text
 
-        logger.debug(f"User {user_id} selected: {text}")
+        logger.info(f"[MENU_SELECTION] User {user_id} sent text: '{text}'")
+        logger.info(f"[MENU_SELECTION] Text length: {len(text)}, starts with '1.': {text.startswith('1.')}")
 
         # Use partial matching since menu text is dynamic
         if text.startswith("1.") or "图生图" in text or "图片脱衣" in text:
+            logger.info(f"[MENU_SELECTION] Matched option 1 (image processing) for user {user_id}")
             await handle_image_processing(update, context, user_id)
 
         elif text.startswith("2.") or "图生成视频" in text or "视频类脱衣" in text or "图片转视频" in text:
+            logger.info(f"[MENU_SELECTION] Matched option 2 (video processing) for user {user_id}")
             await handle_video_processing(update, context, user_id)
 
         elif text.startswith("3.") or "查看队列" in text:
+            logger.info(f"[MENU_SELECTION] Matched option 3 (check queue) for user {user_id}")
             await handle_check_queue(update, context, user_id)
 
         elif text.startswith("4.") or "积分余额" in text or "充值记录" in text:
+            logger.info(f"[MENU_SELECTION] Matched option 4 (balance history) for user {user_id}")
             from handlers.credit_handlers import show_balance_and_history
             await show_balance_and_history(update, context)
 
         elif text.startswith("5.") or "充值积分" in text:
+            logger.info(f"[MENU_SELECTION] Matched option 5 (topup) for user {user_id}")
             from handlers.credit_handlers import show_topup_packages
             await show_topup_packages(update, context)
 
         else:
             # Unknown menu option
-            logger.warning(f"Unknown menu option from user {user_id}: {text}")
+            logger.warning(f"[MENU_SELECTION] No match found for text from user {user_id}: '{text}'")
+            logger.warning(f"[MENU_SELECTION] Sending UNEXPECTED_INPUT_MESSAGE")
             await update.message.reply_text(UNEXPECTED_INPUT_MESSAGE)
 
     except Exception as e:
@@ -81,6 +88,7 @@ async def handle_image_processing(
         user_id: User ID
     """
     try:
+        logger.info(f"[IMAGE_PROCESSING] Function called for user {user_id}")
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
         from core.constants import (
             IMAGE_STYLE_BRA_BUTTON,
@@ -92,6 +100,7 @@ async def handle_image_processing(
 
         # Check if user is already processing
         if state_manager.is_state(user_id, 'processing'):
+            logger.info(f"[IMAGE_PROCESSING] User {user_id} already processing, showing error")
             await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
             return
 
@@ -265,7 +274,8 @@ async def handle_unexpected_text(update: Update, context: ContextTypes.DEFAULT_T
         user_id = update.effective_user.id
         text = update.message.text
 
-        logger.debug(f"Unexpected text from user {user_id}: {text}")
+        logger.warning(f"[UNEXPECTED_TEXT] Called for user {user_id} with text: '{text}'")
+        logger.warning(f"[UNEXPECTED_TEXT] This handler should NOT be called directly - menu_selection should handle everything")
 
         # Check if user is in 'waiting_for_image' state
         if state_manager.is_state(user_id, 'waiting_for_image'):
