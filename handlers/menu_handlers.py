@@ -101,7 +101,7 @@ async def handle_image_processing(
         # Generate dynamic button text for undress style
         if has_trial:
             undress_button_text = "🆓 脱到精光 ✨免费体验✨"
-            trial_status = "🎁 **免费体验可用！** 使用后2天内自动重置"
+            trial_status = "🎁🎉 **免费体验可用！** 🎉🎁\n💫 使用后2天内自动重置"
         else:
             # Get next free trial time and calculate countdown
             next_trial_time = await credit_service.get_next_free_trial_time(user_id)
@@ -122,24 +122,28 @@ async def handle_image_processing(
                     countdown = f"{hours}小时"
 
                 undress_button_text = f"脱到精光（10积分）"
-                trial_status = f"⏰ 距离下次免费：{countdown}"
+                trial_status = f"⏰ **距离下次免费：{countdown}**\n💳 当前需要：10积分"
             else:
                 # No trial history, treat as available
                 undress_button_text = "🆓 脱到精光 ✨免费体验✨"
-                trial_status = "🎁 **免费体验可用！** 使用后2天内自动重置"
+                trial_status = "🎁🎉 **免费体验可用！** 🎉🎁\n💫 使用后2天内自动重置"
 
         # Generate dynamic message
         message = f"""🎨 选择脱衣风格
 
-模型效果展示：
-
-1. 粉色蕾丝内衣示例✨✨：
+━━━━━━━━━━━━━━━━━━
+1️⃣ 粉色蕾丝内衣示例✨✨
 [🔞点击观看🔞](https://t.me/placeholder1)
-✨ **永久免费！无需积分！**
 
-2. 脱到精光示例✨✨：
+🎁💝 **100%永久免费！** 💝🎁
+🆓 **无需积分！随时使用！** 🆓
+━━━━━━━━━━━━━━━━━━
+
+2️⃣ 脱到精光示例✨✨
 [🔞点击观看🔞](https://t.me/placeholder2)
+
 {trial_status}
+━━━━━━━━━━━━━━━━━━
 
 请选择您想要的风格："""
 
