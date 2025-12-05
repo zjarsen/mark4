@@ -253,16 +253,6 @@ class BotApplication:
             group=0
         )
 
-        # Menu selection handlers
-        # Use regex to match menu options (including variations)
-        menu_pattern = r"^(1\. 图片脱衣|2\. 图片转视频脱衣|3\. 查看队列|4\. 📊 积分余额 & 充值记录|5\. 💳 充值积分|.*图片转视频.*)"
-        self.app.add_handler(
-            MessageHandler(
-                filters.Regex(menu_pattern),
-                menu_handlers.handle_menu_selection
-            )
-        )
-
         # Media upload handlers
         self.app.add_handler(
             MessageHandler(filters.PHOTO, media_handlers.handle_photo)
@@ -324,12 +314,13 @@ class BotApplication:
             )
         )
 
-        # Text message fallback (lowest priority)
+        # Text message handler - routes menu selections or shows unexpected message
         # This catches any text that wasn't handled by other handlers
+        # handle_menu_selection will route to appropriate handler or call handle_unexpected_text
         self.app.add_handler(
             MessageHandler(
                 filters.TEXT & ~filters.COMMAND,
-                menu_handlers.handle_unexpected_text
+                menu_handlers.handle_menu_selection
             )
         )
 
