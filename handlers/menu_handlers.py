@@ -40,10 +40,10 @@ async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TY
         logger.debug(f"User {user_id} selected: {text}")
 
         # Use partial matching since menu text is dynamic
-        if text.startswith("1.") or "图片脱衣" in text:
+        if text.startswith("1.") or "图生图" in text or "图片脱衣" in text:
             await handle_image_processing(update, context, user_id)
 
-        elif text.startswith("2.") or "图片转视频" in text:
+        elif text.startswith("2.") or "图生成视频" in text or "视频类脱衣" in text or "图片转视频" in text:
             await handle_video_processing(update, context, user_id)
 
         elif text.startswith("3.") or "查看队列" in text:
