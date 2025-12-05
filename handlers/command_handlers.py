@@ -173,8 +173,11 @@ async def show_main_menu(update: Update):
         one_time_keyboard=False
     )
 
+    # Use minimal character if SELECT_FUNCTION_MESSAGE is empty
+    message_text = SELECT_FUNCTION_MESSAGE if SELECT_FUNCTION_MESSAGE else "·"
+
     await update.message.reply_text(
-        SELECT_FUNCTION_MESSAGE,
+        message_text,
         reply_markup=reply_markup
     )
 
