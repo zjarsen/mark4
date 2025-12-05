@@ -298,6 +298,14 @@ class BotApplication:
             )
         )
 
+        # Image style selection callback handler
+        self.app.add_handler(
+            CallbackQueryHandler(
+                callback_handlers.image_style_callback,
+                pattern="^image_style_|^back_to_menu"
+            )
+        )
+
         # Credit confirmation callback handler
         self.app.add_handler(
             CallbackQueryHandler(

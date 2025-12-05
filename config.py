@@ -20,6 +20,7 @@ class Config:
 
     # ComfyUI Server Configuration - Workflow-specific servers
     COMFYUI_IMAGE_UNDRESS_SERVER = os.getenv('COMFYUI_IMAGE_UNDRESS_SERVER')
+    COMFYUI_IMAGE_BRA_SERVER = os.getenv('COMFYUI_IMAGE_BRA_SERVER')
     COMFYUI_VIDEO_DOUXIONG_SERVER = os.getenv('COMFYUI_VIDEO_DOUXIONG_SERVER')
     COMFYUI_VIDEO_LIUJING_SERVER = os.getenv('COMFYUI_VIDEO_LIUJING_SERVER')
     COMFYUI_VIDEO_SHEJING_SERVER = os.getenv('COMFYUI_VIDEO_SHEJING_SERVER')
@@ -30,13 +31,14 @@ class Config:
         Get all ComfyUI URLs for a specific workflow type.
 
         Args:
-            workflow_type: One of 'image_undress', 'video_douxiong', 'video_liujing', 'video_shejing'
+            workflow_type: One of 'image_undress', 'image_bra', 'video_douxiong', 'video_liujing', 'video_shejing'
 
         Returns:
             Dict with upload_url, prompt_url, queue_url, history_url, view_url
         """
         server_map = {
             'image_undress': self.COMFYUI_IMAGE_UNDRESS_SERVER,
+            'image_bra': self.COMFYUI_IMAGE_BRA_SERVER,
             'video_douxiong': self.COMFYUI_VIDEO_DOUXIONG_SERVER,
             'video_liujing': self.COMFYUI_VIDEO_LIUJING_SERVER,
             'video_shejing': self.COMFYUI_VIDEO_SHEJING_SERVER

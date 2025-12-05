@@ -60,13 +60,28 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Start appropriate workflow
         if is_waiting_image:
-            await workflow_service.start_image_workflow(
-                update,
-                context,
-                local_path,
-                user_id
-            )
-            logger.info(f"Photo processed for user {user_id} (image workflow)")
+            # Get image style from state (if exists)
+            state = state_manager.get_state(user_id)
+            image_style = state.get('image_style')
+
+            if image_style:
+                # Has style selection - start image workflow with style
+                await workflow_service.start_image_workflow_with_style(
+                    update,
+                    context,
+                    local_path,
+                    user_id,
+                    image_style
+                )
+                logger.info(f"Photo processed for user {user_id} (image workflow, style={image_style})")
+            else:
+                # No style selection - fallback (shouldn't happen in new flow)
+                logger.warning(f"User {user_id} uploading image without style selection")
+                await update.message.reply_text(
+                    "请先从主菜单选择图片处理选项"
+                )
+                state_manager.reset_state(user_id)
+                return
 
         elif is_waiting_video:
             # Get video style from state
@@ -136,13 +151,28 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Start appropriate workflow
         if is_waiting_image:
-            await workflow_service.start_image_workflow(
-                update,
-                context,
-                local_path,
-                user_id
-            )
-            logger.info(f"Document processed for user {user_id} (image workflow)")
+            # Get image style from state (if exists)
+            state = state_manager.get_state(user_id)
+            image_style = state.get('image_style')
+
+            if image_style:
+                # Has style selection - start image workflow with style
+                await workflow_service.start_image_workflow_with_style(
+                    update,
+                    context,
+                    local_path,
+                    user_id,
+                    image_style
+                )
+                logger.info(f"Document processed for user {user_id} (image workflow, style={image_style})")
+            else:
+                # No style selection - fallback (shouldn't happen in new flow)
+                logger.warning(f"User {user_id} uploading image without style selection")
+                await update.message.reply_text(
+                    "请先从主菜单选择图片处理选项"
+                )
+                state_manager.reset_state(user_id)
+                return
 
         elif is_waiting_video:
             # Get video style from state

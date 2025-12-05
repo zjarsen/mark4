@@ -56,6 +56,20 @@ SEND_IMAGE_PROMPT = """📸 请上传您的照片，让AI开始创作～
 [🔞点击观看🔞](https://t.me/zuiqiangtuoyi/5)
 
 💡 上传照片后，AI将自动开始处理"""
+
+# Image style selection message
+IMAGE_STYLE_SELECTION_MESSAGE = """🎨 选择脱衣风格
+
+模型效果展示：
+
+1. 粉色蕾丝内衣示例✨✨：
+[🔞点击观看🔞](https://t.me/placeholder1)
+
+2. 脱到精光示例✨✨：
+[🔞点击观看🔞](https://t.me/placeholder2)
+
+请选择您想要的风格："""
+
 FEATURE_NOT_IMPLEMENTED = "此功能仍在开发中"
 INVALID_FORMAT_MESSAGE = """❌ 图片格式不支持
 
@@ -247,6 +261,11 @@ TOPUP_100_BUTTON = "¥100 = 600积分"
 
 # Workflow file names
 WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final.json"
+
+# Image workflow file names
+WORKFLOW_IMAGE_STYLE_BRA = "i2i_bra.json"
+WORKFLOW_IMAGE_STYLE_UNDRESS = "i2i_undress_final.json"
+
 WORKFLOW_VIDEO_PROCESSING = "video_processing.json"  # Future
 WORKFLOW_I2I_OLD = "i2i_1.json"  # Old workflow (deprecated)
 
@@ -282,10 +301,20 @@ VIDEO_STYLE_SELECTION_MESSAGE = """🎬 选择视频风格
 VIDEO_STYLE_A_BUTTON = "脱衣+抖胸（30积分）"
 VIDEO_STYLE_B_BUTTON = "脱衣+下体流精（30积分）"
 VIDEO_STYLE_C_BUTTON = "脱衣+ 吃吊喝精（30积分）"
+
+# Image processing button labels
+IMAGE_STYLE_BRA_BUTTON = "粉色蕾丝内衣（10积分）"
+IMAGE_STYLE_UNDRESS_BUTTON = "脱到精光（10积分）"
+
 BACK_TO_MENU_BUTTON = "🏠 返回主菜单"
 
 # Workflow display names for confirmation
 WORKFLOW_NAME_IMAGE = "图片脱衣"
+
+# Image workflow display names for confirmation
+WORKFLOW_NAME_IMAGE_BRA = "粉色蕾丝内衣"
+WORKFLOW_NAME_IMAGE_UNDRESS = "脱到精光"
+
 WORKFLOW_NAME_VIDEO_A = "脱衣+抖胸"
 WORKFLOW_NAME_VIDEO_B = "脱衣+下体流精"
 WORKFLOW_NAME_VIDEO_C = "脱衣+ 吃吊喝精"

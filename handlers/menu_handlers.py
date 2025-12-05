@@ -72,7 +72,7 @@ async def handle_image_processing(
     user_id: int
 ):
     """
-    Handle 'Image Processing' menu selection.
+    Handle 'Image Processing' menu selection - show style selection.
 
     Args:
         update: Telegram Update
@@ -80,21 +80,40 @@ async def handle_image_processing(
         user_id: User ID
     """
     try:
-        # Set user state to waiting for image
-        state_manager.update_state(
-            user_id,
-            state='waiting_for_image',
-            retry_count=0
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        from core.constants import (
+            IMAGE_STYLE_SELECTION_MESSAGE,
+            IMAGE_STYLE_BRA_BUTTON,
+            IMAGE_STYLE_UNDRESS_BUTTON,
+            BACK_TO_MENU_BUTTON,
+            ALREADY_PROCESSING_MESSAGE
         )
 
-        # Prompt user to send image
-        await update.message.reply_text(SEND_IMAGE_PROMPT, parse_mode='Markdown')
+        # Check if user is already processing
+        if state_manager.is_state(user_id, 'processing'):
+            await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
+            return
 
-        logger.info(f"User {user_id} started image processing workflow")
+        # Show style selection keyboard
+        keyboard = [
+            [InlineKeyboardButton(IMAGE_STYLE_BRA_BUTTON, callback_data="image_style_bra")],
+            [InlineKeyboardButton(IMAGE_STYLE_UNDRESS_BUTTON, callback_data="image_style_undress")],
+            [InlineKeyboardButton(BACK_TO_MENU_BUTTON, callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            IMAGE_STYLE_SELECTION_MESSAGE,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+
+        logger.info(f"User {user_id} requested image processing - showing style selection")
 
     except Exception as e:
         logger.error(f"Error in handle_image_processing: {str(e)}")
-        raise
+        from core.constants import ERROR_MESSAGE
+        await update.message.reply_text(ERROR_MESSAGE)
 
 
 async def handle_video_processing(

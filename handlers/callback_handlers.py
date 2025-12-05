@@ -175,6 +175,78 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         logger.error(f"Error handling video style callback: {str(e)}")
 
 
+async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle image style selection button clicks.
+
+    Args:
+        update: Telegram Update
+        context: Telegram Context
+    """
+    try:
+        query = update.callback_query
+        await query.answer()  # Acknowledge button click
+
+        user_id = update.effective_user.id
+
+        # Handle back to menu
+        if query.data == "back_to_menu":
+            await query.edit_message_text("已取消")
+            return
+
+        # Extract style from callback data (image_style_bra, image_style_undress)
+        if not query.data.startswith("image_style_"):
+            await query.edit_message_text("无效的选择")
+            return
+
+        style = query.data  # Keep full format: "image_style_bra" or "image_style_undress"
+
+        # Validate style
+        valid_styles = ['image_style_bra', 'image_style_undress']
+        if style not in valid_styles:
+            await query.edit_message_text("无效的风格选择")
+            return
+
+        # Convert to internal format: "bra" or "undress"
+        internal_style = style.replace("image_style_", "")
+
+        # Check if already processing
+        if state_manager.is_state(user_id, 'processing'):
+            from core.constants import ALREADY_PROCESSING_MESSAGE
+            await query.edit_message_text(ALREADY_PROCESSING_MESSAGE)
+            return
+
+        # Map callback data to proper Chinese style names
+        from core.constants import WORKFLOW_NAME_IMAGE_BRA, WORKFLOW_NAME_IMAGE_UNDRESS
+        style_map = {
+            'image_style_bra': WORKFLOW_NAME_IMAGE_BRA,
+            'image_style_undress': WORKFLOW_NAME_IMAGE_UNDRESS
+        }
+        style_name = style_map.get(style, style)
+
+        # Update state to waiting for image with selected style
+        state_manager.update_state(
+            user_id,
+            state='waiting_for_image',
+            image_style=internal_style,
+            retry_count=0
+        )
+
+        from core.constants import SEND_IMAGE_PROMPT
+        await query.edit_message_text(
+            f"已选择 {style_name}\n\n{SEND_IMAGE_PROMPT}",
+            parse_mode='Markdown'
+        )
+
+        logger.info(f"User {user_id} selected image style: {internal_style}")
+
+    except Exception as e:
+        logger.error(f"Error handling image style callback: {str(e)}")
+        await update.effective_chat.send_message(
+            "选择风格时发生错误，请重试"
+        )
+
+
 async def credit_confirmation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle credit confirmation button clicks (confirm or cancel).
@@ -263,7 +335,19 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
                 return
 
             # Proceed with appropriate workflow
-            if workflow_type == "image":
+            if workflow_type.startswith("image_"):
+                # Styled image workflows (image_bra, image_undress)
+                success = await workflow_service.proceed_with_image_workflow_with_style(
+                    context.bot,
+                    user_id
+                )
+                logger.info(
+                    f"User {user_id} confirmed styled image workflow, "
+                    f"type: {workflow_type}, success: {success}"
+                )
+
+            elif workflow_type == "image":
+                # Legacy image workflow (backward compatibility)
                 success = await workflow_service.proceed_with_image_workflow(
                     context.bot,
                     user_id
