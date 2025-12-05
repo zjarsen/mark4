@@ -368,52 +368,19 @@ class WorkflowService:
                             hours = delta.seconds // 3600
                             cooldown_info = f"使用后 {days}天{hours}小时 后可再次免费使用"
 
-                else:  # style == 'bra' - paid only, no free trial
-                    has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
-                        user_id,
-                        'image_processing'
+                else:  # style == 'bra' - permanently free (0 credits, no payment ever)
+                    # Get user's balance for display only (not used for checking)
+                    balance = await self.credit_service.get_balance(user_id)
+
+                    # Bra style is permanently free - set cost to 0
+                    cost = 0
+
+                    # Mark as free trial to skip credit deduction later
+                    has_free_trial = True
+
+                    logger.info(
+                        f"User {user_id} using bra style (permanently free)"
                     )
-
-                    if not has_sufficient:
-                        from core.constants import (
-                            INSUFFICIENT_CREDITS_MESSAGE,
-                            TOPUP_PACKAGES_MESSAGE,
-                            TOPUP_10_BUTTON,
-                            TOPUP_30_BUTTON,
-                            TOPUP_50_BUTTON,
-                            TOPUP_100_BUTTON
-                        )
-                        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-                        # Send insufficient credits message
-                        await update.message.reply_text(
-                            INSUFFICIENT_CREDITS_MESSAGE.format(
-                                balance=balance,
-                                required=cost
-                            )
-                        )
-
-                        # Show topup packages inline keyboard
-                        keyboard = [
-                            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
-                        ]
-                        reply_markup = InlineKeyboardMarkup(keyboard)
-
-                        await context.bot.send_message(
-                            chat_id=user_id,
-                            text=TOPUP_PACKAGES_MESSAGE,
-                            reply_markup=reply_markup
-                        )
-
-                        logger.warning(
-                            f"User {user_id} has insufficient credits for bra style: "
-                            f"balance={balance}, required={cost}"
-                        )
-                        self.state_manager.reset_state(user_id)
-                        return
 
             # Upload image to ComfyUI
             await image_workflow.upload_image(local_path, filename)
@@ -783,56 +750,17 @@ class WorkflowService:
                             self.state_manager.reset_state(user_id)
                             return False
 
-                else:  # style == 'bra' - paid only
-                    has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
-                        user_id,
-                        'image_processing'
+                else:  # style == 'bra' - permanently free (no credit checks)
+                    # Bra style is permanently free - skip all credit checks
+                    logger.info(
+                        f"User {user_id} proceeding with bra style (permanently free)"
                     )
-
-                    if not has_sufficient:
-                        # Insufficient credits - show error and topup menu
-                        from core.constants import (
-                            CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
-                            TOPUP_PACKAGES_MESSAGE,
-                            TOPUP_10_BUTTON,
-                            TOPUP_30_BUTTON,
-                            TOPUP_50_BUTTON,
-                            TOPUP_100_BUTTON
-                        )
-                        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-                        # Send insufficient credits message
-                        await bot.send_message(
-                            chat_id=user_id,
-                            text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
-                                balance=int(balance),
-                                cost=int(cost)
-                            )
-                        )
-
-                        # Show topup packages inline keyboard
-                        keyboard = [
-                            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
-                        ]
-                        reply_markup = InlineKeyboardMarkup(keyboard)
-
-                        await bot.send_message(
-                            chat_id=user_id,
-                            text=TOPUP_PACKAGES_MESSAGE,
-                            reply_markup=reply_markup
-                        )
-
-                        self.state_manager.reset_state(user_id)
-                        return False
 
             # Queue workflow
             prompt_id = await image_workflow.queue_workflow(filename=filename)
 
-            # Deduct credits after successful queue
-            if self.credit_service:
+            # Deduct credits after successful queue (skip if bra style - permanently free)
+            if self.credit_service and style != 'bra':
                 success, new_balance = await self.credit_service.deduct_credits(
                     user_id,
                     'image_processing',
@@ -845,6 +773,10 @@ class WorkflowService:
                     )
                 else:
                     logger.error(f"Failed to deduct credits for user {user_id}")
+            elif style == 'bra':
+                logger.info(
+                    f"Skipping credit deduction for user {user_id} (bra style - permanently free)"
+                )
 
             # Update user state
             self.state_manager.update_state(

@@ -303,7 +303,7 @@ VIDEO_STYLE_B_BUTTON = "脱衣+下体流精（30积分）"
 VIDEO_STYLE_C_BUTTON = "脱衣+ 吃吊喝精（30积分）"
 
 # Image processing button labels
-IMAGE_STYLE_BRA_BUTTON = "粉色蕾丝内衣（10积分）"
+IMAGE_STYLE_BRA_BUTTON = "🎁 粉色蕾丝内衣 ✨永久免费✨"
 IMAGE_STYLE_UNDRESS_BUTTON = "脱到精光（10积分）"
 
 BACK_TO_MENU_BUTTON = "🏠 返回主菜单"

@@ -131,6 +131,7 @@ class BotApplication:
         menu_handlers.notification_service = self.notification_service
         menu_handlers.queue_service = self.queue_service
         menu_handlers.config = self.config
+        menu_handlers.credit_service = self.credit_service
 
         # Inject into media_handlers
         media_handlers.state_manager = self.state_manager

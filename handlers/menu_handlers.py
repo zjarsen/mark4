@@ -22,6 +22,7 @@ state_manager = None
 notification_service = None
 queue_service = None
 config = None
+credit_service = None
 
 
 async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -72,7 +73,7 @@ async def handle_image_processing(
     user_id: int
 ):
     """
-    Handle 'Image Processing' menu selection - show style selection.
+    Handle 'Image Processing' menu selection - show style selection with dynamic trial status.
 
     Args:
         update: Telegram Update
@@ -82,33 +83,84 @@ async def handle_image_processing(
     try:
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
         from core.constants import (
-            IMAGE_STYLE_SELECTION_MESSAGE,
             IMAGE_STYLE_BRA_BUTTON,
-            IMAGE_STYLE_UNDRESS_BUTTON,
             BACK_TO_MENU_BUTTON,
             ALREADY_PROCESSING_MESSAGE
         )
+        from datetime import datetime
+        import pytz
 
         # Check if user is already processing
         if state_manager.is_state(user_id, 'processing'):
             await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
             return
 
-        # Show style selection keyboard
+        # Check trial status for undress style
+        has_trial = await credit_service.has_free_trial(user_id)
+
+        # Generate dynamic button text for undress style
+        if has_trial:
+            undress_button_text = "🆓 脱到精光 ✨免费体验✨"
+            trial_status = "🎁 **免费体验可用！** 使用后2天内自动重置"
+        else:
+            # Get next free trial time and calculate countdown
+            next_trial_time = await credit_service.get_next_free_trial_time(user_id)
+
+            if next_trial_time:
+                # Calculate time difference
+                beijing_tz = pytz.timezone('Asia/Shanghai')
+                now = datetime.now(beijing_tz)
+                time_diff = next_trial_time - now
+
+                # Convert to days and hours
+                days = time_diff.days
+                hours = time_diff.seconds // 3600
+
+                if days > 0:
+                    countdown = f"{days}天{hours}小时"
+                else:
+                    countdown = f"{hours}小时"
+
+                undress_button_text = f"脱到精光（10积分）"
+                trial_status = f"⏰ 距离下次免费：{countdown}"
+            else:
+                # No trial history, treat as available
+                undress_button_text = "🆓 脱到精光 ✨免费体验✨"
+                trial_status = "🎁 **免费体验可用！** 使用后2天内自动重置"
+
+        # Generate dynamic message
+        message = f"""🎨 选择脱衣风格
+
+模型效果展示：
+
+1. 粉色蕾丝内衣示例✨✨：
+[🔞点击观看🔞](https://t.me/placeholder1)
+✨ **永久免费！无需积分！**
+
+2. 脱到精光示例✨✨：
+[🔞点击观看🔞](https://t.me/placeholder2)
+{trial_status}
+
+请选择您想要的风格："""
+
+        # Build keyboard with dynamic button text
         keyboard = [
             [InlineKeyboardButton(IMAGE_STYLE_BRA_BUTTON, callback_data="image_style_bra")],
-            [InlineKeyboardButton(IMAGE_STYLE_UNDRESS_BUTTON, callback_data="image_style_undress")],
+            [InlineKeyboardButton(undress_button_text, callback_data="image_style_undress")],
             [InlineKeyboardButton(BACK_TO_MENU_BUTTON, callback_data="back_to_menu")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await update.message.reply_text(
-            IMAGE_STYLE_SELECTION_MESSAGE,
+            message,
             reply_markup=reply_markup,
             parse_mode='Markdown'
         )
 
-        logger.info(f"User {user_id} requested image processing - showing style selection")
+        logger.info(
+            f"User {user_id} requested image processing - showing style selection "
+            f"(trial available: {has_trial})"
+        )
 
     except Exception as e:
         logger.error(f"Error in handle_image_processing: {str(e)}")
