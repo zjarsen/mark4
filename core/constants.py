@@ -30,9 +30,9 @@ class PaymentStatus(Enum):
 
 
 # Menu text constants
-MENU_OPTION_IMAGE = "1. 图片脱衣"
-MENU_OPTION_VIDEO = "2. 图片转视频脱衣"
-MENU_OPTION_CHECK_QUEUE = "3. 查看队列"
+MENU_OPTION_IMAGE = "1. 📸 图生图类脱衣！✨"
+MENU_OPTION_VIDEO = "2. 🎬 图生成视频类脱衣！✨"
+MENU_OPTION_CHECK_QUEUE = "3. 查看当前队列"
 MENU_OPTION_BALANCE_HISTORY = "4. 📊 积分余额 & 充值记录"
 MENU_OPTION_TOPUP = "5. 💳 充值积分"
 
