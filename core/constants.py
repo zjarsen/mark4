@@ -179,6 +179,8 @@ TOPUP_PACKAGES_MESSAGE = """💳 充值套餐
 2️⃣ ¥33 = 120积分 🔥 性价比最高
 3️⃣ ¥55 = 250积分 💎
 4️⃣ ¥110 = 600积分 👑 豪华装
+5️⃣ ¥143 = 永久VIP ⭐⭐⭐ 无限使用
+6️⃣ ¥286 = 永久黑金VIP 👑👑👑 无限使用+优先队列
 
 ✨ 充值优势：
 • 积分永久有效
@@ -258,6 +260,8 @@ TOPUP_10_BUTTON = "¥11 = 30积分"
 TOPUP_30_BUTTON = "¥33 = 120积分"
 TOPUP_50_BUTTON = "¥55 = 250积分"
 TOPUP_100_BUTTON = "¥110 = 600积分"
+TOPUP_VIP_BUTTON = "¥143 = 永久VIP"
+TOPUP_BLACK_GOLD_VIP_BUTTON = "¥286 = 永久黑金VIP"
 
 # Workflow file names
 WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final.json"
@@ -321,8 +325,45 @@ WORKFLOW_NAME_VIDEO_C = "脱衣+ 吃吊喝精"
 
 # Top-up packages (amount in CNY: credits)
 TOPUP_PACKAGES = {
-    10: 30,     # ¥10 = 30积分
-    30: 120,    # ¥30 = 120积分
-    50: 250,    # ¥50 = 250积分
-    100: 600    # ¥100 = 600积分
+    10: 30,         # ¥10 = 30积分
+    30: 120,        # ¥30 = 120积分
+    50: 250,        # ¥50 = 250积分
+    100: 600,       # ¥100 = 600积分
+    130: 99999999,  # ¥130 = 永久VIP (unlimited credits)
+    260: 99999999   # ¥260 = 永久黑金VIP (unlimited credits)
 }
+
+# VIP System Messages
+VIP_CONFIRMATION_MESSAGE = """👑 VIP会员确认
+
+本次使用：免费 (VIP特权)
+当前余额：{balance} 积分
+
+✨ VIP用户享受无限使用权限"""
+
+VIP_PURCHASE_SUCCESS_MESSAGE = """🎉 恭喜您成为{tier}！
+
+✨ 您的专属特权：
+{benefits}
+
+现在就去无限体验吧～"""
+
+VIP_BENEFITS_REGULAR = """• 无限使用所有功能
+• 无需积分消耗
+• 永久有效"""
+
+VIP_BENEFITS_BLACK_GOLD = """• 无限使用所有功能
+• 优先处理队列 ⚡
+• 无需积分消耗
+• 永久有效"""
+
+VIP_STATUS_BADGE = "👑 {tier}用户"
+
+# VIP Balance Display
+BALANCE_MESSAGE_VIP = """💰 我的账户
+
+会员等级：{vip_badge}
+当前余额：{balance} 积分 (无限使用)
+累计消费：{total_spent} 积分
+
+✨ VIP特权生效中"""

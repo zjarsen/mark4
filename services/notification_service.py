@@ -190,10 +190,11 @@ class NotificationService:
         balance: float,
         cost: float,
         is_free_trial: bool = False,
-        cooldown_info: str = None
+        cooldown_info: str = None,
+        is_vip: bool = False
     ):
         """
-        Send credit confirmation message with confirm/cancel buttons.
+        Send credit confirmation message with confirm/cancel buttons (VIP-aware).
 
         Args:
             bot: Telegram Bot instance
@@ -204,6 +205,7 @@ class NotificationService:
             cost: Cost of this operation
             is_free_trial: Whether this is a free trial use
             cooldown_info: Optional cooldown information text
+            is_vip: Whether user is VIP (bypasses credit check)
 
         Returns:
             Sent Message object
@@ -212,12 +214,16 @@ class NotificationService:
             from core.constants import (
                 CREDIT_CONFIRMATION_MESSAGE,
                 CREDIT_CONFIRMATION_FREE_TRIAL_MESSAGE,
+                VIP_CONFIRMATION_MESSAGE,
                 CONFIRM_CREDITS_BUTTON,
                 CANCEL_CREDITS_BUTTON
             )
 
             # Build message text
-            if is_free_trial:
+            if is_vip:
+                # VIP confirmation message (simplified)
+                text = VIP_CONFIRMATION_MESSAGE.format(balance=int(balance))
+            elif is_free_trial:
                 if not cooldown_info:
                     cooldown_info = ""
                 text = CREDIT_CONFIRMATION_FREE_TRIAL_MESSAGE.format(
@@ -259,7 +265,7 @@ class NotificationService:
 
             logger.info(
                 f"Sent credit confirmation to user {chat_id}: "
-                f"{workflow_name}, free_trial={is_free_trial}"
+                f"{workflow_name}, VIP={is_vip}, free_trial={is_free_trial}"
             )
             return message
 

@@ -440,3 +440,158 @@ class CreditService:
         except Exception as e:
             logger.error(f"Error refunding credits for user {user_id}: {str(e)}")
             return False, 0.0
+
+    async def get_total_spent(self, user_id: int) -> float:
+        """
+        Get user's total spent credits.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Total spent amount
+        """
+        try:
+            user = self.db.get_user(user_id)
+            return user['total_spent'] if user else 0.0
+
+        except Exception as e:
+            logger.error(f"Error getting total spent for user {user_id}: {str(e)}")
+            return 0.0
+
+    # VIP operations
+    async def is_vip_user(self, user_id: int) -> Tuple[bool, str]:
+        """
+        Check if user is VIP and return tier.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Tuple of (is_vip, tier) where tier is 'none', 'vip', or 'black_gold'
+        """
+        try:
+            tier = self.db.get_vip_tier(user_id)
+            is_vip = tier in ['vip', 'black_gold']
+            return is_vip, tier
+
+        except Exception as e:
+            logger.error(f"Error checking VIP status for user {user_id}: {str(e)}")
+            return False, 'none'
+
+    async def check_sufficient_credits_with_vip(
+        self,
+        user_id: int,
+        feature_name: str
+    ) -> Tuple[bool, bool, float, float]:
+        """
+        Check credits with VIP bypass.
+
+        Args:
+            user_id: User ID
+            feature_name: Feature name (e.g., 'image_processing')
+
+        Returns:
+            Tuple of (is_vip, has_sufficient, balance, cost)
+        """
+        try:
+            # Check VIP status first
+            is_vip, tier = await self.is_vip_user(user_id)
+
+            balance = await self.get_balance(user_id)
+            cost = self.db.get_feature_cost(feature_name) or 0.0
+
+            if is_vip:
+                # VIP users always have sufficient credits
+                logger.info(f"VIP user {user_id} (tier: {tier}) - bypassing credit check")
+                return True, True, balance, cost
+
+            # Regular credit check for non-VIP (includes free trial logic)
+            has_sufficient, balance, cost = await self.check_sufficient_credits(
+                user_id, feature_name
+            )
+            return False, has_sufficient, balance, cost
+
+        except Exception as e:
+            logger.error(
+                f"Error checking credits with VIP for user {user_id}: {str(e)}"
+            )
+            return False, False, 0.0, 0.0
+
+    async def grant_vip_status(self, user_id: int, tier: str) -> Tuple[bool, str]:
+        """
+        Grant VIP status to user and add unlimited credits.
+
+        Args:
+            user_id: User ID
+            tier: 'vip' or 'black_gold'
+
+        Returns:
+            Tuple of (success, message)
+        """
+        try:
+            # Validate tier
+            if tier not in ['vip', 'black_gold']:
+                return False, "无效的VIP类型"
+
+            # Check current tier
+            current_tier = self.db.get_vip_tier(user_id)
+
+            # Check if redundant purchase
+            if current_tier == tier:
+                tier_name = self._tier_display_name(tier)
+                return False, f"您已经是{tier_name}了"
+
+            # Check if downgrade (shouldn't happen, but validate)
+            if current_tier == 'black_gold' and tier == 'vip':
+                return False, "不能从黑金VIP降级到普通VIP"
+
+            # Set VIP tier
+            success = self.db.set_vip_tier(user_id, tier)
+
+            if not success:
+                return False, "设置VIP状态失败"
+
+            # Add 99999999 credits
+            credit_amount = 99999999
+            tier_name = self._tier_display_name(tier)
+
+            success, new_balance = await self.add_credits(
+                user_id,
+                credit_amount,
+                description=f"{tier_name}购买",
+                reference_id=f"vip_{tier}_{user_id}"
+            )
+
+            if not success:
+                # Rollback VIP tier
+                self.db.set_vip_tier(user_id, current_tier)
+                return False, "添加积分失败"
+
+            logger.info(
+                f"Granted {tier} VIP to user {user_id}, "
+                f"added {credit_amount} credits, new balance: {new_balance}"
+            )
+
+            return True, f"恭喜成为{tier_name}！"
+
+        except Exception as e:
+            logger.error(f"Error granting VIP to user {user_id}: {str(e)}")
+            return False, "系统错误"
+
+    def _tier_display_name(self, tier: str) -> str:
+        """
+        Get display name for tier.
+
+        Args:
+            tier: Tier code ('none', 'vip', 'black_gold')
+
+        Returns:
+            Display name in Chinese
+        """
+        names = {
+            'vip': '永久VIP',
+            'black_gold': '永久黑金VIP',
+            'none': '普通用户'
+        }
+        return names.get(tier, tier)

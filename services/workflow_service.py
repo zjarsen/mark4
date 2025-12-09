@@ -82,6 +82,17 @@ class WorkflowService:
         # Store ComfyUI services for queue service (uses image_undress by default)
         self.comfyui_service = image_comfyui
 
+        # Initialize VIP queue manager for priority queue handling
+        from services.vip_queue_manager import VIPQueueManager
+        self.vip_queue_manager = VIPQueueManager(
+            comfyui_service=image_comfyui,
+            max_comfyui_queue_size=10
+        )
+
+        # Start VIP queue processor
+        asyncio.create_task(self.vip_queue_manager.start())
+        logger.info("VIP Queue Manager initialized and started")
+
     async def start_image_workflow(
         self,
         update,
@@ -676,7 +687,7 @@ class WorkflowService:
 
     async def proceed_with_image_workflow_with_style(self, bot, user_id: int):
         """
-        Proceed with styled image workflow after user confirms credit deduction.
+        Proceed with styled image workflow after user confirms credit deduction (VIP-aware).
         Called from credit_confirmation_callback handler.
 
         Args:
@@ -698,122 +709,150 @@ class WorkflowService:
 
             image_workflow = self.image_workflows[style]
 
-            # Re-check credits based on style
+            # Check VIP status first
+            is_vip = False
+            is_black_gold = False
+
             if self.credit_service:
-                if style == 'undress':
-                    # Check with free trial support
-                    has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
-                        user_id,
-                        'image_processing'
-                    )
+                is_vip, tier = await self.credit_service.is_vip_user(user_id)
+                is_black_gold = (tier == 'black_gold')
 
-                    if not has_sufficient:
-                        # Check if user has free trial
-                        has_trial = await self.credit_service.has_free_trial(user_id)
-
-                        if not has_trial:
-                            # Insufficient credits - show error and topup menu
-                            from core.constants import (
-                                CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
-                                TOPUP_PACKAGES_MESSAGE,
-                                TOPUP_10_BUTTON,
-                                TOPUP_30_BUTTON,
-                                TOPUP_50_BUTTON,
-                                TOPUP_100_BUTTON
-                            )
-                            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-                            # Send insufficient credits message
-                            await bot.send_message(
-                                chat_id=user_id,
-                                text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
-                                    balance=int(balance),
-                                    cost=int(cost)
-                                )
-                            )
-
-                            # Show topup packages inline keyboard
-                            keyboard = [
-                                [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                                [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                                [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                                [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
-                            ]
-                            reply_markup = InlineKeyboardMarkup(keyboard)
-
-                            await bot.send_message(
-                                chat_id=user_id,
-                                text=TOPUP_PACKAGES_MESSAGE,
-                                reply_markup=reply_markup
-                            )
-
-                            self.state_manager.reset_state(user_id)
-                            return False
-
-                else:  # style == 'bra' - permanently free (no credit checks)
-                    # Bra style is permanently free - skip all credit checks
+                if is_vip:
+                    # VIP users: no credit checks, no credit deduction
                     logger.info(
-                        f"User {user_id} proceeding with bra style (permanently free)"
-                    )
-
-            # Queue workflow
-            prompt_id = await image_workflow.queue_workflow(filename=filename)
-
-            # Deduct credits after successful queue (skip if bra style - permanently free)
-            if self.credit_service and style != 'bra':
-                success, new_balance = await self.credit_service.deduct_credits(
-                    user_id,
-                    'image_processing',
-                    reference_id=prompt_id
-                )
-                if success:
-                    logger.info(
-                        f"Deducted credits for user {user_id} (style: {style}), "
-                        f"new balance: {new_balance}"
+                        f"VIP user {user_id} (tier: {tier}) - bypassing all credit operations"
                     )
                 else:
-                    logger.error(f"Failed to deduct credits for user {user_id}")
-            elif style == 'bra':
-                logger.info(
-                    f"Skipping credit deduction for user {user_id} (bra style - permanently free)"
+                    # Non-VIP users: re-check credits based on style
+                    if style == 'undress':
+                        # Check with free trial support
+                        has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
+                            user_id,
+                            'image_processing'
+                        )
+
+                        if not has_sufficient:
+                            # Check if user has free trial
+                            has_trial = await self.credit_service.has_free_trial(user_id)
+
+                            if not has_trial:
+                                # Insufficient credits - show error and topup menu
+                                from core.constants import (
+                                    CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
+                                    TOPUP_PACKAGES_MESSAGE,
+                                    TOPUP_10_BUTTON,
+                                    TOPUP_30_BUTTON,
+                                    TOPUP_50_BUTTON,
+                                    TOPUP_100_BUTTON
+                                )
+                                from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+                                # Send insufficient credits message
+                                await bot.send_message(
+                                    chat_id=user_id,
+                                    text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
+                                        balance=int(balance),
+                                        cost=int(cost)
+                                    )
+                                )
+
+                                # Show topup packages inline keyboard
+                                keyboard = [
+                                    [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
+                                    [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
+                                    [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+                                    [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                                ]
+                                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                                await bot.send_message(
+                                    chat_id=user_id,
+                                    text=TOPUP_PACKAGES_MESSAGE,
+                                    reply_markup=reply_markup
+                                )
+
+                                self.state_manager.reset_state(user_id)
+                                return False
+
+                    else:  # style == 'bra' - permanently free (no credit checks)
+                        # Bra style is permanently free - skip all credit checks
+                        logger.info(
+                            f"User {user_id} proceeding with bra style (permanently free)"
+                        )
+
+            # Prepare workflow for queue submission
+            workflow = await image_workflow.prepare_workflow(filename=filename)
+
+            # Define callback for when job is submitted
+            async def on_submitted(prompt_id):
+                """Callback when job submitted to ComfyUI."""
+                # Deduct credits after successful queue (skip if VIP or bra style)
+                if self.credit_service and not is_vip and style != 'bra':
+                    success, new_balance = await self.credit_service.deduct_credits(
+                        user_id,
+                        'image_processing',
+                        reference_id=prompt_id
+                    )
+                    if success:
+                        logger.info(
+                            f"Deducted credits for user {user_id} (style: {style}), "
+                            f"new balance: {new_balance}"
+                        )
+                    else:
+                        logger.error(f"Failed to deduct credits for user {user_id}")
+                elif is_vip:
+                    logger.info(
+                        f"Skipping credit deduction for VIP user {user_id} (tier: {tier})"
+                    )
+                elif style == 'bra':
+                    logger.info(
+                        f"Skipping credit deduction for user {user_id} (bra style - permanently free)"
+                    )
+
+                # Update user state
+                self.state_manager.update_state(
+                    user_id,
+                    state='processing',
+                    prompt_id=prompt_id,
+                    filename=filename,
+                    image_style=style
                 )
 
-            # Update user state
-            self.state_manager.update_state(
-                user_id,
-                state='processing',
-                prompt_id=prompt_id,
-                filename=filename,
-                image_style=style
-            )
-
-            # Show initial queue position
-            position, total = await self.queue_service.get_queue_position(prompt_id)
-            message = await self.notification_service.send_queue_position(
-                bot,
-                user_id,
-                position,
-                total,
-                prompt_id
-            )
-
-            # Store message for later updates/deletion
-            self.state_manager.set_queue_message(user_id, message)
-
-            # Start monitoring in background
-            asyncio.create_task(
-                self._monitor_and_complete_image_styled(
+                # Show initial queue position
+                position, total = await self.queue_service.get_queue_position(prompt_id)
+                message = await self.notification_service.send_queue_position(
                     bot,
                     user_id,
-                    prompt_id,
-                    filename,
-                    style
+                    position,
+                    total,
+                    prompt_id
                 )
+
+                # Store message for later updates/deletion
+                self.state_manager.set_queue_message(user_id, message)
+
+                # Start monitoring in background
+                asyncio.create_task(
+                    self._monitor_and_complete_image_styled(
+                        bot,
+                        user_id,
+                        prompt_id,
+                        filename,
+                        style
+                    )
+                )
+
+            # Queue job via VIP queue manager (black_gold gets priority)
+            await self.vip_queue_manager.queue_job(
+                user_id=user_id,
+                workflow_data=workflow,
+                is_vip=is_black_gold,  # Only black_gold gets priority
+                callback=on_submitted
             )
 
             logger.info(
-                f"Proceeded with styled image workflow for user {user_id}, "
-                f"style: {style}, prompt_id: {prompt_id}"
+                f"Queued job for user {user_id}, "
+                f"style: {style}, VIP: {is_vip}, Priority: {is_black_gold}"
             )
             return True
 

@@ -148,7 +148,7 @@ class PaymentService:
         payment_id: str
     ) -> Tuple[bool, Optional[float], Optional[str]]:
         """
-        Process a completed payment and credit the user's account.
+        Process a completed payment and credit the user's account (VIP-aware).
 
         Args:
             payment_id: Payment ID
@@ -175,34 +175,68 @@ class PaymentService:
                 )
                 return False, None, f"Payment status: {status.value}"
 
-            # Credit the user's account
             user_id = payment['user_id']
             credits_amount = payment['credits_amount']
 
-            success, new_balance = await self.credit_service.add_credits(
-                user_id=user_id,
-                amount=credits_amount,
-                description=f"充值 ¥{payment['amount']}",
-                reference_id=payment_id
-            )
+            # Check if this is a VIP purchase
+            metadata = payment.get('metadata', '')
+            is_vip_purchase = metadata.startswith('vip_tier:')
 
-            if not success:
-                logger.error(f"Failed to credit user {user_id} for payment {payment_id}")
-                return False, None, "Failed to add credits"
+            if is_vip_purchase:
+                # VIP purchase - grant VIP status (includes credits)
+                tier = metadata.split(':')[1] if ':' in metadata else 'vip'
 
-            # Update payment status
-            self.db.update_payment_status(
-                payment_id=payment_id,
-                status=PaymentStatus.COMPLETED.value,
-                completed_at=datetime.now()
-            )
+                success, message = await self.credit_service.grant_vip_status(user_id, tier)
 
-            logger.info(
-                f"Completed payment {payment_id} for user {user_id}: "
-                f"credited {credits_amount} credits, new balance: {new_balance}"
-            )
+                if not success:
+                    logger.error(
+                        f"Failed to grant VIP status to user {user_id} for payment {payment_id}: {message}"
+                    )
+                    return False, None, f"VIP授予失败: {message}"
 
-            return True, new_balance, None
+                # Get new balance
+                new_balance = await self.credit_service.get_balance(user_id)
+
+                # Update payment status
+                self.db.update_payment_status(
+                    payment_id=payment_id,
+                    status=PaymentStatus.COMPLETED.value,
+                    completed_at=datetime.now()
+                )
+
+                logger.info(
+                    f"Completed VIP payment {payment_id} for user {user_id}: "
+                    f"granted {tier} status, new balance: {new_balance}"
+                )
+
+                return True, new_balance, None
+
+            else:
+                # Regular credit purchase
+                success, new_balance = await self.credit_service.add_credits(
+                    user_id=user_id,
+                    amount=credits_amount,
+                    description=f"充值 ¥{payment['amount']}",
+                    reference_id=payment_id
+                )
+
+                if not success:
+                    logger.error(f"Failed to credit user {user_id} for payment {payment_id}")
+                    return False, None, "Failed to add credits"
+
+                # Update payment status
+                self.db.update_payment_status(
+                    payment_id=payment_id,
+                    status=PaymentStatus.COMPLETED.value,
+                    completed_at=datetime.now()
+                )
+
+                logger.info(
+                    f"Completed payment {payment_id} for user {user_id}: "
+                    f"credited {credits_amount} credits, new balance: {new_balance}"
+                )
+
+                return True, new_balance, None
 
         except Exception as e:
             logger.error(f"Error processing payment completion {payment_id}: {str(e)}")

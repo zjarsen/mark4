@@ -126,6 +126,23 @@ class DatabaseService:
             except Exception as e:
                 logger.debug(f"Migration already applied or error: {e}")
 
+            # Migration: Add vip_tier column for VIP system
+            try:
+                cursor.execute("""
+                    ALTER TABLE users ADD COLUMN vip_tier TEXT DEFAULT 'none'
+                    CHECK(vip_tier IN ('none', 'vip', 'black_gold'))
+                """)
+                logger.info("Added vip_tier column to users table")
+            except Exception as e:
+                logger.debug(f"vip_tier column already exists or error: {e}")
+
+            # Migration: Add metadata column to payments for VIP purchases
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN metadata TEXT")
+                logger.info("Added metadata column to payments table")
+            except Exception:
+                pass  # Column already exists
+
             # Feature pricing table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS feature_pricing (
@@ -462,6 +479,98 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Error getting feature cost for {feature_name}: {str(e)}")
             return None
+
+    # VIP operations
+    def get_vip_tier(self, user_id: int) -> str:
+        """
+        Get user's VIP tier.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            'none', 'vip', or 'black_gold'
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT vip_tier FROM users WHERE user_id = ?
+            """, (user_id,))
+            result = cursor.fetchone()
+
+            if result and result['vip_tier']:
+                return result['vip_tier']
+            return 'none'
+
+        except Exception as e:
+            logger.error(f"Error getting VIP tier for user {user_id}: {str(e)}")
+            return 'none'
+
+    def set_vip_tier(self, user_id: int, tier: str) -> bool:
+        """
+        Set user's VIP tier.
+
+        Args:
+            user_id: User ID
+            tier: 'none', 'vip', or 'black_gold'
+
+        Returns:
+            True if successful
+        """
+        try:
+            # Validate tier
+            if tier not in ['none', 'vip', 'black_gold']:
+                logger.error(f"Invalid VIP tier: {tier}")
+                return False
+
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            # Ensure user exists
+            self.get_user(user_id)
+
+            # Update VIP tier
+            cursor.execute("""
+                UPDATE users
+                SET vip_tier = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = ?
+            """, (tier, user_id))
+
+            conn.commit()
+            logger.info(f"Set VIP tier for user {user_id} to {tier}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error setting VIP tier for user {user_id}: {str(e)}")
+            conn.rollback()
+            return False
+
+    def is_vip(self, user_id: int) -> bool:
+        """
+        Check if user has any VIP status.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            True if user is VIP or Black Gold VIP
+        """
+        tier = self.get_vip_tier(user_id)
+        return tier in ['vip', 'black_gold']
+
+    def is_black_gold_vip(self, user_id: int) -> bool:
+        """
+        Check if user has Black Gold VIP status.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            True if user is Black Gold VIP
+        """
+        return self.get_vip_tier(user_id) == 'black_gold'
 
     def close(self):
         """Close database connection."""

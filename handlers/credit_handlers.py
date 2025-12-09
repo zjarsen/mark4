@@ -35,22 +35,26 @@ async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show top-up package options."""
+    """Show top-up package options (including VIP packages)."""
     try:
         from core.constants import (
             TOPUP_PACKAGES_MESSAGE,
             TOPUP_10_BUTTON,
             TOPUP_30_BUTTON,
             TOPUP_50_BUTTON,
-            TOPUP_100_BUTTON
+            TOPUP_100_BUTTON,
+            TOPUP_VIP_BUTTON,
+            TOPUP_BLACK_GOLD_VIP_BUTTON
         )
 
-        # Create inline keyboard with package options
+        # Create inline keyboard with package options (including VIP)
         keyboard = [
             [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
             [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
             [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")],
+            [InlineKeyboardButton(TOPUP_VIP_BUTTON, callback_data="topup_130")],
+            [InlineKeyboardButton(TOPUP_BLACK_GOLD_VIP_BUTTON, callback_data="topup_260")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -59,7 +63,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             reply_markup=reply_markup
         )
 
-        logger.info(f"User {update.effective_user.id} viewing top-up packages")
+        logger.info(f"User {update.effective_user.id} viewing top-up packages (with VIP)")
 
     except Exception as e:
         logger.error(f"Error showing top-up packages: {str(e)}")
@@ -110,33 +114,48 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
 
 
 async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show user's balance and transaction history combined."""
+    """Show user's balance and transaction history combined (VIP-aware)."""
     try:
         user_id = update.effective_user.id
 
+        # Get VIP status
+        is_vip, tier = await credit_service.is_vip_user(user_id)
+
         # Get user stats
-        stats = await credit_service.get_user_stats(user_id)
+        balance = await credit_service.get_balance(user_id)
+        total_spent = await credit_service.get_total_spent(user_id)
 
         # Get transactions
         transactions = await credit_service.get_transaction_history(user_id, limit=10)
 
         from core.constants import (
-            TRANSACTION_ITEM_TEMPLATE
+            TRANSACTION_ITEM_TEMPLATE,
+            VIP_STATUS_BADGE,
+            BALANCE_MESSAGE_VIP
         )
 
-        # Build combined message
-        message = f"""📊 积分余额 & 充值记录
+        # Build VIP or regular message
+        if is_vip:
+            # VIP balance message
+            tier_display = credit_service._tier_display_name(tier)
+            vip_badge = VIP_STATUS_BADGE.format(tier=tier_display)
 
-💰 当前积分：{stats['balance']} 积分
-📈 累计消费：{stats['total_spent']} 积分
+            message = BALANCE_MESSAGE_VIP.format(
+                vip_badge=vip_badge,
+                balance=int(balance),
+                total_spent=int(total_spent)
+            )
+        else:
+            # Regular balance message
+            message = f"""📊 积分余额 & 充值记录
 
-图片脱衣：10 积分/次
+💰 当前积分：{int(balance)} 积分
+📈 累计消费：{int(total_spent)} 积分
 
-━━━━━━━━━━━━━━━━━━━━━━
+图片脱衣：10 积分/次"""
 
-📝 最近10笔记录：
-
-"""
+        # Add transaction history section
+        message += "\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 最近10笔记录：\n\n"
 
         if not transactions:
             message += "暂无消费记录"
@@ -158,7 +177,7 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
                 )
 
         await update.message.reply_text(message)
-        logger.info(f"User {user_id} viewed balance and history")
+        logger.info(f"User {user_id} viewed balance and history (VIP: {is_vip})")
 
     except Exception as e:
         logger.error(f"Error showing balance and history: {str(e)}")
@@ -255,6 +274,24 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             chat_id = query.message.chat_id
             message_id = query.message.message_id
 
+            # Check if this is a VIP purchase
+            is_vip_purchase = amount_cny in [130, 260]
+            vip_tier = None
+
+            if is_vip_purchase:
+                # Determine VIP tier
+                vip_tier = 'vip' if amount_cny == 130 else 'black_gold'
+
+                # Check if redundant purchase
+                current_tier = credit_service.db.get_vip_tier(user_id)
+
+                if current_tier == vip_tier:
+                    tier_name = credit_service._tier_display_name(vip_tier)
+                    await query.edit_message_text(
+                        f"您已经是{tier_name}了，无需重复购买！"
+                    )
+                    return
+
             # Create payment
             success, payment_info, error = await payment_service.create_topup_payment(
                 user_id,
@@ -267,6 +304,20 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             if not success:
                 await query.edit_message_text(f"创建支付失败: {error}")
                 return
+
+            # If VIP purchase, store VIP tier in payment metadata
+            if is_vip_purchase and vip_tier:
+                conn = payment_service.db._get_connection()
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE payments
+                    SET metadata = ?
+                    WHERE payment_id = ?
+                """, (f"vip_tier:{vip_tier}", payment_info['payment_id']))
+                conn.commit()
+                logger.info(
+                    f"Stored VIP tier metadata for payment {payment_info['payment_id']}: {vip_tier}"
+                )
 
             from core.constants import PAYMENT_PENDING_MESSAGE
             payment_method_cn = "支付宝" if payment_method == "alipay" else "微信支付"
@@ -330,8 +381,15 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             # Calculate displayed amount (with 10% transaction fee)
             displayed_amount = int(amount_cny * 1.1)
 
+            # Check if this is a VIP purchase
+            is_vip = amount_cny in [130, 260]
+            tier_name = ""
+            if is_vip:
+                tier = 'vip' if amount_cny == 130 else 'black_gold'
+                tier_name = f" ({credit_service._tier_display_name(tier)})"
+
             # Show payment method selection
-            message = f"""💳 充值 ¥{displayed_amount} = {credits}积分
+            message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}
 
 请选择支付方式："""
 
