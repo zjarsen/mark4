@@ -96,8 +96,8 @@ async def payment_callback():
     Handle payment callback from payment provider.
 
     Supports both GET and POST methods:
-    - taitaitai.xyz sends POST requests with form data
-    - Some vendors may send GET requests with query parameters
+    - yzzhifu.me sends GET requests with query parameters
+    - POST method also supported for compatibility
 
     Common parameters:
     - pid: Merchant ID
