@@ -39,7 +39,6 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
         from core.constants import (
             TOPUP_PACKAGES_MESSAGE,
-            TOPUP_5_BUTTON,
             TOPUP_10_BUTTON,
             TOPUP_30_BUTTON,
             TOPUP_50_BUTTON,
@@ -50,7 +49,6 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         # Create inline keyboard with package options (including VIP)
         keyboard = [
-            [InlineKeyboardButton(TOPUP_5_BUTTON, callback_data="topup_5")],
             [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
             [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
             [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
@@ -204,7 +202,6 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
         from core.constants import (
             PAYMENT_TIMEOUT_MESSAGE,
             TOPUP_PACKAGES,
-            TOPUP_5_BUTTON,
             TOPUP_10_BUTTON,
             TOPUP_30_BUTTON,
             TOPUP_50_BUTTON,
@@ -226,7 +223,6 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
 
         # Send new message with top-up packages below
         keyboard = [
-            [InlineKeyboardButton(TOPUP_5_BUTTON, callback_data="topup_5")],
             [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
             [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
             [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
@@ -399,7 +395,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             keyboard = [
                 [InlineKeyboardButton(
-                    "💰 支付宝支付",
+                    "💰 支付宝支付 (维护中，请用微信)",
                     callback_data=f"topup_{amount_cny}_alipay"
                 )],
                 [InlineKeyboardButton(
