@@ -58,8 +58,8 @@ class BotApplication:
         # Initialize services
         self._initialize_services()
 
-        # Create Telegram application
-        self.app = Application.builder().token(config.BOT_TOKEN).build()
+        # Create Telegram application with post_init callback
+        self.app = Application.builder().token(config.BOT_TOKEN).post_init(self._post_init).build()
 
         # Inject dependencies into handlers
         self._inject_dependencies()
@@ -365,8 +365,7 @@ class BotApplication:
             # Run bot with polling
             self.app.run_polling(
                 allowed_updates=Update.ALL_TYPES,
-                drop_pending_updates=True,  # Ignore updates received while bot was offline
-                post_init=self._post_init  # Start background tasks after initialization
+                drop_pending_updates=True  # Ignore updates received while bot was offline
             )
 
         except KeyboardInterrupt:
