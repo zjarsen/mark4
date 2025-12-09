@@ -63,10 +63,10 @@ IMAGE_STYLE_SELECTION_MESSAGE = """🎨 选择脱衣风格
 模型效果展示：
 
 1. 粉色蕾丝内衣示例✨✨：
-[🔞点击观看🔞](https://t.me/placeholder1)
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/25)
 
 2. 脱到精光示例✨✨：
-[🔞点击观看🔞](https://t.me/placeholder2)
+[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/29)
 
 请选择您想要的风格："""
 
