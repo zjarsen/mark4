@@ -88,10 +88,7 @@ class WorkflowService:
             comfyui_service=image_comfyui,
             max_comfyui_queue_size=10
         )
-
-        # Start VIP queue processor
-        asyncio.create_task(self.vip_queue_manager.start())
-        logger.info("VIP Queue Manager initialized and started")
+        logger.info("VIP Queue Manager initialized (will start with event loop)")
 
     async def start_image_workflow(
         self,

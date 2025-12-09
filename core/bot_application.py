@@ -337,6 +337,14 @@ class BotApplication:
 
         logger.info("All handlers registered")
 
+    async def _post_init(self, application):
+        """Called after application initialization to start background tasks."""
+        # Start VIP queue manager
+        workflow_service = application.bot_data.get('workflow_service')
+        if workflow_service and hasattr(workflow_service, 'vip_queue_manager'):
+            await workflow_service.vip_queue_manager.start()
+            logger.info("VIP Queue Manager started")
+
     def run(self):
         """Start the bot with polling."""
         logger.info(f"Starting bot: {self.config.BOT_USERNAME}")
@@ -357,7 +365,8 @@ class BotApplication:
             # Run bot with polling
             self.app.run_polling(
                 allowed_updates=Update.ALL_TYPES,
-                drop_pending_updates=True  # Ignore updates received while bot was offline
+                drop_pending_updates=True,  # Ignore updates received while bot was offline
+                post_init=self._post_init  # Start background tasks after initialization
             )
 
         except KeyboardInterrupt:
