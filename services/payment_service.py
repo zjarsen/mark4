@@ -179,7 +179,8 @@ class PaymentService:
             credits_amount = payment['credits_amount']
 
             # Check if this is a VIP purchase
-            metadata = payment.get('metadata', '')
+            # Handle None metadata (database NULL) by converting to empty string
+            metadata = payment.get('metadata') or ''
             is_vip_purchase = metadata.startswith('vip_tier:')
 
             if is_vip_purchase:
