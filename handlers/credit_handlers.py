@@ -199,6 +199,13 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
         amount_cny: Payment amount in CNY
     """
     try:
+        # Check if payment has already been completed
+        payment = payment_service.db.get_payment(payment_id)
+        if payment and payment['status'] != 'pending':
+            # Payment already completed or cancelled, don't send timeout menu
+            logger.info(f"Payment {payment_id} already {payment['status']}, skipping timeout menu")
+            return
+
         from core.constants import (
             PAYMENT_TIMEOUT_MESSAGE,
             TOPUP_PACKAGES,
@@ -395,7 +402,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             keyboard = [
                 [InlineKeyboardButton(
-                    "💰 支付宝支付 (维护中，请用微信)",
+                    "💰 支付宝支付",
                     callback_data=f"topup_{amount_cny}_alipay"
                 )],
                 [InlineKeyboardButton(
