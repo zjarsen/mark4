@@ -321,8 +321,8 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             from core.constants import PAYMENT_PENDING_MESSAGE
             payment_method_cn = "支付宝" if payment_method == "alipay" else "微信支付"
-            # Calculate displayed amount (with 10% transaction fee)
-            displayed_amount = int(payment_info['amount_cny'] * 1.1)
+            # Calculate displayed amount (with 5% transaction fee)
+            displayed_amount = int(payment_info['amount_cny'] * 1.05)
             message = PAYMENT_PENDING_MESSAGE.format(
                 payment_id=payment_info['payment_id'],
                 amount=displayed_amount,
@@ -378,8 +378,8 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             from core.constants import TOPUP_PACKAGES
             credits = TOPUP_PACKAGES.get(amount_cny, 0)
 
-            # Calculate displayed amount (with 10% transaction fee)
-            displayed_amount = int(amount_cny * 1.1)
+            # Calculate displayed amount (with 5% transaction fee)
+            displayed_amount = int(amount_cny * 1.05)
 
             # Check if this is a VIP purchase
             is_vip = amount_cny in [130, 260]

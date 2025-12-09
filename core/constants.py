@@ -176,11 +176,11 @@ TOPUP_PACKAGES_MESSAGE = """💳 充值套餐
 
 🔥 超值套餐推荐：
 1️⃣ ¥11 = 30积分 ⭐
-2️⃣ ¥33 = 120积分 🔥
-3️⃣ ¥55 = 250积分 💎
-4️⃣ ¥110 = 600积分 👑
-5️⃣ ¥143 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】
-6️⃣ ¥286 = 永久黑金VIP 👑👑👑 【无限使用+无需排队】
+2️⃣ ¥32 = 120积分 🔥
+3️⃣ ¥53 = 250积分 💎
+4️⃣ ¥105 = 600积分 👑
+5️⃣ ¥137 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】
+6️⃣ ¥273 = 永久黑金VIP 👑👑👑 【无限使用+无需排队】
 
 ✨ 充值优势：
 • 积分永久有效
@@ -257,11 +257,11 @@ REFRESH_QUEUE_BUTTON = "刷新队列"
 CONFIRM_CREDITS_BUTTON = "✅ 确认"
 CANCEL_CREDITS_BUTTON = "❌ 取消"
 TOPUP_10_BUTTON = "¥11 = 30积分"
-TOPUP_30_BUTTON = "¥33 = 120积分"
-TOPUP_50_BUTTON = "¥55 = 250积分"
-TOPUP_100_BUTTON = "¥110 = 600积分"
-TOPUP_VIP_BUTTON = "¥143 = 永久VIP"
-TOPUP_BLACK_GOLD_VIP_BUTTON = "¥286 = 永久黑金VIP"
+TOPUP_30_BUTTON = "¥32 = 120积分"
+TOPUP_50_BUTTON = "¥53 = 250积分"
+TOPUP_100_BUTTON = "¥105 = 600积分"
+TOPUP_VIP_BUTTON = "¥137 = 永久VIP"
+TOPUP_BLACK_GOLD_VIP_BUTTON = "¥273 = 永久黑金VIP"
 
 # Workflow file names
 WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final.json"
