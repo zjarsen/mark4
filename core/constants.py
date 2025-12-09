@@ -175,10 +175,10 @@ BALANCE_MESSAGE = """💰 我的积分
 TOPUP_PACKAGES_MESSAGE = """💳 充值套餐
 
 🔥 超值套餐推荐：
-1️⃣ ¥10 = 30积分 ⭐
-2️⃣ ¥30 = 120积分 🔥 性价比最高
-3️⃣ ¥50 = 250积分 💎
-4️⃣ ¥100 = 600积分 👑 豪华装
+1️⃣ ¥11 = 30积分 ⭐
+2️⃣ ¥33 = 120积分 🔥 性价比最高
+3️⃣ ¥55 = 250积分 💎
+4️⃣ ¥110 = 600积分 👑 豪华装
 
 ✨ 充值优势：
 • 积分永久有效
@@ -254,10 +254,10 @@ PAYMENT_TIMEOUT_SECONDS = 180  # 3 minutes
 REFRESH_QUEUE_BUTTON = "刷新队列"
 CONFIRM_CREDITS_BUTTON = "✅ 确认"
 CANCEL_CREDITS_BUTTON = "❌ 取消"
-TOPUP_10_BUTTON = "¥10 = 30积分"
-TOPUP_30_BUTTON = "¥30 = 120积分"
-TOPUP_50_BUTTON = "¥50 = 250积分"
-TOPUP_100_BUTTON = "¥100 = 600积分"
+TOPUP_10_BUTTON = "¥11 = 30积分"
+TOPUP_30_BUTTON = "¥33 = 120积分"
+TOPUP_50_BUTTON = "¥55 = 250积分"
+TOPUP_100_BUTTON = "¥110 = 600积分"
 
 # Workflow file names
 WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final.json"

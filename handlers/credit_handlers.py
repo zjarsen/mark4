@@ -270,9 +270,11 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             from core.constants import PAYMENT_PENDING_MESSAGE
             payment_method_cn = "支付宝" if payment_method == "alipay" else "微信支付"
+            # Calculate displayed amount (with 10% transaction fee)
+            displayed_amount = int(payment_info['amount_cny'] * 1.1)
             message = PAYMENT_PENDING_MESSAGE.format(
                 payment_id=payment_info['payment_id'],
-                amount=payment_info['amount_cny'],
+                amount=displayed_amount,
                 credits=payment_info['credits_amount']
             )
             message += f"\n支付方式：{payment_method_cn}"
@@ -325,8 +327,11 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             from core.constants import TOPUP_PACKAGES
             credits = TOPUP_PACKAGES.get(amount_cny, 0)
 
+            # Calculate displayed amount (with 10% transaction fee)
+            displayed_amount = int(amount_cny * 1.1)
+
             # Show payment method selection
-            message = f"""💳 充值 ¥{amount_cny} = {credits}积分
+            message = f"""💳 充值 ¥{displayed_amount} = {credits}积分
 
 请选择支付方式："""
 
