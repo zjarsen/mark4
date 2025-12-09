@@ -343,7 +343,6 @@ class BotApplication:
         workflow_service = application.bot_data.get('workflow_service')
         if workflow_service and hasattr(workflow_service, 'vip_queue_manager'):
             await workflow_service.vip_queue_manager.start()
-            logger.info("VIP Queue Manager started")
 
     def run(self):
         """Start the bot with polling."""
