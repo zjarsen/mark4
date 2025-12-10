@@ -70,6 +70,10 @@ IMAGE_STYLE_SELECTION_MESSAGE = """🎨 选择脱衣风格
 
 请选择您想要的风格："""
 
+# Demo video links
+DEMO_LINK_BRA = "https://t.me/zuiqiangtuoyi/25"
+DEMO_LINK_UNDRESS = "https://t.me/zuiqiangtuoyi/29"
+
 FEATURE_NOT_IMPLEMENTED = "此功能仍在开发中"
 INVALID_FORMAT_MESSAGE = """❌ 图片格式不支持
 

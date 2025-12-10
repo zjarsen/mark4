@@ -12,7 +12,9 @@ from core.constants import (
     SEND_IMAGE_PROMPT,
     FEATURE_NOT_IMPLEMENTED,
     QUEUE_UNAVAILABLE,
-    UNEXPECTED_INPUT_MESSAGE
+    UNEXPECTED_INPUT_MESSAGE,
+    DEMO_LINK_BRA,
+    DEMO_LINK_UNDRESS
 )
 
 logger = logging.getLogger('mark4_bot')
@@ -142,14 +144,14 @@ async def handle_image_processing(
 
 ━━━━━━━━━━━━━━━━━━
 1️⃣ 粉色蕾丝内衣示例✨✨
-[🔞点击观看🔞](https://t.me/placeholder1)
+[🔞点击观看🔞]({DEMO_LINK_BRA})
 
 🎁💝 **100%永久免费！** 💝🎁
 🆓 **无需积分！随时使用！** 🆓
 ━━━━━━━━━━━━━━━━━━
 
 2️⃣ 脱到精光示例✨✨
-[🔞点击观看🔞](https://t.me/placeholder2)
+[🔞点击观看🔞]({DEMO_LINK_UNDRESS})
 
 {trial_status}
 ━━━━━━━━━━━━━━━━━━
