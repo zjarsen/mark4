@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}功能分析{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2><i class="bi bi-graph-up"></i> 功能使用分析</h2>
+            <button class="btn btn-primary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> 刷新
+            </button>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-image"></i> 图片脱衣
+                        </h6>
+                        <h2 class="mb-0">{{ analytics.image_total }}</h2>
+                        <small>总使用次数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-film"></i> 图片转视频
+                        </h6>
+                        <h2 class="mb-0">{{ analytics.video_total }}</h2>
+                        <small>总使用次数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-coin"></i> 图片脱衣收入
+                        </h6>
+                        <h2 class="mb-0">{{ analytics.image_revenue }}</h2>
+                        <small>积分</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-currency-dollar"></i> 视频收入
+                        </h6>
+                        <h2 class="mb-0">{{ analytics.video_revenue }}</h2>
+                        <small>积分</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Free Trial Stats -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-gift"></i> 免费试用统计
+                        </h5>
+                        <p class="mb-0">
+                            已使用免费试用的用户: <strong>{{ analytics.free_trial_users }}</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-graph-up-arrow"></i> 30天使用趋势
+                        </h5>
+                        <canvas id="usageTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-pie-chart"></i> 功能使用分布
+                        </h5>
+                        <canvas id="featurePopularityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Usage Trend Chart (Line Chart)
+const usageTrendCtx = document.getElementById('usageTrendChart').getContext('2d');
+const dailyUsage = {{ analytics.daily_usage | tojson }};
+
+const labels = dailyUsage.map(d => d.date);
+const imageData = dailyUsage.map(d => d.image_count);
+const videoData = dailyUsage.map(d => d.video_count);
+
+new Chart(usageTrendCtx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: '图片脱衣',
+                data: imageData,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                tension: 0.1,
+                fill: true
+            },
+            {
+                label: '图片转视频',
+                data: videoData,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.1,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Feature Popularity Chart (Pie Chart)
+const featurePopularityCtx = document.getElementById('featurePopularityChart').getContext('2d');
+
+new Chart(featurePopularityCtx, {
+    type: 'pie',
+    data: {
+        labels: ['图片脱衣', '图片转视频'],
+        datasets: [{
+            data: [{{ analytics.image_total }}, {{ analytics.video_total }}],
+            backgroundColor: [
+                'rgb(54, 162, 235)',
+                'rgb(75, 192, 192)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
