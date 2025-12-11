@@ -111,6 +111,7 @@ def dashboard_users():
                 u.credit_balance,
                 u.total_spent,
                 COALESCE(img_count.count, 0) as image_processing_count,
+                COALESCE(free_count.count, 0) as free_usage_count,
                 COALESCE(vid_count.count, 0) as video_processing_count
             FROM users u
             LEFT JOIN (
@@ -119,6 +120,12 @@ def dashboard_users():
                 WHERE description LIKE '%image_processing%' AND transaction_type = 'deduction'
                 GROUP BY user_id
             ) img_count ON u.user_id = img_count.user_id
+            LEFT JOIN (
+                SELECT user_id, COUNT(*) as count
+                FROM transactions
+                WHERE amount = 0 AND transaction_type = 'deduction' AND description LIKE '%免费使用%'
+                GROUP BY user_id
+            ) free_count ON u.user_id = free_count.user_id
             LEFT JOIN (
                 SELECT user_id, COUNT(*) as count
                 FROM transactions
@@ -158,6 +165,7 @@ def dashboard_users():
                 'credit_balance': int(user['credit_balance']),
                 'total_spent': int(user['total_spent']),
                 'image_count': user['image_processing_count'],
+                'free_count': user['free_usage_count'],
                 'video_count': user['video_processing_count']
             })
 

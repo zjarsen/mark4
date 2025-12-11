@@ -238,6 +238,20 @@ class CreditService:
                 if has_trial:
                     success = await self.use_free_trial(user_id)
                     if success:
+                        # Get current balance (unchanged for free usage)
+                        balance = await self.get_balance(user_id)
+
+                        # Create transaction record for free trial usage
+                        self.db.create_transaction(
+                            user_id=user_id,
+                            transaction_type='deduction',
+                            amount=0.0,  # Zero amount for free usage
+                            balance_before=balance,
+                            balance_after=balance,  # Balance unchanged
+                            description=f"免费使用: {feature_name}",
+                            reference_id=reference_id
+                        )
+
                         logger.info(f"User {user_id} used free trial for {feature_name}")
                         return True, 0.0  # Balance unchanged
                     else:

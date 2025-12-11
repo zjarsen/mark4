@@ -802,8 +802,19 @@ class WorkflowService:
                         f"Skipping credit deduction for VIP user {user_id} (tier: {tier})"
                     )
                 elif style == 'bra':
+                    # Create transaction record for free bra usage (amount = 0)
+                    balance = await self.credit_service.get_balance(user_id)
+                    self.credit_service.db.create_transaction(
+                        user_id=user_id,
+                        transaction_type='deduction',
+                        amount=0.0,  # Zero amount for free usage
+                        balance_before=balance,
+                        balance_after=balance,  # Balance unchanged
+                        description="免费使用: 粉色蕾丝内衣",
+                        reference_id=prompt_id
+                    )
                     logger.info(
-                        f"Skipping credit deduction for user {user_id} (bra style - permanently free)"
+                        f"Skipping credit deduction for user {user_id} (bra style - permanently free), transaction recorded"
                     )
 
                 # Update user state

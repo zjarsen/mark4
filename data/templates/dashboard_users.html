@@ -52,6 +52,7 @@
                                 <th>积分余额</th>
                                 <th>累计消费</th>
                                 <th>图片脱衣</th>
+                                <th>免费使用</th>
                                 <th>图片转视频</th>
                             </tr>
                         </thead>
@@ -77,6 +78,7 @@
                                 <td>{{ user.credit_balance }}</td>
                                 <td>{{ user.total_spent }}</td>
                                 <td><span class="badge bg-info">{{ user.image_count }}</span></td>
+                                <td><span class="badge bg-success">{{ user.free_count }}</span></td>
                                 <td><span class="badge bg-success">{{ user.video_count }}</span></td>
                             </tr>
                             {% endfor %}
