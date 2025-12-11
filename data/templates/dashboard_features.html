@@ -18,10 +18,21 @@
                 <div class="card bg-primary text-white">
                     <div class="card-body">
                         <h6 class="card-title">
-                            <i class="bi bi-image"></i> 图片脱衣
+                            <i class="bi bi-image"></i> 图片脱衣（付费）
                         </h6>
-                        <h2 class="mb-0">{{ analytics.image_total }}</h2>
-                        <small>总使用次数</small>
+                        <h2 class="mb-0">{{ analytics.image_paid }}</h2>
+                        <small>使用次数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-gift"></i> 图片脱衣（免费）
+                        </h6>
+                        <h2 class="mb-0">{{ analytics.image_free }}</h2>
+                        <small>使用次数</small>
                     </div>
                 </div>
             </div>
@@ -29,14 +40,29 @@
                 <div class="card bg-success text-white">
                     <div class="card-body">
                         <h6 class="card-title">
-                            <i class="bi bi-film"></i> 图片转视频
+                            <i class="bi bi-film"></i> 图片转视频（付费）
                         </h6>
-                        <h2 class="mb-0">{{ analytics.video_total }}</h2>
-                        <small>总使用次数</small>
+                        <h2 class="mb-0">{{ analytics.video_paid }}</h2>
+                        <small>使用次数</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
+                <div class="card bg-warning">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-gift"></i> 图片转视频（免费）
+                        </h6>
+                        <h2 class="mb-0">{{ analytics.video_free }}</h2>
+                        <small>使用次数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6">
                 <div class="card bg-info text-white">
                     <div class="card-body">
                         <h6 class="card-title">
@@ -47,7 +73,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="card bg-warning">
                     <div class="card-body">
                         <h6 class="card-title">
@@ -110,8 +136,10 @@ const usageTrendCtx = document.getElementById('usageTrendChart').getContext('2d'
 const dailyUsage = {{ analytics.daily_usage | tojson }};
 
 const labels = dailyUsage.map(d => d.date);
-const imageData = dailyUsage.map(d => d.image_count);
-const videoData = dailyUsage.map(d => d.video_count);
+const imagePaidData = dailyUsage.map(d => d.image_paid);
+const imageFreeData = dailyUsage.map(d => d.image_free);
+const videoPaidData = dailyUsage.map(d => d.video_paid);
+const videoFreeData = dailyUsage.map(d => d.video_free);
 
 new Chart(usageTrendCtx, {
     type: 'line',
@@ -119,20 +147,38 @@ new Chart(usageTrendCtx, {
         labels: labels,
         datasets: [
             {
-                label: '图片脱衣',
-                data: imageData,
+                label: '图片脱衣（付费）',
+                data: imagePaidData,
                 borderColor: 'rgb(54, 162, 235)',
                 backgroundColor: 'rgba(54, 162, 235, 0.1)',
                 tension: 0.1,
                 fill: true
             },
             {
-                label: '图片转视频',
-                data: videoData,
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                label: '图片脱衣（免费）',
+                data: imageFreeData,
+                borderColor: 'rgb(23, 162, 184)',
+                backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                tension: 0.1,
+                fill: true,
+                borderDash: [5, 5]
+            },
+            {
+                label: '图片转视频（付费）',
+                data: videoPaidData,
+                borderColor: 'rgb(40, 167, 69)',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
                 tension: 0.1,
                 fill: true
+            },
+            {
+                label: '图片转视频（免费）',
+                data: videoFreeData,
+                borderColor: 'rgb(255, 193, 7)',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.1,
+                fill: true,
+                borderDash: [5, 5]
             }
         ]
     },
@@ -164,12 +210,19 @@ const featurePopularityCtx = document.getElementById('featurePopularityChart').g
 new Chart(featurePopularityCtx, {
     type: 'pie',
     data: {
-        labels: ['图片脱衣', '图片转视频'],
+        labels: ['图片脱衣（付费）', '图片脱衣（免费）', '图片转视频（付费）', '图片转视频（免费）'],
         datasets: [{
-            data: [{{ analytics.image_total }}, {{ analytics.video_total }}],
+            data: [
+                {{ analytics.image_paid }},
+                {{ analytics.image_free }},
+                {{ analytics.video_paid }},
+                {{ analytics.video_free }}
+            ],
             backgroundColor: [
-                'rgb(54, 162, 235)',
-                'rgb(75, 192, 192)'
+                'rgb(54, 162, 235)',   // image paid - blue
+                'rgb(23, 162, 184)',   // image free - cyan
+                'rgb(40, 167, 69)',    // video paid - green
+                'rgb(255, 193, 7)'     // video free - yellow
             ]
         }]
     },

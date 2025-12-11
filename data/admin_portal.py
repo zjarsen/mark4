@@ -267,11 +267,13 @@ def dashboard_features():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get feature usage totals
+        # Get feature usage totals (separate paid and free)
         cursor.execute("""
             SELECT
-                SUM(CASE WHEN description LIKE '%image_processing%' THEN 1 ELSE 0 END) as image_total,
-                SUM(CASE WHEN description LIKE '%video_processing%' THEN 1 ELSE 0 END) as video_total,
+                SUM(CASE WHEN description LIKE '%image_processing%' AND amount < 0 THEN 1 ELSE 0 END) as image_paid,
+                SUM(CASE WHEN description LIKE '%免费使用%' AND (description LIKE '%image_processing%' OR description LIKE '%粉色蕾丝内衣%') AND amount = 0 THEN 1 ELSE 0 END) as image_free,
+                SUM(CASE WHEN description LIKE '%video_processing%' AND amount < 0 THEN 1 ELSE 0 END) as video_paid,
+                SUM(CASE WHEN description LIKE '%video_processing%' AND amount = 0 THEN 1 ELSE 0 END) as video_free,
                 SUM(CASE WHEN description LIKE '%image_processing%' THEN ABS(amount) ELSE 0 END) as image_revenue,
                 SUM(CASE WHEN description LIKE '%video_processing%' THEN ABS(amount) ELSE 0 END) as video_revenue
             FROM transactions
@@ -280,12 +282,14 @@ def dashboard_features():
 
         stats = cursor.fetchone()
 
-        # Get 30-day usage trends (daily aggregation)
+        # Get 30-day usage trends (daily aggregation, separate paid and free)
         cursor.execute("""
             SELECT
                 DATE(created_at) as date,
-                SUM(CASE WHEN description LIKE '%image_processing%' THEN 1 ELSE 0 END) as image_count,
-                SUM(CASE WHEN description LIKE '%video_processing%' THEN 1 ELSE 0 END) as video_count
+                SUM(CASE WHEN description LIKE '%image_processing%' AND amount < 0 THEN 1 ELSE 0 END) as image_paid,
+                SUM(CASE WHEN description LIKE '%免费使用%' AND (description LIKE '%image_processing%' OR description LIKE '%粉色蕾丝内衣%') AND amount = 0 THEN 1 ELSE 0 END) as image_free,
+                SUM(CASE WHEN description LIKE '%video_processing%' AND amount < 0 THEN 1 ELSE 0 END) as video_paid,
+                SUM(CASE WHEN description LIKE '%video_processing%' AND amount = 0 THEN 1 ELSE 0 END) as video_free
             FROM transactions
             WHERE transaction_type = 'deduction'
                 AND created_at >= datetime('now', '-30 days')
@@ -308,16 +312,22 @@ def dashboard_features():
 
         # Format data for template
         analytics_data = {
-            'image_total': stats['image_total'] or 0,
-            'video_total': stats['video_total'] or 0,
+            'image_paid': stats['image_paid'] or 0,
+            'image_free': stats['image_free'] or 0,
+            'image_total': (stats['image_paid'] or 0) + (stats['image_free'] or 0),
+            'video_paid': stats['video_paid'] or 0,
+            'video_free': stats['video_free'] or 0,
+            'video_total': (stats['video_paid'] or 0) + (stats['video_free'] or 0),
             'image_revenue': int(stats['image_revenue'] or 0),
             'video_revenue': int(stats['video_revenue'] or 0),
             'free_trial_users': free_trial['free_trial_users'] or 0,
             'daily_usage': [
                 {
                     'date': row['date'],
-                    'image_count': row['image_count'],
-                    'video_count': row['video_count']
+                    'image_paid': row['image_paid'],
+                    'image_free': row['image_free'],
+                    'video_paid': row['video_paid'],
+                    'video_free': row['video_free']
                 }
                 for row in daily_usage
             ]
