@@ -268,11 +268,11 @@ TOPUP_VIP_BUTTON = "¥137 = 永久VIP"
 TOPUP_BLACK_GOLD_VIP_BUTTON = "¥273 = 永久黑金VIP"
 
 # Workflow file names
-WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final.json"
+WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final_v5.json"
 
 # Image workflow file names
 WORKFLOW_IMAGE_STYLE_BRA = "i2i_bra.json"
-WORKFLOW_IMAGE_STYLE_UNDRESS = "i2i_undress_final.json"
+WORKFLOW_IMAGE_STYLE_UNDRESS = "i2i_undress_final_v5.json"
 
 WORKFLOW_VIDEO_PROCESSING = "video_processing.json"  # Future
 WORKFLOW_I2I_OLD = "i2i_1.json"  # Old workflow (deprecated)
