@@ -109,15 +109,21 @@ def dashboard_users():
                 u.created_at,
                 u.vip_tier,
                 u.credit_balance,
-                u.total_spent,
+                COALESCE(spent.total, 0) as total_spent,
                 COALESCE(img_count.count, 0) as image_processing_count,
                 COALESCE(free_count.count, 0) as free_usage_count,
                 COALESCE(vid_count.count, 0) as video_processing_count
             FROM users u
             LEFT JOIN (
+                SELECT user_id, SUM(ABS(amount)) as total
+                FROM transactions
+                WHERE transaction_type = 'deduction' AND amount < 0
+                GROUP BY user_id
+            ) spent ON u.user_id = spent.user_id
+            LEFT JOIN (
                 SELECT user_id, COUNT(*) as count
                 FROM transactions
-                WHERE description LIKE '%image_processing%' AND transaction_type = 'deduction'
+                WHERE description LIKE '%image_processing%' AND transaction_type = 'deduction' AND amount < 0
                 GROUP BY user_id
             ) img_count ON u.user_id = img_count.user_id
             LEFT JOIN (
@@ -129,7 +135,7 @@ def dashboard_users():
             LEFT JOIN (
                 SELECT user_id, COUNT(*) as count
                 FROM transactions
-                WHERE description LIKE '%video_processing%' AND transaction_type = 'deduction'
+                WHERE description LIKE '%video_processing%' AND transaction_type = 'deduction' AND amount < 0
                 GROUP BY user_id
             ) vid_count ON u.user_id = vid_count.user_id
         """
