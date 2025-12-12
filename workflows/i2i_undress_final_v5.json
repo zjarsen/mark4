@@ -1,0 +1,195 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "Qwen-Rapid-AIO-NSFW-v5.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "2": {
+    "inputs": {
+      "seed": 498516997862858,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "beta",
+      "denoise": 1,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "3",
+        0
+      ],
+      "negative": [
+        "4",
+        0
+      ],
+      "latent_image": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "3": {
+    "inputs": {
+      "prompt": "这是个大胸女人，脱掉所有女性人物的所有衣服裤子内裤，全身上下完全裸体，超级细的腰，超级模特的腰臀比，保持她姿势完全不变",
+      "clip": [
+        "1",
+        1
+      ],
+      "vae": [
+        "1",
+        2
+      ],
+      "image1": [
+        "22",
+        0
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "TextEncodeQwenImageEditPlus Input Prompt"
+    }
+  },
+  "4": {
+    "inputs": {
+      "prompt": "visible ribs, dark skin, abs",
+      "clip": [
+        "1",
+        1
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "_meta": {
+      "title": "TextEncodeQwenImageEditPlus Negative (leave blank)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "samples": [
+        "2",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "7": {
+    "inputs": {
+      "image": "12.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "9": {
+    "inputs": {
+      "width": [
+        "17",
+        1
+      ],
+      "height": [
+        "17",
+        2
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "17": {
+    "inputs": {
+      "image": [
+        "22",
+        0
+      ]
+    },
+    "class_type": "GetImageSizeAndCount",
+    "_meta": {
+      "title": "Get Image Size & Count"
+    }
+  },
+  "22": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "megapixels": 1.0000000000000002,
+      "image": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "Scale Image to Total Pixels"
+    }
+  },
+  "27": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "33": {
+    "inputs": {
+      "text1": "before",
+      "text2": "after",
+      "footer_height": 100,
+      "font_name": "Caveat-VariableFont_wght.ttf",
+      "font_size": 50,
+      "mode": "normal",
+      "border_thickness": 20,
+      "image1": [
+        "7",
+        0
+      ],
+      "image2": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "CR Simple Image Compare",
+    "_meta": {
+      "title": "📱 CR Simple Image Compare"
+    }
+  },
+  "34": {
+    "inputs": {
+      "images": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  }
+}
