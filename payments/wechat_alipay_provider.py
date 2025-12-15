@@ -340,7 +340,8 @@ class WeChatAlipayProvider(PaymentProvider):
         # Generate MD5 hash and convert to lowercase
         signature = hashlib.md5(sign_str.encode('utf-8')).hexdigest().lower()
 
-        logger.debug(f"Generated signature for params: {list(filtered_params.keys())}")
+        logger.debug(f"Signature string: {sign_str}")
+        logger.debug(f"Generated signature: {signature}")
 
         return signature
 
@@ -380,13 +381,20 @@ class WeChatAlipayProvider(PaymentProvider):
                 if k not in ['sign', 'sign_type']
             }
 
+            # Log callback data for debugging
+            logger.info(f"Callback data received: {list(callback_data.keys())}")
+            logger.debug(f"Full callback data: {callback_data}")
+            logger.debug(f"Params to verify (sorted): {sorted(params_to_verify.items())}")
+
             calculated_signature = self._generate_signature(params_to_verify)
 
             if received_signature.lower() != calculated_signature.lower():
                 logger.error(
                     f"Invalid callback signature! "
                     f"Received: {received_signature[:10]}..., "
-                    f"Calculated: {calculated_signature[:10]}..."
+                    f"Calculated: {calculated_signature[:10]}... "
+                    f"Full received: {received_signature}, "
+                    f"Full calculated: {calculated_signature}"
                 )
                 return {
                     'status': 'error',
