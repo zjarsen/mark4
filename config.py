@@ -85,14 +85,12 @@ class Config:
     # Database Configuration
     DATABASE_PATH = os.getenv('DATABASE_PATH', 'data/mark4_bot.db')
 
-    # Payment Configuration (WeChat/Alipay 3rd party acquirer)
+    # Payment Configuration (剑来支付 - Jianlai Payment Gateway)
     PAYMENT_GATEWAY_URL = os.getenv('PAYMENT_GATEWAY_URL')  # Base URL for payment gateway
-    PAYMENT_MERCHANT_ID = os.getenv('PAYMENT_MERCHANT_ID')  # pay_memberid
+    PAYMENT_MERCHANT_ID = os.getenv('PAYMENT_MERCHANT_ID')  # Merchant ID (pid)
     PAYMENT_SECRET_KEY = os.getenv('PAYMENT_SECRET_KEY')    # Secret key for MD5 signing
-    PAYMENT_NOTIFY_URL = os.getenv('PAYMENT_NOTIFY_URL')    # Server callback URL (pay_notifyurl)
-    PAYMENT_CALLBACK_URL = os.getenv('PAYMENT_CALLBACK_URL')  # User return URL (pay_callbackurl)
-    PAYMENT_BANKCODE_WECHAT = os.getenv('PAYMENT_BANKCODE_WECHAT', '998')  # Bank code for WeChat
-    PAYMENT_BANKCODE_ALIPAY = os.getenv('PAYMENT_BANKCODE_ALIPAY', '999')  # Bank code for Alipay
+    PAYMENT_NOTIFY_URL = os.getenv('PAYMENT_NOTIFY_URL')    # Server callback URL (notify_url)
+    PAYMENT_CALLBACK_URL = os.getenv('PAYMENT_CALLBACK_URL')  # User return URL (return_url)
 
     # Admin Testing Configuration
     ADMIN_TOPUP_PASSWORD = os.getenv('ADMIN_TOPUP_PASSWORD')  # Admin password for testing top-ups

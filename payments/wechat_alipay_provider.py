@@ -34,8 +34,6 @@ class WeChatAlipayProvider(PaymentProvider):
         self.secret_key = getattr(config, 'PAYMENT_SECRET_KEY', None)
         self.notify_url = getattr(config, 'PAYMENT_NOTIFY_URL', None)
         self.callback_url = getattr(config, 'PAYMENT_CALLBACK_URL', None)
-        self.bankcode_wechat = getattr(config, 'PAYMENT_BANKCODE_WECHAT', '998')
-        self.bankcode_alipay = getattr(config, 'PAYMENT_BANKCODE_ALIPAY', '999')
 
         # Validate required config
         if not all([self.gateway_url, self.merchant_id, self.secret_key,
@@ -78,8 +76,8 @@ class WeChatAlipayProvider(PaymentProvider):
             payment_id = f"{int(datetime.now().timestamp())}{user_id}"[:20]
 
             # Select payment type based on payment method
-            # New vendor uses: 'alipay' or 'wxpay'
-            payment_type = self.bankcode_alipay if payment_method == 'alipay' else self.bankcode_wechat
+            # 剑来支付 uses: 'alipay' or 'wxpay'
+            payment_type = 'alipay' if payment_method == 'alipay' else 'wxpay'
 
             # Prepare SIGNATURE parameters (all signed for new vendor)
             signature_params = {
