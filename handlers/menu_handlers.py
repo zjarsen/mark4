@@ -240,6 +240,7 @@ async def handle_check_queue(
 ):
     """
     Handle 'Check Queue' menu selection.
+    Shows application-layer queue status from queue managers.
 
     Args:
         update: Telegram Update
@@ -247,21 +248,94 @@ async def handle_check_queue(
         user_id: User ID
     """
     try:
-        # Get queue total
-        total = await queue_service.get_queue_total()
+        logger.info(f"handle_check_queue called for user {user_id}")
+        logger.info(f"Update type: message={bool(update.message)}, callback_query={bool(update.callback_query)}")
 
-        # Send queue total to user
-        await notification_service.send_queue_total(
-            context.bot,
-            user_id,
-            total
-        )
+        # Get workflow service from bot data
+        workflow_service = context.bot_data.get('workflow_service')
 
-        logger.info(f"User {user_id} checked queue: {total} total")
+        if not workflow_service:
+            logger.error("workflow_service not found in bot_data")
+            # Handle both message and callback query
+            if update.callback_query:
+                await update.callback_query.answer(QUEUE_UNAVAILABLE, show_alert=True)
+            elif update.message:
+                await update.message.reply_text(QUEUE_UNAVAILABLE)
+            return
+
+        logger.info("Getting application queue status...")
+        # Get application queue status
+        status = queue_service.get_application_queue_status(workflow_service)
+        logger.info(f"Queue status retrieved: {status['total_jobs']} total jobs")
+
+        # Format queue status message with improved UI
+        message = "━━━━━━━━━━━━━━━━━━━━\n"
+        message += "📊 **当前队列状态**\n"
+        message += "━━━━━━━━━━━━━━━━━━━━\n\n"
+
+        # Per-manager detailed status (no overview section)
+        for workflow_type, servers in status['managers'].items():
+            # Workflow type icon
+            if workflow_type == 'image':
+                workflow_icon = "🖼️"
+                workflow_label = "图片处理"
+            else:
+                workflow_icon = "🎬"
+                workflow_label = "视频处理"
+
+            message += f"{workflow_icon} **{workflow_label}**\n"
+
+            # Convert server keys to numbered servers (1号, 2号, etc.)
+            server_number = 1
+            for server_key, manager_status in servers.items():
+                vip_count = manager_status['vip_queue_size']
+                regular_count = manager_status['regular_queue_size']
+                is_processing = manager_status['processing']
+
+                # Include processing task in total count
+                total_count = vip_count + regular_count + (1 if is_processing else 0)
+
+                # Show server details with numbered naming
+                message += f"  └─ 服务器 **{server_number}号**：**{total_count}** 个任务\n"
+                if vip_count > 0:
+                    message += f"     • 👑 VIP：**{vip_count}** 个\n"
+                if regular_count > 0:
+                    message += f"     • 👤 普通：**{regular_count}** 个\n"
+
+                server_number += 1
+
+            message += "\n"
+
+        # Footer with helpful info
+        message += "━━━━━━━━━━━━━━━━━━━━\n"
+        message += "💡 **提示**：VIP用户享有优先处理权"
+
+        logger.info(f"Sending queue status message to user {user_id}")
+
+        # Handle both message and callback query
+        if update.callback_query:
+            # Answer the callback query first to stop loading
+            await update.callback_query.answer()
+            # Send the queue status as a new message
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=message,
+                parse_mode='Markdown'
+            )
+            logger.info(f"Queue status sent via callback query for user {user_id}")
+        elif update.message:
+            await update.message.reply_text(message, parse_mode='Markdown')
+            logger.info(f"Queue status sent via message reply for user {user_id}")
+
+        logger.info(f"User {user_id} checked queue: {status['total_jobs']} total jobs")
 
     except Exception as e:
-        logger.error(f"Error checking queue: {str(e)}")
-        await update.message.reply_text(QUEUE_UNAVAILABLE)
+        logger.error(f"Error checking queue: {str(e)}", exc_info=True)
+        # Handle both message and callback query
+        if update.callback_query:
+            await update.callback_query.answer(QUEUE_UNAVAILABLE, show_alert=True)
+        elif update.message:
+            await update.message.reply_text(QUEUE_UNAVAILABLE)
 
 
 async def handle_unexpected_text(update: Update, context: ContextTypes.DEFAULT_TYPE):

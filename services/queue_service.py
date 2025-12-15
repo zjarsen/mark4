@@ -36,7 +36,9 @@ class QueueService:
 
     async def get_queue_total(self) -> int:
         """
-        Get total number of items in queue.
+        Get total number of items in ComfyUI queue (legacy method).
+
+        DEPRECATED: Use get_application_queue_status() for new queue system.
 
         Returns:
             Total queue size
@@ -48,6 +50,44 @@ class QueueService:
         except Exception as e:
             logger.error(f"Error getting queue total: {str(e)}")
             return 0
+
+    def get_application_queue_status(self, workflow_service):
+        """
+        Get application-layer queue status from all queue managers.
+
+        Args:
+            workflow_service: WorkflowService instance with queue managers
+
+        Returns:
+            Dict with queue status for all managers
+        """
+        status = {
+            'total_vip': 0,
+            'total_regular': 0,
+            'total_processing': 0,
+            'managers': {}
+        }
+
+        all_managers = workflow_service.get_all_queue_managers()
+
+        for workflow_type, servers in all_managers.items():
+            status['managers'][workflow_type] = {}
+
+            for server_key, manager in servers.items():
+                manager_status = manager.get_queue_status()
+
+                status['managers'][workflow_type][server_key] = manager_status
+
+                # Aggregate totals
+                status['total_vip'] += manager_status['vip_queue_size']
+                status['total_regular'] += manager_status['regular_queue_size']
+                status['total_processing'] += 1 if manager_status['processing'] else 0
+
+        # Calculate total queued (not processing)
+        status['total_queued'] = status['total_vip'] + status['total_regular']
+        status['total_jobs'] = status['total_queued'] + status['total_processing']
+
+        return status
 
     async def monitor_processing(
         self,

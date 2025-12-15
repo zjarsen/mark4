@@ -1,6 +1,7 @@
 """Workflow orchestration service."""
 
 import asyncio
+import time
 from pathlib import Path
 import logging
 from workflows_processing.image_processing import (
@@ -8,6 +9,7 @@ from workflows_processing.image_processing import (
     ImageProcessingStyleBra,
     ImageProcessingStyleUndress
 )
+from services.queue_manager_base import QueuedJob
 
 logger = logging.getLogger('mark4_bot')
 
@@ -82,13 +84,301 @@ class WorkflowService:
         # Store ComfyUI services for queue service (uses image_undress by default)
         self.comfyui_service = image_comfyui
 
-        # Initialize VIP queue manager for priority queue handling
-        from services.vip_queue_manager import VIPQueueManager
-        self.vip_queue_manager = VIPQueueManager(
-            comfyui_service=image_comfyui,
-            max_comfyui_queue_size=10
-        )
-        logger.info("VIP Queue Manager initialized (will start with event loop)")
+        # Initialize queue managers dictionary for scalability (future: multiple servers per type)
+        from services.image_queue_manager import ImageQueueManager
+        from services.video_queue_manager import VideoQueueManager
+
+        self.queue_managers = {
+            'image': {
+                'undress': ImageQueueManager(comfyui_service=image_comfyui),
+                # Future: 'undress_2': ImageQueueManager(comfyui_service=image_comfyui_2),
+            },
+            'video': {
+                'default': VideoQueueManager(comfyui_service=video_douxiong_comfyui),
+                # Future: 'douxiong_2': VideoQueueManager(comfyui_service=video_douxiong_comfyui_2),
+            }
+        }
+
+        # Convenience accessors (for backward compatibility with existing code)
+        self.image_queue_manager = self.queue_managers['image']['undress']
+        self.video_queue_manager = self.queue_managers['video']['default']
+
+        logger.info("Queue managers initialized (indexed by type and server)")
+
+    def get_queue_manager(self, workflow_type: str, server_key: str = 'default'):
+        """
+        Get a specific queue manager by workflow type and server key.
+
+        Args:
+            workflow_type: 'image' or 'video'
+            server_key: Server identifier (default: 'undress' for image, 'default' for video)
+
+        Returns:
+            Queue manager instance or None if not found
+        """
+        if workflow_type == 'image' and server_key == 'default':
+            server_key = 'undress'  # Map default to undress for images
+
+        return self.queue_managers.get(workflow_type, {}).get(server_key)
+
+    def get_all_queue_managers(self):
+        """
+        Get all queue managers for status reporting.
+
+        Returns:
+            Dict of {workflow_type: {server_key: manager}}
+        """
+        return self.queue_managers
+
+    async def start_queue_managers(self):
+        """Start all queue managers' background processors"""
+        for workflow_type, servers in self.queue_managers.items():
+            for server_key, manager in servers.items():
+                await manager.start()
+                logger.info(f"Started queue manager: {workflow_type}/{server_key}")
+        logger.info("All queue managers started successfully")
+
+    async def stop_queue_managers(self):
+        """Stop all queue managers' background processors"""
+        for workflow_type, servers in self.queue_managers.items():
+            for server_key, manager in servers.items():
+                await manager.stop()
+                logger.info(f"Stopped queue manager: {workflow_type}/{server_key}")
+        logger.info("All queue managers stopped successfully")
+
+    # Helper methods for queue job callbacks
+    async def _send_queue_position_message(self, bot, user_id, position, job_id=None):
+        """Send queue position message to user with refresh button and store message ID"""
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+        message_text = f"📋 您的任务已加入队列\n位置: #{position}"
+
+        # Add refresh button with job_id for position lookup
+        # Store job_id in callback_data so refresh can look up current position
+        callback_data = f"refresh_queue_{user_id}"
+        if job_id:
+            callback_data = f"refresh_queue_{job_id}"
+
+        keyboard = [[InlineKeyboardButton("🔄 刷新", callback_data=callback_data)]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        try:
+            sent_message = await bot.send_message(user_id, message_text, reply_markup=reply_markup)
+            # Store message ID and job_id in state manager for later deletion and refresh
+            state_updates = {'queue_message_id': sent_message.message_id}
+            if job_id:
+                state_updates['current_job_id'] = job_id
+            self.state_manager.update_state(user_id, **state_updates)
+            logger.info(f"Sent queue position message {sent_message.message_id} to user {user_id} (job_id: {job_id})")
+        except Exception as e:
+            logger.error(f"Error sending queue position message: {e}")
+
+    async def _send_processing_message(self, bot, user_id):
+        """Update queue position message to show processing (removes refresh button)"""
+        message_text = "🚀 您的任务现在正在服务器上处理！\n⏱️ 这可能需要几分钟..."
+        try:
+            state = self.state_manager.get_state(user_id)
+            queue_msg_id = state.get('queue_message_id')
+
+            if queue_msg_id:
+                # Edit existing queue position message (removes refresh button)
+                await bot.edit_message_text(
+                    chat_id=user_id,
+                    message_id=queue_msg_id,
+                    text=message_text
+                )
+                logger.info(f"Updated queue message {queue_msg_id} to processing for user {user_id}")
+            else:
+                # Fallback: send new message if no queue message exists
+                sent_message = await bot.send_message(user_id, message_text)
+                self.state_manager.update_state(user_id, queue_message_id=sent_message.message_id)
+                logger.info(f"Sent processing message {sent_message.message_id} to user {user_id}")
+        except Exception as e:
+            logger.error(f"Error sending processing message: {e}")
+
+    async def _delete_queue_messages(self, bot, user_id):
+        """Delete queue/processing message (now the same message)"""
+        state = self.state_manager.get_state(user_id)
+
+        # Delete queue position message (which becomes processing message when submitted)
+        queue_msg_id = state.get('queue_message_id')
+        if queue_msg_id:
+            try:
+                await bot.delete_message(chat_id=user_id, message_id=queue_msg_id)
+                logger.info(f"Deleted queue/processing message {queue_msg_id} for user {user_id}")
+            except Exception as e:
+                logger.warning(f"Could not delete queue/processing message {queue_msg_id}: {e}")
+
+    async def _handle_queue_error_with_refund(self, bot, user_id, error_msg, cost):
+        """Handle queue error and refund credits"""
+        logger.error(f"Job failed for user {user_id}: {error_msg}")
+
+        # Delete queue messages
+        await self._delete_queue_messages(bot, user_id)
+
+        # Refund credits
+        if self.credit_service and cost > 0:
+            try:
+                success, new_balance = await self.credit_service.add_credits(user_id, cost)
+                if success:
+                    logger.info(f"Refunded {cost} credits to user {user_id}")
+            except Exception as e:
+                logger.error(f"Error refunding credits: {e}")
+
+        # Notify user
+        try:
+            await bot.send_message(
+                user_id,
+                f"❌ 处理失败: {error_msg}\n"
+                f"💰 {cost} 积分已退还。" if cost > 0 else f"❌ 处理失败: {error_msg}"
+            )
+        except Exception as e:
+            logger.error(f"Error sending error message: {e}")
+
+        # Reset state
+        self.state_manager.reset_state(user_id)
+
+    async def _handle_image_submitted(self, bot, user_id: int, prompt_id: str, filename: str):
+        """
+        Called when image job is submitted to ComfyUI.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+            prompt_id: ComfyUI prompt ID
+            filename: Original filename
+        """
+        try:
+            # Update queue message to show processing (removes refresh button)
+            await self._send_processing_message(bot, user_id)
+            self.state_manager.update_state(
+                user_id,
+                prompt_id=prompt_id,
+                state='processing',
+                filename=filename
+            )
+            logger.info(f"Image job {prompt_id} submitted for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error in _handle_image_submitted: {e}", exc_info=True)
+
+    async def _handle_image_completed(self, bot, user_id: int, prompt_id: str, history: dict, filename: str):
+        """
+        Called when image job completes.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+            prompt_id: ComfyUI prompt ID
+            history: ComfyUI history result
+            filename: Original filename
+        """
+        try:
+            logger.info(f"Image job {prompt_id} completed for user {user_id}")
+            # Delete queue messages before showing result
+            await self._delete_queue_messages(bot, user_id)
+            # Start monitoring for results (existing _monitor_and_complete logic)
+            asyncio.create_task(
+                self._monitor_and_complete(bot, user_id, prompt_id, filename)
+            )
+        except Exception as e:
+            logger.error(f"Error in _handle_image_completed: {e}", exc_info=True)
+
+    async def _handle_styled_image_submitted(self, bot, user_id: int, prompt_id: str, filename: str, style: str):
+        """
+        Called when styled image job is submitted to ComfyUI.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+            prompt_id: ComfyUI prompt ID
+            filename: Original filename
+            style: Image style (e.g., 'undress', 'bra')
+        """
+        try:
+            # Update queue message to show processing (removes refresh button)
+            await self._send_processing_message(bot, user_id)
+            self.state_manager.update_state(
+                user_id,
+                prompt_id=prompt_id,
+                state='processing',
+                filename=filename,
+                image_style=style
+            )
+            logger.info(f"Styled image job {prompt_id} (style: {style}) submitted for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error in _handle_styled_image_submitted: {e}", exc_info=True)
+
+    async def _handle_styled_image_completed(self, bot, user_id: int, prompt_id: str, history: dict, filename: str, style: str):
+        """
+        Called when styled image job completes.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+            prompt_id: ComfyUI prompt ID
+            history: ComfyUI history result
+            filename: Original filename
+            style: Image style (e.g., 'undress', 'bra')
+        """
+        try:
+            logger.info(f"Styled image job {prompt_id} (style: {style}) completed for user {user_id}")
+            # Delete queue messages before showing result
+            await self._delete_queue_messages(bot, user_id)
+            # Start monitoring for results
+            asyncio.create_task(
+                self._monitor_and_complete_image_styled(bot, user_id, prompt_id, filename, style)
+            )
+        except Exception as e:
+            logger.error(f"Error in _handle_styled_image_completed: {e}", exc_info=True)
+
+    async def _handle_video_submitted(self, bot, user_id: int, prompt_id: str, filename: str, style: str):
+        """
+        Called when video job is submitted to ComfyUI.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+            prompt_id: ComfyUI prompt ID
+            filename: Original filename
+            style: Video style (e.g., 'douxiong', 'liujing', 'shejing')
+        """
+        try:
+            # Update queue message to show processing (removes refresh button)
+            await self._send_processing_message(bot, user_id)
+            self.state_manager.update_state(
+                user_id,
+                prompt_id=prompt_id,
+                state='processing',
+                filename=filename,
+                workflow_type='video',
+                video_style=style
+            )
+            logger.info(f"Video job {prompt_id} (style: {style}) submitted for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error in _handle_video_submitted: {e}", exc_info=True)
+
+    async def _handle_video_completed(self, bot, user_id: int, prompt_id: str, history: dict, filename: str, style: str):
+        """
+        Called when video job completes.
+
+        Args:
+            bot: Telegram Bot instance
+            user_id: User ID
+            prompt_id: ComfyUI prompt ID
+            history: ComfyUI history result
+            filename: Original filename
+            style: Video style (e.g., 'douxiong', 'liujing', 'shejing')
+        """
+        try:
+            logger.info(f"Video job {prompt_id} (style: {style}) completed for user {user_id}")
+            # Delete queue messages before showing result
+            await self._delete_queue_messages(bot, user_id)
+            # Start monitoring for results
+            asyncio.create_task(
+                self._monitor_and_complete_video(bot, user_id, prompt_id, filename, style)
+            )
+        except Exception as e:
+            logger.error(f"Error in _handle_video_completed: {e}", exc_info=True)
 
     async def start_image_workflow(
         self,
@@ -577,58 +867,60 @@ class WorkflowService:
                         self.state_manager.reset_state(user_id)
                         return False
 
-            # Queue workflow
-            prompt_id = await self.image_workflow.queue_workflow(filename=filename)
-
-            # Deduct credits after successful queue
+            # Deduct credits BEFORE queueing (new approach)
+            cost = 0
             if self.credit_service:
+                # Get cost for this operation
+                _, _, cost = await self.credit_service.check_sufficient_credits(
+                    user_id,
+                    'image_processing'
+                )
+
+                # Deduct credits before queueing
                 success, new_balance = await self.credit_service.deduct_credits(
                     user_id,
                     'image_processing',
-                    reference_id=prompt_id
+                    reference_id=f"image_{user_id}_{filename}"
                 )
                 if success:
                     logger.info(
-                        f"Deducted credits for user {user_id}, "
+                        f"Deducted {cost} credits for user {user_id}, "
                         f"new balance: {new_balance}"
                     )
                 else:
                     logger.error(f"Failed to deduct credits for user {user_id}")
+                    await bot.send_message(user_id, "❌ 积分扣除失败，请稍后重试")
+                    self.state_manager.reset_state(user_id)
+                    return False
 
-            # Update user state
-            self.state_manager.update_state(
-                user_id,
-                state='processing',
-                prompt_id=prompt_id,
-                filename=filename
+            # Check VIP status (only Black Gold gets priority)
+            is_vip = False
+            if self.credit_service:
+                is_vip_user, tier = await self.credit_service.is_vip_user(user_id)
+                is_vip = (tier == 'black_gold')
+
+            # Prepare workflow
+            workflow_dict = await self.image_workflow.prepare_workflow(filename=filename)
+
+            # Create QueuedJob with callbacks
+            job_id = f"{user_id}_{int(time.time())}"
+            job = QueuedJob(
+                job_id=job_id,
+                user_id=user_id,
+                workflow=workflow_dict,
+                workflow_type="image_undress",
+                on_queued=lambda pos: self._send_queue_position_message(bot, user_id, pos, job_id),
+                on_submitted=lambda pid: self._handle_image_submitted(bot, user_id, pid, filename),
+                on_completed=lambda pid, hist: self._handle_image_completed(bot, user_id, pid, hist, filename),
+                on_error=lambda err: self._handle_queue_error_with_refund(bot, user_id, err, cost)
             )
 
-            # Show initial queue position
-            position, total = await self.queue_service.get_queue_position(prompt_id)
-            message = await self.notification_service.send_queue_position(
-                bot,
-                user_id,
-                position,
-                total,
-                prompt_id
-            )
-
-            # Store message for later updates/deletion
-            self.state_manager.set_queue_message(user_id, message)
-
-            # Start monitoring in background
-            asyncio.create_task(
-                self._monitor_and_complete(
-                    bot,
-                    user_id,
-                    prompt_id,
-                    filename
-                )
-            )
+            # Queue the job
+            await self.image_queue_manager.queue_job(job, is_vip=is_vip)
 
             logger.info(
-                f"Proceeded with image workflow for user {user_id}, "
-                f"prompt_id: {prompt_id}"
+                f"Queued image workflow for user {user_id} "
+                f"(job_id: {job.job_id}, VIP: {is_vip})"
             )
             return True
 
@@ -777,86 +1069,62 @@ class WorkflowService:
                             f"User {user_id} proceeding with bra style (permanently free)"
                         )
 
+            # Deduct credits BEFORE queueing (new approach)
+            cost = 0
+            if self.credit_service and not is_vip and style != 'bra':
+                # Get cost and deduct credits for undress style
+                _, _, cost = await self.credit_service.check_sufficient_credits(
+                    user_id,
+                    'image_processing'
+                )
+
+                success, new_balance = await self.credit_service.deduct_credits(
+                    user_id,
+                    'image_processing',
+                    reference_id=f"image_{style}_{user_id}_{filename}"
+                )
+                if success:
+                    logger.info(
+                        f"Deducted {cost} credits for user {user_id} (style: {style}), "
+                        f"new balance: {new_balance}"
+                    )
+                else:
+                    logger.error(f"Failed to deduct credits for user {user_id}")
+                    await bot.send_message(user_id, "❌ 积分扣除失败，请稍后重试")
+                    self.state_manager.reset_state(user_id)
+                    return False
+            elif style == 'bra' and self.credit_service:
+                # Create transaction record for free bra usage (amount = 0)
+                balance = await self.credit_service.get_balance(user_id)
+                self.credit_service.db.create_transaction(
+                    user_id=user_id,
+                    transaction_type='deduction',
+                    amount=0.0,
+                    balance_before=balance,
+                    balance_after=balance,
+                    description="免费使用: 粉色蕾丝内衣",
+                    reference_id=f"image_{style}_{user_id}_{filename}"
+                )
+                logger.info(f"Created free transaction record for user {user_id} (bra style)")
+
             # Prepare workflow for queue submission
             workflow = await image_workflow.prepare_workflow(filename=filename)
 
-            # Define callback for when job is submitted
-            async def on_submitted(prompt_id):
-                """Callback when job submitted to ComfyUI."""
-                # Deduct credits after successful queue (skip if VIP or bra style)
-                if self.credit_service and not is_vip and style != 'bra':
-                    success, new_balance = await self.credit_service.deduct_credits(
-                        user_id,
-                        'image_processing',
-                        reference_id=prompt_id
-                    )
-                    if success:
-                        logger.info(
-                            f"Deducted credits for user {user_id} (style: {style}), "
-                            f"new balance: {new_balance}"
-                        )
-                    else:
-                        logger.error(f"Failed to deduct credits for user {user_id}")
-                elif is_vip:
-                    logger.info(
-                        f"Skipping credit deduction for VIP user {user_id} (tier: {tier})"
-                    )
-                elif style == 'bra':
-                    # Create transaction record for free bra usage (amount = 0)
-                    balance = await self.credit_service.get_balance(user_id)
-                    self.credit_service.db.create_transaction(
-                        user_id=user_id,
-                        transaction_type='deduction',
-                        amount=0.0,  # Zero amount for free usage
-                        balance_before=balance,
-                        balance_after=balance,  # Balance unchanged
-                        description="免费使用: 粉色蕾丝内衣",
-                        reference_id=prompt_id
-                    )
-                    logger.info(
-                        f"Skipping credit deduction for user {user_id} (bra style - permanently free), transaction recorded"
-                    )
-
-                # Update user state
-                self.state_manager.update_state(
-                    user_id,
-                    state='processing',
-                    prompt_id=prompt_id,
-                    filename=filename,
-                    image_style=style
-                )
-
-                # Show initial queue position
-                position, total = await self.queue_service.get_queue_position(prompt_id)
-                message = await self.notification_service.send_queue_position(
-                    bot,
-                    user_id,
-                    position,
-                    total,
-                    prompt_id
-                )
-
-                # Store message for later updates/deletion
-                self.state_manager.set_queue_message(user_id, message)
-
-                # Start monitoring in background
-                asyncio.create_task(
-                    self._monitor_and_complete_image_styled(
-                        bot,
-                        user_id,
-                        prompt_id,
-                        filename,
-                        style
-                    )
-                )
-
-            # Queue job via VIP queue manager (black_gold gets priority)
-            await self.vip_queue_manager.queue_job(
+            # Create QueuedJob with callbacks
+            job_id = f"{user_id}_{int(time.time())}"
+            job = QueuedJob(
+                job_id=job_id,
                 user_id=user_id,
-                workflow_data=workflow,
-                is_vip=is_black_gold,  # Only black_gold gets priority
-                callback=on_submitted
+                workflow=workflow,
+                workflow_type=f"image_{style}",
+                on_queued=lambda pos: self._send_queue_position_message(bot, user_id, pos, job_id),
+                on_submitted=lambda pid: self._handle_styled_image_submitted(bot, user_id, pid, filename, style),
+                on_completed=lambda pid, hist: self._handle_styled_image_completed(bot, user_id, pid, hist, filename, style),
+                on_error=lambda err: self._handle_queue_error_with_refund(bot, user_id, err, cost)
             )
+
+            # Queue job via image queue manager (black_gold gets priority)
+            await self.image_queue_manager.queue_job(job, is_vip=is_black_gold)
 
             logger.info(
                 f"Queued job for user {user_id}, "
@@ -1139,46 +1407,36 @@ class WorkflowService:
                     f"new balance: {new_balance}"
                 )
 
-            # Queue workflow
-            prompt_id = await video_workflow.queue_workflow(filename=filename)
+            # Check VIP status for priority queue (Black Gold only)
+            is_vip = False
+            if self.credit_service:
+                is_vip_user, tier = await self.credit_service.is_vip_user(user_id)
+                is_vip = (tier == 'black_gold')
 
-            # Update user state
-            self.state_manager.update_state(
-                user_id,
-                state='processing',
-                prompt_id=prompt_id,
-                filename=filename,
-                workflow_type='video',
-                video_style=style
+            # Prepare workflow
+            workflow_dict = await video_workflow.prepare_workflow(filename=filename)
+
+            # Create QueuedJob with callbacks
+            import time
+            from services.queue_manager_base import QueuedJob
+
+            job_id = f"{user_id}_{int(time.time())}"
+            job = QueuedJob(
+                job_id=job_id,
+                user_id=user_id,
+                workflow=workflow_dict,
+                workflow_type=f"video_{style}",
+                on_queued=lambda pos: self._send_queue_position_message(bot, user_id, pos, job_id),
+                on_submitted=lambda pid: self._handle_video_submitted(bot, user_id, pid, filename, style),
+                on_completed=lambda pid, hist: self._handle_video_completed(bot, user_id, pid, hist, filename, style),
+                on_error=lambda err: self._handle_queue_error_with_refund(bot, user_id, err, cost)
             )
 
-            # Show initial queue position
-            position, total = await self.queue_service.get_queue_position(prompt_id)
-            message = await self.notification_service.send_queue_position(
-                bot,
-                user_id,
-                position,
-                total,
-                prompt_id
-            )
-
-            # Store message for later updates/deletion
-            self.state_manager.set_queue_message(user_id, message)
-
-            # Start monitoring in background
-            asyncio.create_task(
-                self._monitor_and_complete_video(
-                    bot,
-                    user_id,
-                    prompt_id,
-                    filename,
-                    style
-                )
-            )
+            # Queue job via video queue manager (black_gold gets priority)
+            await self.video_queue_manager.queue_job(job, is_vip=is_vip)
 
             logger.info(
-                f"Proceeded with video workflow for user {user_id}, "
-                f"style: {style}, prompt_id: {prompt_id}"
+                f"Queued video job for user {user_id}, style: {style}, VIP: {is_vip}, Priority: {is_vip}"
             )
             return True
 

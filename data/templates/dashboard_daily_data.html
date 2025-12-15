@@ -20,41 +20,24 @@
                         <h5 class="mb-3"><i class="bi bi-sliders"></i> 时间窗口控制</h5>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             <!-- Days control -->
-                            <span class="badge bg-secondary">窗口天数:</span>
-                            <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(-7)">
-                                <i class="bi bi-dash-circle"></i> -7天
-                            </button>
+                            <span class="badge bg-secondary">窗口大小:</span>
                             <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(-1)">
-                                <i class="bi bi-dash"></i> -1天
+                                <i class="bi bi-dash"></i>
                             </button>
                             <span class="badge bg-primary fs-6 px-3">{{ window.days }} 天</span>
                             <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(1)">
-                                <i class="bi bi-plus"></i> +1天
-                            </button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(7)">
-                                <i class="bi bi-plus-circle"></i> +7天
+                                <i class="bi bi-plus"></i>
                             </button>
                         </div>
                         <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
                             <!-- Offset control -->
-                            <span class="badge bg-secondary">移动窗口:</span>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(-30)">
-                                <i class="bi bi-chevron-double-left"></i> -30天
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(-7)">
-                                <i class="bi bi-chevron-left"></i> -7天
-                            </button>
+                            <span class="badge bg-secondary">窗口位置:</span>
                             <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(-1)">
-                                <i class="bi bi-arrow-left"></i> -1天
+                                <i class="bi bi-arrow-left"></i>
                             </button>
+                            <span class="badge bg-secondary fs-6 px-3">偏移 {{ window.offset }} 天</span>
                             <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(1)">
-                                <i class="bi bi-arrow-right"></i> +1天
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(7)">
-                                <i class="bi bi-chevron-right"></i> +7天
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(30)">
-                                <i class="bi bi-chevron-double-right"></i> +30天
+                                <i class="bi bi-arrow-right"></i>
                             </button>
                         </div>
                     </div>
@@ -66,7 +49,7 @@
                             <span class="text-success">{{ window.end_date }}</span>
                         </h5>
                         <button class="btn btn-sm btn-warning mt-2" onclick="resetWindow()">
-                            <i class="bi bi-arrow-counterclockwise"></i> 重置为最近30天
+                            <i class="bi bi-arrow-counterclockwise"></i> 重置为最近7天
                         </button>
                     </div>
                 </div>
@@ -92,6 +75,17 @@
                     <small class="text-muted">(完成支付用户)</small>
                 </h5>
                 <canvas id="dailyPaymentChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Graph 3: Next-Day Retention Rate -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-arrow-repeat"></i> 次日留存率
+                    <small class="text-muted">(昨日活跃用户今日回归比例)</small>
+                </h5>
+                <canvas id="retentionRateChart"></canvas>
             </div>
         </div>
 
@@ -149,12 +143,18 @@ const currentOffset = {{ window.offset }};
 const allDates = new Set();
 dailyData.active_users.forEach(d => allDates.add(d.date));
 dailyData.payments.forEach(d => allDates.add(d.date));
+dailyData.retention.forEach(d => allDates.add(d.date));
 const dateLabels = Array.from(allDates).sort();
 
 // Create maps for quick lookup
 const activeUsersMap = new Map(dailyData.active_users.map(d => [d.date, d.count]));
 const payingUsersMap = new Map(dailyData.payments.map(d => [d.date, d.paying_users]));
 const revenueMap = new Map(dailyData.payments.map(d => [d.date, d.revenue]));
+const retentionMap = new Map(dailyData.retention.map(d => [d.date, d.retention_rate]));
+const retentionDetailsMap = new Map(dailyData.retention.map(d => [d.date, {
+    yesterday_active: d.yesterday_active,
+    retained_users: d.retained_users
+}]));
 
 // Prepare datasets with 0 for missing dates
 const activeUsersData = dateLabels.map(date => activeUsersMap.get(date) || 0);
@@ -348,6 +348,95 @@ new Chart(paymentCtx, {
     }
 });
 
+// Prepare retention rate data (null for dates without data)
+const retentionData = dateLabels.map(date => {
+    const rate = retentionMap.get(date);
+    return rate !== undefined ? rate : null;
+});
+
+// Chart 3: Next-Day Retention Rate (Line Chart)
+const retentionCtx = document.getElementById('retentionRateChart').getContext('2d');
+new Chart(retentionCtx, {
+    type: 'line',
+    data: {
+        labels: dateLabels,
+        datasets: [{
+            label: '次日留存率 (%)',
+            data: retentionData,
+            backgroundColor: 'rgba(153, 102, 255, 0.1)',
+            borderColor: 'rgb(153, 102, 255)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            spanGaps: false,
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                formatter: function(value) {
+                    if (value === null || value === undefined) {
+                        return 'N/A';
+                    }
+                    return value.toFixed(1) + '%';
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                color: '#9966ff'
+            }
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        if (context.parsed.y === null) {
+                            return '次日留存率: N/A (无前一天数据)';
+                        }
+                        const date = dateLabels[context.dataIndex];
+                        const details = retentionDetailsMap.get(date);
+                        if (details && details.yesterday_active !== undefined) {
+                            return '次日留存率: ' + context.parsed.y.toFixed(2) + '% (' +
+                                   details.retained_users + '/' + details.yesterday_active + ' 用户)';
+                        }
+                        return '次日留存率: ' + context.parsed.y.toFixed(2) + '%';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                },
+                title: {
+                    display: true,
+                    text: '留存率 (%)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: '日期 (GMT+8)'
+                }
+            }
+        }
+    }
+});
+
 // Window control functions
 function adjustDays(delta) {
     const newDays = currentDays + delta;
@@ -368,7 +457,7 @@ function adjustOffset(delta) {
 }
 
 function resetWindow() {
-    window.location.href = '?days=30&offset=0';
+    window.location.href = '?days=7&offset=0';
 }
 </script>
 {% endblock %}

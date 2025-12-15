@@ -265,12 +265,8 @@ class BotApplication:
         )
 
         # Callback query handlers (inline buttons)
-        self.app.add_handler(
-            CallbackQueryHandler(
-                callback_handlers.refresh_queue_callback,
-                pattern="^refresh_"
-            )
-        )
+        # Note: refresh_queue_callback moved to inline handler below (line 320)
+        # to properly handle message editing in same context
         self.app.add_handler(
             CallbackQueryHandler(
                 callback_handlers.cancel_callback,
@@ -317,6 +313,89 @@ class BotApplication:
             )
         )
 
+        # Queue refresh callback handler (for refresh button in queue position message)
+        async def refresh_queue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            """Handle refresh_queue callback to update position in same message."""
+            query = update.callback_query
+            user_id = update.effective_user.id if update.effective_user else None
+
+            if not user_id:
+                return
+
+            # Extract job_id from callback_data (format: "refresh_queue_{job_id}")
+            job_id = query.data.replace("refresh_queue_", "")
+
+            logger.info(f"[CALLBACK] refresh_queue button clicked by user {user_id} for job {job_id}")
+
+            try:
+                # Answer callback to stop loading
+                await query.answer()
+
+                # Get workflow service
+                workflow_service = context.bot_data.get('workflow_service')
+                if not workflow_service:
+                    await query.edit_message_text("❌ 无法获取队列状态")
+                    return
+
+                # Determine which queue manager to check based on job_id pattern
+                # We need to find the job in either image or video queue manager
+                position = None
+                found_in_queue = False
+
+                # Check image queue manager
+                image_status = workflow_service.image_queue_manager.get_queue_status()
+                image_position = workflow_service.image_queue_manager._get_job_position(job_id)
+                if image_position is not None:
+                    position = image_position
+                    found_in_queue = True
+
+                # Check video queue manager if not found in image
+                if not found_in_queue:
+                    video_status = workflow_service.video_queue_manager.get_queue_status()
+                    video_position = workflow_service.video_queue_manager._get_job_position(job_id)
+                    if video_position is not None:
+                        position = video_position
+                        found_in_queue = True
+
+                # Update message with current position
+                from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                from telegram.error import BadRequest
+
+                try:
+                    if found_in_queue and position is not None:
+                        # Job is still in queue - show position with refresh button
+                        message_text = f"📋 您的任务已加入队列\n位置: #{position}"
+                        keyboard = [[InlineKeyboardButton("🔄 刷新", callback_data=f"refresh_queue_{job_id}")]]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+                        await query.edit_message_text(message_text, reply_markup=reply_markup)
+                    else:
+                        # Job not found in queue - being processed, show processing message without button
+                        message_text = "🚀 您的任务现在正在服务器上处理！\n⏱️ 这可能需要几分钟..."
+                        await query.edit_message_text(message_text)
+
+                    logger.info(f"Refreshed queue position for user {user_id}, job {job_id}: position={position}")
+
+                except BadRequest as e:
+                    if "message is not modified" in str(e).lower():
+                        # Message content is the same, just acknowledge the callback
+                        logger.debug(f"Queue position unchanged for user {user_id}, job {job_id}")
+                    else:
+                        raise  # Re-raise other BadRequest errors
+
+            except Exception as e:
+                logger.error(f"Error refreshing queue: {e}", exc_info=True)
+                try:
+                    await query.answer("刷新失败", show_alert=True)
+                except:
+                    pass
+
+        self.app.add_handler(
+            CallbackQueryHandler(
+                refresh_queue_callback,
+                pattern="^refresh_queue_"
+            )
+        )
+
         # Text message handler - routes menu selections or shows unexpected message
         # This catches any text that wasn't handled by other handlers
         # handle_menu_selection will route to appropriate handler or call handle_unexpected_text
@@ -339,10 +418,14 @@ class BotApplication:
 
     async def _post_init(self, application):
         """Called after application initialization to start background tasks."""
-        # Start VIP queue manager
+        # Start queue managers (image and video)
         workflow_service = application.bot_data.get('workflow_service')
-        if workflow_service and hasattr(workflow_service, 'vip_queue_manager'):
-            await workflow_service.vip_queue_manager.start()
+        if workflow_service:
+            if hasattr(workflow_service, 'start_queue_managers'):
+                await workflow_service.start_queue_managers()
+                logger.info("Queue managers started via post_init")
+            else:
+                logger.warning("workflow_service does not have start_queue_managers method")
 
     def run(self):
         """Start the bot with polling."""

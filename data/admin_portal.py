@@ -401,6 +401,7 @@ def dashboard_daily_data():
     - Daily active users (any activity in transactions)
     - Daily paying users (completed payments)
     - Daily revenue (CNY from completed payments)
+    - Next-day retention rate (users active yesterday who are also active today)
 
     Supports moving window controls for date range selection.
     """
@@ -408,8 +409,8 @@ def dashboard_daily_data():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get window parameters (default: last 30 days)
-        window_days = int(request.args.get('days', 30))
+        # Get window parameters (default: last 7 days)
+        window_days = int(request.args.get('days', 7))
         window_offset = int(request.args.get('offset', 0))
 
         # Clamp values to reasonable ranges
@@ -458,6 +459,60 @@ def dashboard_daily_data():
 
         payment_data = cursor.fetchall()
 
+        # Query 3: Next-Day Retention Rate
+        # Need to extend query range by 1 day before start to calculate retention for first day
+        extended_start_utc = (start_date_gmt8 - timedelta(days=1)).astimezone(pytz.utc)
+
+        cursor.execute("""
+            WITH daily_users AS (
+                SELECT DISTINCT
+                    DATE(created_at, '+8 hours') as date_gmt8,
+                    user_id
+                FROM transactions
+                WHERE created_at >= ? AND created_at < ?
+            ),
+            yesterday_counts AS (
+                -- Count ALL users active on each day (for denominator)
+                SELECT
+                    date_gmt8,
+                    COUNT(DISTINCT user_id) as total_users
+                FROM daily_users
+                GROUP BY date_gmt8
+            ),
+            retention_calc AS (
+                -- Count users who were active yesterday AND today (for numerator)
+                SELECT
+                    today.date_gmt8 as date_gmt8,
+                    COUNT(DISTINCT today.user_id) as retained_users
+                FROM daily_users today
+                INNER JOIN daily_users yesterday
+                    ON yesterday.date_gmt8 = DATE(today.date_gmt8, '-1 day')
+                    AND yesterday.user_id = today.user_id
+                WHERE today.date_gmt8 >= ? AND today.date_gmt8 < ?
+                GROUP BY today.date_gmt8
+            )
+            SELECT
+                r.date_gmt8,
+                COALESCE(y.total_users, 0) as yesterday_active,
+                COALESCE(r.retained_users, 0) as retained_users,
+                CASE
+                    WHEN COALESCE(y.total_users, 0) > 0
+                    THEN ROUND(CAST(COALESCE(r.retained_users, 0) AS FLOAT) / y.total_users * 100, 2)
+                    ELSE NULL
+                END as retention_rate
+            FROM retention_calc r
+            LEFT JOIN yesterday_counts y
+                ON y.date_gmt8 = DATE(r.date_gmt8, '-1 day')
+            ORDER BY r.date_gmt8 ASC
+        """, (
+            extended_start_utc.strftime('%Y-%m-%d %H:%M:%S'),
+            end_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
+            start_date_gmt8.strftime('%Y-%m-%d'),
+            end_date_gmt8.strftime('%Y-%m-%d')
+        ))
+
+        retention_data = cursor.fetchall()
+
         conn.close()
 
         # Format data for charts
@@ -476,6 +531,15 @@ def dashboard_daily_data():
                     'revenue': float(row['revenue_cny']) if row['revenue_cny'] else 0.0
                 }
                 for row in payment_data
+            ],
+            'retention': [
+                {
+                    'date': row['date_gmt8'],
+                    'yesterday_active': row['yesterday_active'],
+                    'retained_users': row['retained_users'],
+                    'retention_rate': float(row['retention_rate']) if row['retention_rate'] is not None else None
+                }
+                for row in retention_data
             ]
         }
 

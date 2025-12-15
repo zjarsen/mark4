@@ -201,6 +201,41 @@ class ComfyUIService:
             # Return -1 to indicate error
             return -1, -1
 
+    async def get_history(self, prompt_id: str) -> Optional[Dict]:
+        """
+        Get history entry for a specific prompt_id.
+
+        Args:
+            prompt_id: The prompt ID to check
+
+        Returns:
+            Dictionary with history entry if exists, None if not found
+
+        Raises:
+            Exception: If request fails
+        """
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = f"{self.history_url}/{prompt_id}"
+
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        logger.warning(
+                            f"Failed to get history for {prompt_id}: {resp.status}"
+                        )
+                        return None
+
+                    history = await resp.json()
+
+                    if prompt_id in history:
+                        return history[prompt_id]
+
+                    return None
+
+        except Exception as e:
+            logger.error(f"Error getting history for {prompt_id}: {str(e)}")
+            return None
+
     async def check_completion(self, prompt_id: str) -> Optional[Dict]:
         """
         Check if processing is complete and return outputs.
@@ -214,29 +249,14 @@ class ComfyUIService:
         Raises:
             Exception: If request fails
         """
-        try:
-            async with aiohttp.ClientSession() as session:
-                url = f"{self.history_url}/{prompt_id}"
+        history_entry = await self.get_history(prompt_id)
 
-                async with session.get(url) as resp:
-                    if resp.status != 200:
-                        logger.warning(
-                            f"Failed to check completion for {prompt_id}: {resp.status}"
-                        )
-                        return None
+        if history_entry:
+            outputs = history_entry.get('outputs', {})
+            logger.info(f"Processing completed for prompt {prompt_id}")
+            return outputs
 
-                    history = await resp.json()
-
-                    if prompt_id in history:
-                        outputs = history[prompt_id].get('outputs', {})
-                        logger.info(f"Processing completed for prompt {prompt_id}")
-                        return outputs
-
-                    return None
-
-        except Exception as e:
-            logger.error(f"Error checking completion for {prompt_id}: {str(e)}")
-            return None
+        return None
 
     async def download_image(
         self,

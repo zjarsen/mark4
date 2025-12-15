@@ -57,17 +57,18 @@ class Config:
         }
 
     # Directory Configuration
+    # Default to subdirectories relative to project root if not specified in .env
     USER_UPLOADS_DIR = Path(
-        os.getenv('USER_UPLOADS_DIR', '~/mark4/user_uploads')
-    ).expanduser()
+        os.getenv('USER_UPLOADS_DIR', BASE_DIR / 'user_uploads')
+    ) if not os.getenv('USER_UPLOADS_DIR') else Path(os.getenv('USER_UPLOADS_DIR')).expanduser()
 
     COMFYUI_RETRIEVE_DIR = Path(
-        os.getenv('COMFYUI_RETRIEVE_DIR', '~/mark4/comfyui_retrieve')
-    ).expanduser()
+        os.getenv('COMFYUI_RETRIEVE_DIR', BASE_DIR / 'comfyui_retrieve')
+    ) if not os.getenv('COMFYUI_RETRIEVE_DIR') else Path(os.getenv('COMFYUI_RETRIEVE_DIR')).expanduser()
 
     WORKFLOWS_DIR = Path(
-        os.getenv('WORKFLOWS_DIR', '~/mark4/workflows')
-    ).expanduser()
+        os.getenv('WORKFLOWS_DIR', BASE_DIR / 'workflows')
+    ) if not os.getenv('WORKFLOWS_DIR') else Path(os.getenv('WORKFLOWS_DIR')).expanduser()
 
     # Processing Configuration
     CLEANUP_TIMEOUT = int(os.getenv('CLEANUP_TIMEOUT', '300'))  # 5 minutes in seconds

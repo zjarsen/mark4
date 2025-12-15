@@ -13,44 +13,21 @@ queue_service = None
 
 async def refresh_queue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Handle 'Refresh Queue' button clicks.
+    DEPRECATED: This handler is no longer used.
 
-    Args:
-        update: Telegram Update
-        context: Telegram Context
+    The refresh queue functionality has been moved to an inline handler
+    in core/bot_application.py to properly handle message editing with
+    stored message IDs from state manager.
+
+    This function is kept for backward compatibility but should not be called.
     """
-    try:
-        query = update.callback_query
-        await query.answer()  # Acknowledge button click
+    logger.warning(
+        f"DEPRECATED refresh_queue_callback called - "
+        f"this should not happen. Check handler registration."
+    )
 
-        user_id = update.effective_user.id
-
-        # Extract prompt_id from callback data
-        # Format: "refresh_{prompt_id}"
-        prompt_id = query.data.replace("refresh_", "")
-
-        logger.debug(f"Queue refresh requested by user {user_id} for prompt {prompt_id}")
-
-        # Get queue message
-        queue_message = state_manager.get_queue_message(user_id)
-
-        if not queue_message:
-            logger.warning(f"No queue message found for user {user_id}")
-            await query.edit_message_text("无法刷新队列信息")
-            return
-
-        # Refresh queue position
-        await queue_service.refresh_queue_position(prompt_id, queue_message)
-
-        logger.info(f"Refreshed queue position for user {user_id}")
-
-    except Exception as e:
-        logger.error(f"Error handling queue refresh: {str(e)}")
-
-        try:
-            await query.edit_message_text("刷新失败，请稍后再试")
-        except:
-            pass
+    query = update.callback_query
+    await query.answer("此功能已更新，请重新提交任务", show_alert=True)
 
 
 async def payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
