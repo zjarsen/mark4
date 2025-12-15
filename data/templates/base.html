@@ -14,6 +14,9 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+    <!-- Chart.js Datalabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_style.css') }}">
 
@@ -47,6 +50,12 @@
                         <a class="nav-link {% if request.endpoint == 'dashboard_features' %}active{% endif %}"
                            href="{{ url_for('dashboard_features') }}">
                             <i class="bi bi-graph-up"></i> 功能分析
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard_daily_data' %}active{% endif %}"
+                           href="{{ url_for('dashboard_daily_data') }}">
+                            <i class="bi bi-calendar3"></i> 每日数据
                         </a>
                     </li>
                 </ul>

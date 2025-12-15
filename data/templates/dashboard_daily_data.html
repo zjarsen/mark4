@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}每日数据{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2><i class="bi bi-calendar3"></i> 每日数据分析</h2>
+            <button class="btn btn-primary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> 刷新
+            </button>
+        </div>
+
+        <!-- Window Controls -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-3"><i class="bi bi-sliders"></i> 时间窗口控制</h5>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <!-- Days control -->
+                            <span class="badge bg-secondary">窗口天数:</span>
+                            <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(-7)">
+                                <i class="bi bi-dash-circle"></i> -7天
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(-1)">
+                                <i class="bi bi-dash"></i> -1天
+                            </button>
+                            <span class="badge bg-primary fs-6 px-3">{{ window.days }} 天</span>
+                            <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(1)">
+                                <i class="bi bi-plus"></i> +1天
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(7)">
+                                <i class="bi bi-plus-circle"></i> +7天
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+                            <!-- Offset control -->
+                            <span class="badge bg-secondary">移动窗口:</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(-30)">
+                                <i class="bi bi-chevron-double-left"></i> -30天
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(-7)">
+                                <i class="bi bi-chevron-left"></i> -7天
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(-1)">
+                                <i class="bi bi-arrow-left"></i> -1天
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(1)">
+                                <i class="bi bi-arrow-right"></i> +1天
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(7)">
+                                <i class="bi bi-chevron-right"></i> +7天
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(30)">
+                                <i class="bi bi-chevron-double-right"></i> +30天
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                        <h6 class="text-muted">当前时间范围 (GMT+8)</h6>
+                        <h5 class="mb-0">
+                            <span class="text-primary">{{ window.start_date }}</span>
+                            <i class="bi bi-arrow-right mx-2"></i>
+                            <span class="text-success">{{ window.end_date }}</span>
+                        </h5>
+                        <button class="btn btn-sm btn-warning mt-2" onclick="resetWindow()">
+                            <i class="bi bi-arrow-counterclockwise"></i> 重置为最近30天
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graph 1: Daily Active Users -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-people-fill"></i> 每日活跃用户数
+                    <small class="text-muted">(任何活动记录)</small>
+                </h5>
+                <canvas id="dailyActiveUsersChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Graph 2: Daily Paying Users + Revenue -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-currency-yen"></i> 每日付费用户数 + 收入
+                    <small class="text-muted">(完成支付用户)</small>
+                </h5>
+                <canvas id="dailyPaymentChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-person-check"></i> 总活跃用户数
+                        </h6>
+                        <h2 class="mb-0" id="totalActiveUsers">-</h2>
+                        <small>在当前时间窗口内</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-wallet2"></i> 总付费用户数
+                        </h6>
+                        <h2 class="mb-0" id="totalPayingUsers">-</h2>
+                        <small>在当前时间窗口内</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-currency-dollar"></i> 总收入
+                        </h6>
+                        <h2 class="mb-0" id="totalRevenue">-</h2>
+                        <small>人民币 (CNY)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Register the datalabels plugin
+Chart.register(ChartDataLabels);
+
+// Get data from backend
+const dailyData = {{ daily_data | tojson }};
+const currentDays = {{ window.days }};
+const currentOffset = {{ window.offset }};
+
+// Extract dates and data
+const allDates = new Set();
+dailyData.active_users.forEach(d => allDates.add(d.date));
+dailyData.payments.forEach(d => allDates.add(d.date));
+const dateLabels = Array.from(allDates).sort();
+
+// Create maps for quick lookup
+const activeUsersMap = new Map(dailyData.active_users.map(d => [d.date, d.count]));
+const payingUsersMap = new Map(dailyData.payments.map(d => [d.date, d.paying_users]));
+const revenueMap = new Map(dailyData.payments.map(d => [d.date, d.revenue]));
+
+// Prepare datasets with 0 for missing dates
+const activeUsersData = dateLabels.map(date => activeUsersMap.get(date) || 0);
+const payingUsersData = dateLabels.map(date => payingUsersMap.get(date) || 0);
+const revenueData = dateLabels.map(date => revenueMap.get(date) || 0);
+
+// Calculate totals
+const totalActiveUsers = activeUsersData.reduce((sum, val) => sum + val, 0);
+const totalPayingUsers = payingUsersData.reduce((sum, val) => sum + val, 0);
+const totalRevenue = revenueData.reduce((sum, val) => sum + val, 0);
+
+document.getElementById('totalActiveUsers').textContent = totalActiveUsers.toLocaleString();
+document.getElementById('totalPayingUsers').textContent = totalPayingUsers.toLocaleString();
+document.getElementById('totalRevenue').textContent = '¥' + totalRevenue.toFixed(2);
+
+// Chart 1: Daily Active Users (Bar Chart)
+const activeUsersCtx = document.getElementById('dailyActiveUsersChart').getContext('2d');
+new Chart(activeUsersCtx, {
+    type: 'bar',
+    data: {
+        labels: dateLabels,
+        datasets: [{
+            label: '活跃用户数',
+            data: activeUsersData,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgb(54, 162, 235)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return '活跃用户: ' + context.parsed.y + ' 人';
+                    }
+                }
+            },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                formatter: function(value) {
+                    return value > 0 ? value : '';
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                color: '#333'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                title: {
+                    display: true,
+                    text: '用户数 (人)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: '日期 (GMT+8)'
+                }
+            }
+        }
+    }
+});
+
+// Chart 2: Daily Paying Users + Revenue (Dual Y-axis)
+const paymentCtx = document.getElementById('dailyPaymentChart').getContext('2d');
+new Chart(paymentCtx, {
+    type: 'bar',
+    data: {
+        labels: dateLabels,
+        datasets: [
+            {
+                label: '付费用户数',
+                data: payingUsersData,
+                backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                borderColor: 'rgb(40, 167, 69)',
+                borderWidth: 1,
+                yAxisID: 'y',
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: function(value) {
+                        return value > 0 ? value : '';
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 10
+                    },
+                    color: '#28a745'
+                }
+            },
+            {
+                label: '收入 (CNY)',
+                data: revenueData,
+                type: 'line',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                borderColor: 'rgb(255, 193, 7)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                yAxisID: 'y1',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: function(value) {
+                        return value > 0 ? '¥' + value.toFixed(0) : '';
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 10
+                    },
+                    color: '#ffc107'
+                }
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        if (context.dataset.label === '付费用户数') {
+                            return '付费用户: ' + context.parsed.y + ' 人';
+                        } else {
+                            return '收入: ¥' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                title: {
+                    display: true,
+                    text: '付费用户数 (人)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: '收入 (CNY ¥)'
+                },
+                grid: {
+                    drawOnChartArea: false
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: '日期 (GMT+8)'
+                }
+            }
+        }
+    }
+});
+
+// Window control functions
+function adjustDays(delta) {
+    const newDays = currentDays + delta;
+    if (newDays < 7 || newDays > 365) {
+        alert('窗口天数范围: 7-365天');
+        return;
+    }
+    window.location.href = `?days=${newDays}&offset=${currentOffset}`;
+}
+
+function adjustOffset(delta) {
+    const newOffset = currentOffset + delta;
+    if (newOffset < -1000 || newOffset > 0) {
+        alert('最多可查看1000天前的数据');
+        return;
+    }
+    window.location.href = `?days=${currentDays}&offset=${newOffset}`;
+}
+
+function resetWindow() {
+    window.location.href = '?days=30&offset=0';
+}
+</script>
+{% endblock %}

@@ -7,7 +7,7 @@ A Flask-based web interface for monitoring user activity, transactions, and syst
 from flask import Flask, render_template, request, jsonify
 import sqlite3
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import pytz
 from typing import Dict, List, Optional
@@ -392,6 +392,110 @@ def api_user_transactions(user_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/daily-data')
+def dashboard_daily_data():
+    """
+    Daily data analytics dashboard.
+
+    Displays:
+    - Daily active users (any activity in transactions)
+    - Daily paying users (completed payments)
+    - Daily revenue (CNY from completed payments)
+
+    Supports moving window controls for date range selection.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get window parameters (default: last 30 days)
+        window_days = int(request.args.get('days', 30))
+        window_offset = int(request.args.get('offset', 0))
+
+        # Clamp values to reasonable ranges
+        window_days = max(7, min(365, window_days))  # 7-365 days
+        window_offset = max(-1000, min(0, window_offset))  # Max 1000 days back, 0 for current
+
+        # Calculate date range in GMT+8
+        gmt8 = pytz.timezone('Asia/Shanghai')
+        now_gmt8 = datetime.now(gmt8)
+
+        # Apply offset (move window forward/backward)
+        end_date_gmt8 = now_gmt8 + timedelta(days=window_offset + 1)
+        start_date_gmt8 = end_date_gmt8 - timedelta(days=window_days)
+
+        # Convert to UTC for database query
+        start_date_utc = start_date_gmt8.astimezone(pytz.utc)
+        end_date_utc = end_date_gmt8.astimezone(pytz.utc)
+
+        # Query 1: Daily Active Users (any transaction activity)
+        cursor.execute("""
+            SELECT
+                DATE(created_at, '+8 hours') as date_gmt8,
+                COUNT(DISTINCT user_id) as active_users
+            FROM transactions
+            WHERE created_at >= ? AND created_at < ?
+            GROUP BY DATE(created_at, '+8 hours')
+            ORDER BY date_gmt8 ASC
+        """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
+              end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
+
+        active_users_data = cursor.fetchall()
+
+        # Query 2: Daily Paying Users + Revenue (completed payments only)
+        cursor.execute("""
+            SELECT
+                DATE(completed_at, '+8 hours') as date_gmt8,
+                COUNT(DISTINCT user_id) as paying_users,
+                SUM(amount) as revenue_cny
+            FROM payments
+            WHERE status = 'completed'
+                AND completed_at >= ? AND completed_at < ?
+            GROUP BY DATE(completed_at, '+8 hours')
+            ORDER BY date_gmt8 ASC
+        """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
+              end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
+
+        payment_data = cursor.fetchall()
+
+        conn.close()
+
+        # Format data for charts
+        daily_data = {
+            'active_users': [
+                {
+                    'date': row['date_gmt8'],
+                    'count': row['active_users']
+                }
+                for row in active_users_data
+            ],
+            'payments': [
+                {
+                    'date': row['date_gmt8'],
+                    'paying_users': row['paying_users'],
+                    'revenue': float(row['revenue_cny']) if row['revenue_cny'] else 0.0
+                }
+                for row in payment_data
+            ]
+        }
+
+        # Window control parameters
+        window_params = {
+            'days': window_days,
+            'offset': window_offset,
+            'start_date': start_date_gmt8.strftime('%Y-%m-%d'),
+            'end_date': end_date_gmt8.strftime('%Y-%m-%d')
+        }
+
+        return render_template('dashboard_daily_data.html',
+                             daily_data=daily_data,
+                             window=window_params)
+
+    except Exception as e:
+        logger.error(f"Error loading daily data dashboard: {str(e)}", exc_info=True)
+        return f"Error loading dashboard: {str(e)}", 500
+
+
 @app.route('/health')
 def health_check():
     """Health check endpoint."""
@@ -411,6 +515,7 @@ if __name__ == '__main__':
     logger.info(f"User Management: http://localhost:{port}/")
     logger.info(f"Transaction Ledger: http://localhost:{port}/transactions")
     logger.info(f"Feature Analytics: http://localhost:{port}/features")
+    logger.info(f"Daily Data: http://localhost:{port}/daily-data")
 
     # Use simple Flask development server
     app.run(host='0.0.0.0', port=port, debug=False)
