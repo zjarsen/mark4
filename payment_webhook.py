@@ -96,7 +96,7 @@ async def payment_callback():
     Handle payment callback from payment provider.
 
     Supports both GET and POST methods:
-    - yzzhifu.me sends GET requests with query parameters
+    - Payment gateway sends GET requests with query parameters
     - POST method also supported for compatibility
 
     Common parameters:
