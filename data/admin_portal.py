@@ -273,8 +273,8 @@ def dashboard_features():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get window parameters (default: last 30 days)
-        window_days = int(request.args.get('days', 30))
+        # Get window parameters (default: last 7 days)
+        window_days = int(request.args.get('days', 7))
         window_offset = int(request.args.get('offset', 0))
 
         # Clamp values to reasonable ranges

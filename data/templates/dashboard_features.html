@@ -49,7 +49,7 @@
                             <span class="text-success">{{ window.end_date }}</span>
                         </h5>
                         <button class="btn btn-sm btn-warning mt-2" onclick="resetWindow()">
-                            <i class="bi bi-arrow-counterclockwise"></i> 重置为最近30天
+                            <i class="bi bi-arrow-counterclockwise"></i> 重置为最近7天
                         </button>
                     </div>
                 </div>
@@ -305,7 +305,7 @@ function adjustOffset(delta) {
 }
 
 function resetWindow() {
-    window.location.href = '?days=30&offset=0';
+    window.location.href = '?days=7&offset=0';
 }
 </script>
 {% endblock %}
