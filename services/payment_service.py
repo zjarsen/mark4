@@ -39,13 +39,28 @@ class PaymentService:
         """
         Calculate credits for a given CNY amount.
 
+        Supports discounted amounts by finding the closest matching package.
+
         Args:
-            amount_cny: Amount in CNY
+            amount_cny: Amount in CNY (may be discounted)
 
         Returns:
             Credits amount or None if invalid package
         """
-        return TOPUP_PACKAGES.get(amount_cny)
+        # Try exact match first
+        if amount_cny in TOPUP_PACKAGES:
+            return TOPUP_PACKAGES[amount_cny]
+
+        # If not exact match, try to find base package (for discounted amounts)
+        # Discounts range from 50% to 95% (SSR to C tier)
+        # So discounted amount should be 50-95% of a base package
+        for base_amount, credits in TOPUP_PACKAGES.items():
+            # Check if amount_cny could be a discounted version of base_amount
+            # Allow 45-100% range to account for rounding
+            if 0.45 * base_amount <= amount_cny <= base_amount:
+                return credits
+
+        return None
 
     async def create_topup_payment(
         self,
@@ -74,10 +89,10 @@ class PaymentService:
             if payment_method not in ['alipay', 'wechat']:
                 return False, None, f"Invalid payment method: {payment_method}. Must be 'alipay' or 'wechat'."
 
-            # Validate package
+            # Validate package (supports discounted amounts)
             credits_amount = self.calculate_credits_for_amount(amount_cny)
             if credits_amount is None:
-                return False, None, f"Invalid top-up amount: {amount_cny}. Must be 1, 10, 30, 50, or 100."
+                return False, None, f"Invalid top-up amount: {amount_cny}. Please select a valid package."
 
             # Create payment with provider
             payment_result = await self.payment_provider.create_payment(
