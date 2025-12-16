@@ -183,7 +183,7 @@ TOPUP_PACKAGES_MESSAGE = """💳 充值套餐
 2️⃣ ¥32 = 120积分 🔥
 3️⃣ ¥54 = 250积分 💎
 4️⃣ ¥108 = 600积分 👑
-5️⃣ ¥140 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】
+5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】
 6️⃣ ¥281 = 永久黑金VIP 👑👑👑 【无限使用+无需排队】
 
 ✨ 充值优势：
@@ -264,7 +264,7 @@ TOPUP_10_BUTTON = "¥11 = 30积分"
 TOPUP_30_BUTTON = "¥32 = 120积分"
 TOPUP_50_BUTTON = "¥54 = 250积分"
 TOPUP_100_BUTTON = "¥108 = 600积分"
-TOPUP_VIP_BUTTON = "¥140 = 永久VIP"
+TOPUP_VIP_BUTTON = "¥173 = 永久VIP"
 TOPUP_BLACK_GOLD_VIP_BUTTON = "¥281 = 永久黑金VIP"
 
 # Workflow file names
@@ -333,7 +333,7 @@ TOPUP_PACKAGES = {
     30: 120,        # ¥30 = 120积分
     50: 250,        # ¥50 = 250积分
     100: 600,       # ¥100 = 600积分
-    130: 99999999,  # ¥130 = 永久VIP (unlimited credits)
+    160: 99999999,  # ¥160 = 永久VIP (unlimited credits)
     260: 99999999   # ¥260 = 永久黑金VIP (unlimited credits)
 }
 
@@ -371,3 +371,43 @@ BALANCE_MESSAGE_VIP = """💰 我的账户
 累计消费：{total_spent} 积分
 
 ✨ VIP特权生效中"""
+
+# Daily Lucky Discount System
+DISCOUNT_TIERS = {
+    'SSR': {'rate': 0.5, 'display': 'SSR神级运气', 'emoji': '🎊', 'off': '50%'},
+    'SR': {'rate': 0.7, 'display': 'SR超级运气', 'emoji': '🎉', 'off': '30%'},
+    'R': {'rate': 0.85, 'display': 'R运气不错', 'emoji': '✨', 'off': '15%'},
+    'C': {'rate': 0.95, 'display': 'C普通运气', 'emoji': '🍀', 'off': '5%'}
+}
+
+LUCKY_DISCOUNT_BUTTON = "🎰 每日幸运折扣"
+LUCKY_DISCOUNT_BUTTON_REVEALED = "{emoji} {tier} - {off}折扣"
+
+LUCKY_DISCOUNT_CELEBRATION_SSR = """🎊🎊🎊 恭喜恭喜！🎊🎊🎊
+
+您今天抽到了 **SSR神级运气**！
+🔥 全场5折优惠 🔥
+
+所有套餐均享受50%折扣！
+限今日有效，快去选购吧～"""
+
+LUCKY_DISCOUNT_CELEBRATION_SR = """🎉🎉🎉 恭喜您！🎉🎉🎉
+
+您今天抽到了 **SR超级运气**！
+⭐ 全场7折优惠 ⭐
+
+所有套餐均享受30%折扣！
+限今日有效，快去选购吧～"""
+
+LUCKY_DISCOUNT_REVEALED_R = """✨ 您今天的运气：R运气不错
+全场85折，享受15%折扣！"""
+
+LUCKY_DISCOUNT_REVEALED_C = """🍀 您今天的运气：C普通运气
+全场95折，享受5%折扣！"""
+
+LUCKY_DISCOUNT_ALREADY_REVEALED = """您今天已经使用过幸运折扣了！
+
+当前折扣：{tier} ({off}折)
+有效期至：今日24:00
+
+所有套餐价格已显示折扣后价格～"""

@@ -23,6 +23,7 @@ from services.workflow_service import WorkflowService
 from services.database_service import DatabaseService
 from services.credit_service import CreditService
 from services.payment_service import PaymentService
+from services.discount_service import DiscountService
 
 # Import payment provider
 from payments.wechat_alipay_provider import WeChatAlipayProvider
@@ -81,6 +82,7 @@ class BotApplication:
         # Database and credit services
         self.database_service = DatabaseService(self.config)
         self.credit_service = CreditService(self.config, self.database_service)
+        self.discount_service = DiscountService(self.database_service)
 
         # Payment services
         self.payment_provider = WeChatAlipayProvider(self.config)
@@ -148,6 +150,7 @@ class BotApplication:
         credit_handlers.credit_service = self.credit_service
         credit_handlers.payment_service = self.payment_service
         credit_handlers.timeout_service = self.timeout_service
+        credit_handlers.discount_service = self.discount_service
 
         # Store workflow_service in bot_data for access from handlers
         self.app.bot_data['workflow_service'] = self.workflow_service
@@ -160,8 +163,9 @@ class BotApplication:
         Middleware to cleanup timeout messages and handle abandoned confirmations.
 
         This runs before every handler to:
-        1. Delete any pending timeout messages when user interacts
-        2. Cancel credit confirmations if user sends other input
+        1. Track user interaction for daily discount system
+        2. Delete any pending timeout messages when user interacts
+        3. Cancel credit confirmations if user sends other input
 
         Abandoned confirmation detection:
         - If user is in 'waiting_for_credit_confirmation' state
@@ -174,6 +178,12 @@ class BotApplication:
 
         user_id = update.effective_user.id
         chat_id = update.effective_chat.id if update.effective_chat else None
+
+        # Track user interaction for daily discount system
+        try:
+            await self.discount_service.track_user_interaction(user_id)
+        except Exception as e:
+            logger.debug(f"Error tracking interaction for user {user_id}: {str(e)}")
 
         # Check if user has pending timeout messages
         if chat_id and self.timeout_service.has_timeout_messages(user_id):
@@ -305,11 +315,19 @@ class BotApplication:
         )
 
         # Credit system callback handlers
-        from handlers.credit_handlers import handle_topup_callback
+        from handlers.credit_handlers import handle_topup_callback, handle_lucky_discount_callback
         self.app.add_handler(
             CallbackQueryHandler(
                 handle_topup_callback,
                 pattern="^topup_"
+            )
+        )
+
+        # Lucky discount callback handler
+        self.app.add_handler(
+            CallbackQueryHandler(
+                handle_lucky_discount_callback,
+                pattern="^lucky_discount$"
             )
         )
 

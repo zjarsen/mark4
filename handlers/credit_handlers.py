@@ -10,6 +10,7 @@ logger = logging.getLogger('mark4_bot')
 credit_service = None
 payment_service = None
 timeout_service = None
+discount_service = None
 
 
 async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -35,27 +36,78 @@ async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show top-up package options (including VIP packages)."""
+    """Show top-up package options (including VIP packages and lucky discount)."""
     try:
+        user_id = update.effective_user.id
+
         from core.constants import (
             TOPUP_PACKAGES_MESSAGE,
-            TOPUP_10_BUTTON,
-            TOPUP_30_BUTTON,
-            TOPUP_50_BUTTON,
-            TOPUP_100_BUTTON,
-            TOPUP_VIP_BUTTON,
-            TOPUP_BLACK_GOLD_VIP_BUTTON
+            TOPUP_PACKAGES,
+            LUCKY_DISCOUNT_BUTTON,
+            LUCKY_DISCOUNT_BUTTON_REVEALED,
+            DISCOUNT_TIERS
         )
 
-        # Create inline keyboard with package options (including VIP)
-        keyboard = [
-            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")],
-            [InlineKeyboardButton(TOPUP_VIP_BUTTON, callback_data="topup_130")],
-            [InlineKeyboardButton(TOPUP_BLACK_GOLD_VIP_BUTTON, callback_data="topup_260")]
+        # Check if user has active discount today
+        discount_info = await discount_service.get_current_discount(user_id)
+
+        # Build keyboard with discount-aware buttons
+        keyboard = []
+
+        # Add lucky discount button at the top
+        if discount_info:
+            # Discount already revealed
+            tier_data = DISCOUNT_TIERS[discount_info['tier']]
+            button_text = LUCKY_DISCOUNT_BUTTON_REVEALED.format(
+                emoji=tier_data['emoji'],
+                tier=tier_data['display'],
+                off=tier_data['off']
+            )
+            keyboard.append([InlineKeyboardButton(button_text, callback_data="lucky_discount")])
+        else:
+            # Not revealed yet
+            keyboard.append([InlineKeyboardButton(LUCKY_DISCOUNT_BUTTON, callback_data="lucky_discount")])
+
+        # Add package buttons with discount if applicable
+        packages = [
+            (10, "topup_10"),
+            (30, "topup_30"),
+            (50, "topup_50"),
+            (100, "topup_100"),
+            (160, "topup_160"),
+            (260, "topup_260")
         ]
+
+        for base_price, callback_data in packages:
+            credits = TOPUP_PACKAGES[base_price]
+
+            # Calculate displayed price (with 8% fee)
+            displayed_price = int(base_price * 1.08)
+
+            # Apply discount if active
+            if discount_info:
+                discount_rate = discount_info['rate']
+                original_price = displayed_price
+                discounted_price = discount_service.apply_discount_to_price(base_price, discount_rate)
+
+                # Format button text with strikethrough and discount
+                if base_price in [160, 260]:
+                    # VIP packages
+                    vip_name = "永久VIP" if base_price == 160 else "永久黑金VIP"
+                    button_text = f"~~¥{original_price}~~ → ¥{discounted_price} = {vip_name}"
+                else:
+                    # Credit packages
+                    button_text = f"~~¥{original_price}~~ → ¥{discounted_price} = {credits}积分"
+            else:
+                # No discount
+                if base_price in [160, 260]:
+                    vip_name = "永久VIP" if base_price == 160 else "永久黑金VIP"
+                    button_text = f"¥{displayed_price} = {vip_name}"
+                else:
+                    button_text = f"¥{displayed_price} = {credits}积分"
+
+            keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
+
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await update.message.reply_text(
@@ -63,7 +115,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             reply_markup=reply_markup
         )
 
-        logger.info(f"User {update.effective_user.id} viewing top-up packages (with VIP)")
+        logger.info(f"User {user_id} viewing top-up packages (discount active: {discount_info is not None})")
 
     except Exception as e:
         logger.error(f"Error showing top-up packages: {str(e)}")
@@ -253,6 +305,109 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
         logger.error(f"Error handling payment timeout for user {user_id}: {str(e)}", exc_info=True)
 
 
+async def handle_lucky_discount_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle lucky discount button click."""
+    try:
+        query = update.callback_query
+        await query.answer()
+
+        user_id = update.effective_user.id
+
+        from core.constants import (
+            LUCKY_DISCOUNT_CELEBRATION_SSR,
+            LUCKY_DISCOUNT_CELEBRATION_SR,
+            LUCKY_DISCOUNT_REVEALED_R,
+            LUCKY_DISCOUNT_REVEALED_C,
+            LUCKY_DISCOUNT_ALREADY_REVEALED,
+            DISCOUNT_TIERS,
+            TOPUP_PACKAGES,
+            TOPUP_PACKAGES_MESSAGE,
+            LUCKY_DISCOUNT_BUTTON_REVEALED
+        )
+
+        # Get or reveal daily discount
+        discount_info = await discount_service.get_or_reveal_daily_discount(user_id)
+
+        if not discount_info:
+            await query.answer("获取折扣信息失败，请稍后再试", show_alert=True)
+            return
+
+        tier = discount_info['tier']
+        is_new = discount_info['is_new']
+
+        # Show celebration message for new SSR/SR, or simple message for R/C
+        if is_new:
+            if tier == 'SSR':
+                await query.answer(LUCKY_DISCOUNT_CELEBRATION_SSR, show_alert=True)
+            elif tier == 'SR':
+                await query.answer(LUCKY_DISCOUNT_CELEBRATION_SR, show_alert=True)
+            elif tier == 'R':
+                await query.answer(LUCKY_DISCOUNT_REVEALED_R, show_alert=True)
+            else:  # C
+                await query.answer(LUCKY_DISCOUNT_REVEALED_C, show_alert=True)
+        else:
+            # Already revealed today
+            tier_data = DISCOUNT_TIERS[tier]
+            message = LUCKY_DISCOUNT_ALREADY_REVEALED.format(
+                tier=tier_data['display'],
+                off=tier_data['off']
+            )
+            await query.answer(message, show_alert=True)
+
+        # Update keyboard with discount-aware prices
+        keyboard = []
+
+        # Update lucky discount button to show tier
+        tier_data = DISCOUNT_TIERS[tier]
+        button_text = LUCKY_DISCOUNT_BUTTON_REVEALED.format(
+            emoji=tier_data['emoji'],
+            tier=tier_data['display'],
+            off=tier_data['off']
+        )
+        keyboard.append([InlineKeyboardButton(button_text, callback_data="lucky_discount")])
+
+        # Add package buttons with discounted prices
+        packages = [
+            (10, "topup_10"),
+            (30, "topup_30"),
+            (50, "topup_50"),
+            (100, "topup_100"),
+            (160, "topup_160"),
+            (260, "topup_260")
+        ]
+
+        discount_rate = discount_info['rate']
+
+        for base_price, callback_data in packages:
+            credits = TOPUP_PACKAGES[base_price]
+
+            # Calculate prices
+            original_price = int(base_price * 1.08)
+            discounted_price = discount_service.apply_discount_to_price(base_price, discount_rate)
+
+            # Format button text with strikethrough and discount
+            if base_price in [160, 260]:
+                # VIP packages
+                vip_name = "永久VIP" if base_price == 160 else "永久黑金VIP"
+                button_text = f"~~¥{original_price}~~ → ¥{discounted_price} = {vip_name}"
+            else:
+                # Credit packages
+                button_text = f"~~¥{original_price}~~ → ¥{discounted_price} = {credits}积分"
+
+            keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Update message with new prices
+        await query.edit_message_reply_markup(reply_markup=reply_markup)
+
+        logger.info(f"User {user_id} revealed discount: {tier} ({discount_info['rate']})")
+
+    except Exception as e:
+        logger.error(f"Error handling lucky discount: {str(e)}")
+        await query.answer("操作失败，请稍后再试", show_alert=True)
+
+
 async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle top-up package selection (two-step process).
@@ -274,20 +429,32 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             # ===== STEP 2: Payment method selected, create payment =====
             # Extract amount and payment method (e.g., "topup_10_alipay" -> amount=10, method="alipay")
             parts = callback_data.replace("topup_", "").rsplit("_", 1)
-            amount_cny = int(parts[0])
+            base_amount_cny = int(parts[0])  # Base price before discount
             payment_method = parts[1]  # 'alipay' or 'wechat'
+
+            # Check if user has active discount and apply it
+            discount_info = await discount_service.get_current_discount(user_id)
+            if discount_info:
+                # Apply discount to get the actual amount to charge
+                discount_rate = discount_info['rate']
+                # Calculate: base * discount_rate (this gives the discounted base before 8% fee)
+                # The payment provider will add 8% fee on top
+                amount_cny = int(base_amount_cny * discount_rate)
+                logger.info(f"Applying {discount_info['tier']} discount to payment: ¥{base_amount_cny} → ¥{amount_cny}")
+            else:
+                amount_cny = base_amount_cny
 
             # Get chat_id and message_id for later editing
             chat_id = query.message.chat_id
             message_id = query.message.message_id
 
-            # Check if this is a VIP purchase
-            is_vip_purchase = amount_cny in [130, 260]
+            # Check if this is a VIP purchase (based on base amount)
+            is_vip_purchase = base_amount_cny in [160, 260]
             vip_tier = None
 
             if is_vip_purchase:
-                # Determine VIP tier
-                vip_tier = 'vip' if amount_cny == 130 else 'black_gold'
+                # Determine VIP tier (based on base amount)
+                vip_tier = 'vip' if base_amount_cny == 160 else 'black_gold'
 
                 # Check if redundant purchase
                 current_tier = credit_service.db.get_vip_tier(user_id)
@@ -385,15 +552,22 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             from core.constants import TOPUP_PACKAGES
             credits = TOPUP_PACKAGES.get(amount_cny, 0)
 
-            # Calculate displayed amount (with 8% transaction fee)
-            displayed_amount = int(amount_cny * 1.08)
-
             # Check if this is a VIP purchase
-            is_vip = amount_cny in [130, 260]
+            is_vip = amount_cny in [160, 260]
             tier_name = ""
             if is_vip:
-                tier = 'vip' if amount_cny == 130 else 'black_gold'
+                tier = 'vip' if amount_cny == 160 else 'black_gold'
                 tier_name = f" ({credit_service._tier_display_name(tier)})"
+
+            # Check if user has active discount
+            discount_info = await discount_service.get_current_discount(user_id)
+            if discount_info:
+                # Apply discount to displayed amount
+                discount_rate = discount_info['rate']
+                displayed_amount = discount_service.apply_discount_to_price(amount_cny, discount_rate)
+            else:
+                # Calculate displayed amount (with 8% transaction fee)
+                displayed_amount = int(amount_cny * 1.08)
 
             # Show payment method selection
             message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}

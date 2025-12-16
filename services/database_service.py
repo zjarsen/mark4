@@ -143,6 +143,37 @@ class DatabaseService:
             except Exception:
                 pass  # Column already exists
 
+            # Migration: Add daily discount system columns
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN interaction_days INTEGER DEFAULT 0")
+                logger.info("Added interaction_days column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN last_interaction_date TEXT")
+                logger.info("Added last_interaction_date column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN daily_discount_rate REAL")
+                logger.info("Added daily_discount_rate column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN daily_discount_tier TEXT")
+                logger.info("Added daily_discount_tier column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN daily_discount_date TEXT")
+                logger.info("Added daily_discount_date column to users table")
+            except Exception:
+                pass  # Column already exists
+
             # Feature pricing table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS feature_pricing (
@@ -571,6 +602,106 @@ class DatabaseService:
             True if user is Black Gold VIP
         """
         return self.get_vip_tier(user_id) == 'black_gold'
+
+    # Daily discount operations
+    def update_user_interaction(self, user_id: int, current_date: str):
+        """
+        Update user interaction tracking.
+
+        Args:
+            user_id: User ID
+            current_date: Current date in YYYY-MM-DD format (GMT+8)
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            # Get user's last interaction date
+            cursor.execute("""
+                SELECT last_interaction_date, interaction_days
+                FROM users
+                WHERE user_id = ?
+            """, (user_id,))
+
+            result = cursor.fetchone()
+            if not result:
+                return
+
+            last_date = result['last_interaction_date']
+            current_days = result['interaction_days'] or 0
+
+            # If it's a new day, increment interaction_days
+            if last_date != current_date:
+                new_days = current_days + 1
+                cursor.execute("""
+                    UPDATE users
+                    SET interaction_days = ?,
+                        last_interaction_date = ?
+                    WHERE user_id = ?
+                """, (new_days, current_date, user_id))
+                conn.commit()
+                logger.info(f"Updated interaction for user {user_id}: day {new_days}")
+
+        except Exception as e:
+            logger.error(f"Error updating user interaction for {user_id}: {str(e)}")
+
+    def get_user_discount_info(self, user_id: int) -> Optional[Dict]:
+        """
+        Get user's discount information.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Dictionary with discount info or None
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT interaction_days, last_interaction_date,
+                       daily_discount_rate, daily_discount_tier, daily_discount_date
+                FROM users
+                WHERE user_id = ?
+            """, (user_id,))
+
+            result = cursor.fetchone()
+            if result:
+                return dict(result)
+            return None
+
+        except Exception as e:
+            logger.error(f"Error getting discount info for user {user_id}: {str(e)}")
+            return None
+
+    def save_daily_discount(self, user_id: int, tier: str, rate: float, discount_date: str):
+        """
+        Save user's daily discount.
+
+        Args:
+            user_id: User ID
+            tier: Discount tier (SSR, SR, R, C)
+            rate: Discount rate (0.5, 0.7, 0.85, 0.95)
+            discount_date: Date in YYYY-MM-DD format (GMT+8)
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                UPDATE users
+                SET daily_discount_tier = ?,
+                    daily_discount_rate = ?,
+                    daily_discount_date = ?
+                WHERE user_id = ?
+            """, (tier, rate, discount_date, user_id))
+
+            conn.commit()
+            logger.info(f"Saved daily discount for user {user_id}: {tier} ({rate})")
+
+        except Exception as e:
+            logger.error(f"Error saving daily discount for user {user_id}: {str(e)}")
 
     def close(self):
         """Close database connection."""
