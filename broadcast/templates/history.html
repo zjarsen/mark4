@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}历史记录 - 广播门户{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="bi bi-clock-history"></i> 广播历史记录
+        </h2>
+
+        {% if history|length == 0 %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-3">暂无历史记录</p>
+            <a href="/" class="btn btn-primary">
+                <i class="bi bi-send"></i> 发送第一条广播
+            </a>
+        </div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 15%">发送时间</th>
+                        <th style="width: 40%">消息内容</th>
+                        <th style="width: 10%">格式</th>
+                        <th style="width: 10%">目标用户</th>
+                        <th style="width: 10%">成功</th>
+                        <th style="width: 10%">失败</th>
+                        <th style="width: 5%">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in history %}
+                    <tr>
+                        <td>
+                            <small>{{ record.sent_at }}</small>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 400px;" title="{{ record.message }}">
+                                {{ record.message[:100] }}{% if record.message|length > 100 %}...{% endif %}
+                            </div>
+                            {% if record.buttons %}
+                            <small class="text-muted">
+                                <i class="bi bi-link-45deg"></i> 含按钮
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ record.parse_mode }}</span>
+                        </td>
+                        <td class="text-center">
+                            <strong>{{ record.total_users }}</strong>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-success">{{ record.successful }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-danger">{{ record.failed }}</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick='showDetails({{ record|tojson }})'>
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle"></i> 广播详情
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>发送时间:</strong>
+                        <p id="detail-time"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>格式:</strong>
+                        <p id="detail-format"></p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>目标用户:</strong>
+                        <p id="detail-total"></p>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>成功:</strong>
+                        <p id="detail-success" class="text-success"></p>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>失败:</strong>
+                        <p id="detail-failed" class="text-danger"></p>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <strong>筛选条件:</strong>
+                    <pre id="detail-filters" class="bg-light p-2 rounded"></pre>
+                </div>
+
+                <div class="mb-3">
+                    <strong>消息内容:</strong>
+                    <div id="detail-message" class="border p-3 rounded bg-light" style="white-space: pre-wrap;"></div>
+                </div>
+
+                <div id="detail-buttons-section" style="display: none;">
+                    <strong>按钮:</strong>
+                    <div id="detail-buttons" class="mt-2"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="reuseMessage()">
+                    <i class="bi bi-arrow-repeat"></i> 复用此消息
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentRecord = null;
+
+function showDetails(record) {
+    currentRecord = record;
+
+    document.getElementById('detail-time').textContent = record.sent_at;
+    document.getElementById('detail-format').textContent = record.parse_mode;
+    document.getElementById('detail-total').textContent = record.total_users;
+    document.getElementById('detail-success').textContent = record.successful;
+    document.getElementById('detail-failed').textContent = record.failed;
+
+    // Show filters
+    if (record.filters) {
+        document.getElementById('detail-filters').textContent = JSON.stringify(record.filters, null, 2);
+    } else {
+        document.getElementById('detail-filters').textContent = '全部用户 (无筛选)';
+    }
+
+    // Show message
+    document.getElementById('detail-message').textContent = record.message;
+
+    // Show buttons if any
+    if (record.buttons && record.buttons.length > 0) {
+        document.getElementById('detail-buttons-section').style.display = 'block';
+        const buttonsHtml = record.buttons[0].map(btn =>
+            `<a href="${btn.url}" class="btn btn-sm btn-outline-primary me-2 mb-2" target="_blank">${btn.text}</a>`
+        ).join('');
+        document.getElementById('detail-buttons').innerHTML = buttonsHtml;
+    } else {
+        document.getElementById('detail-buttons-section').style.display = 'none';
+    }
+
+    const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+    detailModal.show();
+}
+
+function reuseMessage() {
+    if (!currentRecord) return;
+
+    // Store in sessionStorage to pass to dashboard
+    sessionStorage.setItem('reuseMessage', JSON.stringify({
+        message: currentRecord.message,
+        parse_mode: currentRecord.parse_mode,
+        buttons: currentRecord.buttons ? currentRecord.buttons[0] : []
+    }));
+
+    // Redirect to dashboard
+    window.location.href = '/';
+}
+</script>
+{% endblock %}

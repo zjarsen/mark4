@@ -1,0 +1,187 @@
+/* Broadcast Portal Custom Styles */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Telegram-style message preview */
+.telegram-preview {
+    min-height: 200px;
+    max-height: 500px;
+    overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.telegram-preview a {
+    color: #0088cc;
+    text-decoration: none;
+}
+
+.telegram-preview a:hover {
+    text-decoration: underline;
+}
+
+.telegram-preview strong {
+    font-weight: bold;
+}
+
+.telegram-preview em {
+    font-style: italic;
+}
+
+/* Card styling */
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 8px;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+}
+
+/* User count badge */
+#userCount {
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+/* Filter controls */
+.filter-checkbox {
+    cursor: pointer;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+
+/* Button list styling */
+#buttonsList .input-group {
+    margin-bottom: 0.5rem;
+}
+
+/* Draft list styling */
+#draftsList .list-group-item {
+    padding: 0.5rem;
+}
+
+#draftsList .text-truncate {
+    max-width: 150px;
+}
+
+/* Sticky preview panel */
+.sticky-top {
+    position: sticky;
+    z-index: 100;
+}
+
+/* Progress bar animation */
+.progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+/* Modal customization */
+.modal-header {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* History table styling */
+.table-hover tbody tr:hover {
+    background-color: #f1f3f5;
+    cursor: pointer;
+}
+
+/* Navbar styling */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #userCount {
+        font-size: 2rem;
+    }
+
+    .sticky-top {
+        position: relative;
+    }
+
+    #draftsList .text-truncate {
+        max-width: 100px;
+    }
+}
+
+/* Button groups */
+.btn-group-sm > .btn {
+    font-size: 0.875rem;
+}
+
+/* Alert styling */
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+/* Badge styling */
+.badge {
+    padding: 0.35em 0.65em;
+    font-weight: 500;
+}
+
+/* Form control focus */
+.form-control:focus,
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Message text area */
+#messageText {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+/* Loading spinner */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Success/Error colors */
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+/* Hover effects */
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+/* Card hover effect */
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: box-shadow 0.3s ease;
+}
