@@ -293,73 +293,103 @@ def dashboard_features():
         start_date_utc = start_date_gmt8.astimezone(pytz.utc)
         end_date_utc = end_date_gmt8.astimezone(pytz.utc)
 
-        # Get feature usage totals (separate paid and free, within window)
+        # Feature display names and costs
+        FEATURE_DISPLAY_NAMES = {
+            'image_bra': '📸 粉色蕾丝内衣',
+            'image_undress': '📸 脱到精光',
+            'video_a': '🎬 脱衣+抖胸',
+            'video_b': '🎬 脱衣+下体流精',
+            'video_c': '🎬 脱衣+吃吊喝精'
+        }
+
+        FEATURE_COSTS = {
+            'image_bra': 0,
+            'image_undress': 10,
+            'video_a': 30,
+            'video_b': 30,
+            'video_c': 30
+        }
+
+        # Get feature usage totals by feature_type
         cursor.execute("""
             SELECT
-                SUM(CASE WHEN description LIKE '%image_processing%' AND amount < 0 THEN 1 ELSE 0 END) as image_paid,
-                SUM(CASE WHEN description LIKE '%免费使用%' AND (description LIKE '%image_processing%' OR description LIKE '%粉色蕾丝内衣%') AND amount = 0 THEN 1 ELSE 0 END) as image_free,
-                SUM(CASE WHEN description LIKE '%video_processing%' AND amount < 0 THEN 1 ELSE 0 END) as video_paid,
-                SUM(CASE WHEN description LIKE '%video_processing%' AND amount = 0 THEN 1 ELSE 0 END) as video_free,
-                SUM(CASE WHEN description LIKE '%image_processing%' THEN ABS(amount) ELSE 0 END) as image_revenue,
-                SUM(CASE WHEN description LIKE '%video_processing%' THEN ABS(amount) ELSE 0 END) as video_revenue
+                feature_type,
+                COUNT(*) as usage_count,
+                SUM(ABS(amount)) as revenue,
+                COUNT(DISTINCT user_id) as unique_users,
+                SUM(CASE WHEN amount = 0 THEN 1 ELSE 0 END) as free_usage,
+                SUM(CASE WHEN amount < 0 THEN 1 ELSE 0 END) as paid_usage
             FROM transactions
             WHERE transaction_type = 'deduction'
+                AND feature_type IS NOT NULL
                 AND created_at >= ? AND created_at < ?
+            GROUP BY feature_type
+            ORDER BY usage_count DESC
         """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
               end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
 
-        stats = cursor.fetchone()
+        feature_stats = cursor.fetchall()
 
-        # Get daily usage trends (within window, daily aggregation, separate paid and free)
+        # Get daily usage trends by feature_type
         cursor.execute("""
             SELECT
                 DATE(created_at, '+8 hours') as date_gmt8,
-                SUM(CASE WHEN description LIKE '%image_processing%' AND amount < 0 THEN 1 ELSE 0 END) as image_paid,
-                SUM(CASE WHEN description LIKE '%免费使用%' AND (description LIKE '%image_processing%' OR description LIKE '%粉色蕾丝内衣%') AND amount = 0 THEN 1 ELSE 0 END) as image_free,
-                SUM(CASE WHEN description LIKE '%video_processing%' AND amount < 0 THEN 1 ELSE 0 END) as video_paid,
-                SUM(CASE WHEN description LIKE '%video_processing%' AND amount = 0 THEN 1 ELSE 0 END) as video_free
+                feature_type,
+                COUNT(*) as usage_count
             FROM transactions
             WHERE transaction_type = 'deduction'
+                AND feature_type IS NOT NULL
                 AND created_at >= ? AND created_at < ?
-            GROUP BY DATE(created_at, '+8 hours')
+            GROUP BY date_gmt8, feature_type
             ORDER BY date_gmt8 ASC
         """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
               end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
 
-        daily_usage = cursor.fetchall()
-
-        # Get free trial usage
-        cursor.execute("""
-            SELECT COUNT(*) as free_trial_users
-            FROM users
-            WHERE free_image_processing_used = 1
-        """)
-
-        free_trial = cursor.fetchone()
+        daily_trends = cursor.fetchall()
 
         conn.close()
 
+        # Process feature stats into structured format
+        features_list = []
+        for row in feature_stats:
+            feature_type = row['feature_type']
+            features_list.append({
+                'name': feature_type,
+                'display_name': FEATURE_DISPLAY_NAMES.get(feature_type, feature_type),
+                'total_usage': row['usage_count'] or 0,
+                'paid_usage': row['paid_usage'] or 0,
+                'free_usage': row['free_usage'] or 0,
+                'revenue': int(row['revenue'] or 0),
+                'unique_users': row['unique_users'] or 0,
+                'cost': FEATURE_COSTS.get(feature_type, 0)
+            })
+
+        # Transform daily trends into date-keyed objects
+        daily_usage_map = {}
+        for row in daily_trends:
+            date = row['date_gmt8']
+            feature_type = row['feature_type']
+            count = row['usage_count']
+
+            if date not in daily_usage_map:
+                daily_usage_map[date] = {
+                    'date': date,
+                    'image_bra': 0,
+                    'image_undress': 0,
+                    'video_a': 0,
+                    'video_b': 0,
+                    'video_c': 0
+                }
+
+            daily_usage_map[date][feature_type] = count
+
+        # Convert to sorted list
+        daily_usage_list = sorted(daily_usage_map.values(), key=lambda x: x['date'])
+
         # Format data for template
         analytics_data = {
-            'image_paid': stats['image_paid'] or 0,
-            'image_free': stats['image_free'] or 0,
-            'image_total': (stats['image_paid'] or 0) + (stats['image_free'] or 0),
-            'video_paid': stats['video_paid'] or 0,
-            'video_free': stats['video_free'] or 0,
-            'video_total': (stats['video_paid'] or 0) + (stats['video_free'] or 0),
-            'image_revenue': int(stats['image_revenue'] or 0),
-            'video_revenue': int(stats['video_revenue'] or 0),
-            'free_trial_users': free_trial['free_trial_users'] or 0,
-            'daily_usage': [
-                {
-                    'date': row['date_gmt8'],
-                    'image_paid': row['image_paid'],
-                    'image_free': row['image_free'],
-                    'video_paid': row['video_paid'],
-                    'video_free': row['video_free']
-                }
-                for row in daily_usage
-            ]
+            'features': features_list,
+            'daily_usage': daily_usage_list
         }
 
         # Window control parameters

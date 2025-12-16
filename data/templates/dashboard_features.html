@@ -56,92 +56,47 @@
             </div>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="bi bi-image"></i> 图片脱衣（付费）
-                        </h6>
-                        <h2 class="mb-0">{{ analytics.image_paid }}</h2>
-                        <small>使用次数</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="bi bi-gift"></i> 图片脱衣（免费）
-                        </h6>
-                        <h2 class="mb-0">{{ analytics.image_free }}</h2>
-                        <small>使用次数</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="bi bi-film"></i> 图片转视频（付费）
-                        </h6>
-                        <h2 class="mb-0">{{ analytics.video_paid }}</h2>
-                        <small>使用次数</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="bi bi-gift"></i> 图片转视频（免费）
-                        </h6>
-                        <h2 class="mb-0">{{ analytics.video_free }}</h2>
-                        <small>使用次数</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Revenue Cards -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="bi bi-coin"></i> 图片脱衣收入
-                        </h6>
-                        <h2 class="mb-0">{{ analytics.image_revenue }}</h2>
-                        <small>积分</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card bg-warning">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="bi bi-currency-dollar"></i> 视频收入
-                        </h6>
-                        <h2 class="mb-0">{{ analytics.video_revenue }}</h2>
-                        <small>积分</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Free Trial Stats -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="bi bi-gift"></i> 免费试用统计
-                        </h5>
-                        <p class="mb-0">
-                            已使用免费试用的用户: <strong>{{ analytics.free_trial_users }}</strong>
-                        </p>
-                    </div>
+        <!-- Feature Usage Table -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-bar-chart-fill"></i> 功能使用详情
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>功能名称</th>
+                                <th class="text-end">总使用次数</th>
+                                <th class="text-end">付费次数</th>
+                                <th class="text-end">免费次数</th>
+                                <th class="text-end">独立用户数</th>
+                                <th class="text-end">收入 (积分)</th>
+                                <th class="text-end">成本/次</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feature in analytics.features %}
+                            <tr>
+                                <td><strong>{{ feature.display_name }}</strong></td>
+                                <td class="text-end">{{ feature.total_usage }}</td>
+                                <td class="text-end">{{ feature.paid_usage }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">{{ feature.free_usage }}</span>
+                                </td>
+                                <td class="text-end">{{ feature.unique_users }}</td>
+                                <td class="text-end">{{ feature.revenue }}</td>
+                                <td class="text-end">
+                                    {% if feature.cost == 0 %}
+                                        <span class="badge bg-info">免费</span>
+                                    {% else %}
+                                        {{ feature.cost }} 积分
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -179,56 +134,66 @@
 const currentDays = {{ window.days }};
 const currentOffset = {{ window.offset }};
 
-// Usage Trend Chart (Line Chart)
-const usageTrendCtx = document.getElementById('usageTrendChart').getContext('2d');
-const dailyUsage = {{ analytics.daily_usage | tojson }};
+// Feature colors
+const FEATURE_COLORS = {
+    'image_bra': {
+        border: 'rgb(255, 192, 203)',
+        background: 'rgba(255, 192, 203, 0.1)'
+    },
+    'image_undress': {
+        border: 'rgb(255, 99, 132)',
+        background: 'rgba(255, 99, 132, 0.1)'
+    },
+    'video_a': {
+        border: 'rgb(54, 162, 235)',
+        background: 'rgba(54, 162, 235, 0.1)'
+    },
+    'video_b': {
+        border: 'rgb(75, 192, 192)',
+        background: 'rgba(75, 192, 192, 0.1)'
+    },
+    'video_c': {
+        border: 'rgb(153, 102, 255)',
+        background: 'rgba(153, 102, 255, 0.1)'
+    }
+};
 
+const FEATURE_NAMES = {
+    'image_bra': '📸 粉色蕾丝内衣',
+    'image_undress': '📸 脱到精光',
+    'video_a': '🎬 脱衣+抖胸',
+    'video_b': '🎬 脱衣+下体流精',
+    'video_c': '🎬 脱衣+吃吊喝精'
+};
+
+// Get data
+const dailyUsage = {{ analytics.daily_usage | tojson }};
+const features = {{ analytics.features | tojson }};
+
+// Usage Trend Chart (Line Chart) - 5 feature lines
+const usageTrendCtx = document.getElementById('usageTrendChart').getContext('2d');
 const labels = dailyUsage.map(d => d.date);
-const imagePaidData = dailyUsage.map(d => d.image_paid);
-const imageFreeData = dailyUsage.map(d => d.image_free);
-const videoPaidData = dailyUsage.map(d => d.video_paid);
-const videoFreeData = dailyUsage.map(d => d.video_free);
+
+// Create datasets for each feature
+const datasets = [];
+['image_bra', 'image_undress', 'video_a', 'video_b', 'video_c'].forEach(featureType => {
+    datasets.push({
+        label: FEATURE_NAMES[featureType],
+        data: dailyUsage.map(d => d[featureType] || 0),
+        borderColor: FEATURE_COLORS[featureType].border,
+        backgroundColor: FEATURE_COLORS[featureType].background,
+        tension: 0.3,
+        fill: true,
+        pointRadius: 3,
+        pointHoverRadius: 5
+    });
+});
 
 new Chart(usageTrendCtx, {
     type: 'line',
     data: {
         labels: labels,
-        datasets: [
-            {
-                label: '图片脱衣（付费）',
-                data: imagePaidData,
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                tension: 0.1,
-                fill: true
-            },
-            {
-                label: '图片脱衣（免费）',
-                data: imageFreeData,
-                borderColor: 'rgb(23, 162, 184)',
-                backgroundColor: 'rgba(23, 162, 184, 0.1)',
-                tension: 0.1,
-                fill: true,
-                borderDash: [5, 5]
-            },
-            {
-                label: '图片转视频（付费）',
-                data: videoPaidData,
-                borderColor: 'rgb(40, 167, 69)',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                tension: 0.1,
-                fill: true
-            },
-            {
-                label: '图片转视频（免费）',
-                data: videoFreeData,
-                borderColor: 'rgb(255, 193, 7)',
-                backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                tension: 0.1,
-                fill: true,
-                borderDash: [5, 5]
-            }
-        ]
+        datasets: datasets
     },
     options: {
         responsive: true,
@@ -252,34 +217,41 @@ new Chart(usageTrendCtx, {
     }
 });
 
-// Feature Popularity Chart (Pie Chart)
+// Feature Popularity Chart (Horizontal Bar Chart)
 const featurePopularityCtx = document.getElementById('featurePopularityChart').getContext('2d');
 
+// Prepare data from features list
+const featureLabels = features.map(f => f.display_name);
+const featureData = features.map(f => f.total_usage);
+const featureColors = features.map(f => FEATURE_COLORS[f.name]?.border || 'rgb(128, 128, 128)');
+
 new Chart(featurePopularityCtx, {
-    type: 'pie',
+    type: 'bar',
     data: {
-        labels: ['图片脱衣（付费）', '图片脱衣（免费）', '图片转视频（付费）', '图片转视频（免费）'],
+        labels: featureLabels,
         datasets: [{
-            data: [
-                {{ analytics.image_paid }},
-                {{ analytics.image_free }},
-                {{ analytics.video_paid }},
-                {{ analytics.video_free }}
-            ],
-            backgroundColor: [
-                'rgb(54, 162, 235)',   // image paid - blue
-                'rgb(23, 162, 184)',   // image free - cyan
-                'rgb(40, 167, 69)',    // video paid - green
-                'rgb(255, 193, 7)'     // video free - yellow
-            ]
+            label: '使用次数',
+            data: featureData,
+            backgroundColor: featureColors,
+            borderColor: featureColors,
+            borderWidth: 1
         }]
     },
     options: {
+        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: true,
         plugins: {
             legend: {
-                position: 'bottom',
+                display: false
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
             }
         }
     }
