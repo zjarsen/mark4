@@ -267,13 +267,33 @@ def dashboard_features():
     """
     Feature usage analytics dashboard.
 
-    Displays usage statistics, revenue breakdown, and 30-day usage trends.
+    Displays usage statistics, revenue breakdown, and usage trends with moving window controls.
     """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get feature usage totals (separate paid and free)
+        # Get window parameters (default: last 30 days)
+        window_days = int(request.args.get('days', 30))
+        window_offset = int(request.args.get('offset', 0))
+
+        # Clamp values to reasonable ranges
+        window_days = max(7, min(365, window_days))  # 7-365 days
+        window_offset = max(-1000, min(0, window_offset))  # Max 1000 days back, 0 for current
+
+        # Calculate date range in GMT+8
+        gmt8 = pytz.timezone('Asia/Shanghai')
+        now_gmt8 = datetime.now(gmt8)
+
+        # Apply offset (move window forward/backward)
+        end_date_gmt8 = now_gmt8 + timedelta(days=window_offset + 1)
+        start_date_gmt8 = end_date_gmt8 - timedelta(days=window_days)
+
+        # Convert to UTC for database query
+        start_date_utc = start_date_gmt8.astimezone(pytz.utc)
+        end_date_utc = end_date_gmt8.astimezone(pytz.utc)
+
+        # Get feature usage totals (separate paid and free, within window)
         cursor.execute("""
             SELECT
                 SUM(CASE WHEN description LIKE '%image_processing%' AND amount < 0 THEN 1 ELSE 0 END) as image_paid,
@@ -284,24 +304,27 @@ def dashboard_features():
                 SUM(CASE WHEN description LIKE '%video_processing%' THEN ABS(amount) ELSE 0 END) as video_revenue
             FROM transactions
             WHERE transaction_type = 'deduction'
-        """)
+                AND created_at >= ? AND created_at < ?
+        """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
+              end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
 
         stats = cursor.fetchone()
 
-        # Get 30-day usage trends (daily aggregation, separate paid and free)
+        # Get daily usage trends (within window, daily aggregation, separate paid and free)
         cursor.execute("""
             SELECT
-                DATE(created_at) as date,
+                DATE(created_at, '+8 hours') as date_gmt8,
                 SUM(CASE WHEN description LIKE '%image_processing%' AND amount < 0 THEN 1 ELSE 0 END) as image_paid,
                 SUM(CASE WHEN description LIKE '%免费使用%' AND (description LIKE '%image_processing%' OR description LIKE '%粉色蕾丝内衣%') AND amount = 0 THEN 1 ELSE 0 END) as image_free,
                 SUM(CASE WHEN description LIKE '%video_processing%' AND amount < 0 THEN 1 ELSE 0 END) as video_paid,
                 SUM(CASE WHEN description LIKE '%video_processing%' AND amount = 0 THEN 1 ELSE 0 END) as video_free
             FROM transactions
             WHERE transaction_type = 'deduction'
-                AND created_at >= datetime('now', '-30 days')
-            GROUP BY DATE(created_at)
-            ORDER BY date ASC
-        """)
+                AND created_at >= ? AND created_at < ?
+            GROUP BY DATE(created_at, '+8 hours')
+            ORDER BY date_gmt8 ASC
+        """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
+              end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
 
         daily_usage = cursor.fetchall()
 
@@ -329,7 +352,7 @@ def dashboard_features():
             'free_trial_users': free_trial['free_trial_users'] or 0,
             'daily_usage': [
                 {
-                    'date': row['date'],
+                    'date': row['date_gmt8'],
                     'image_paid': row['image_paid'],
                     'image_free': row['image_free'],
                     'video_paid': row['video_paid'],
@@ -339,8 +362,17 @@ def dashboard_features():
             ]
         }
 
+        # Window control parameters
+        window_params = {
+            'days': window_days,
+            'offset': window_offset,
+            'start_date': start_date_gmt8.strftime('%Y-%m-%d'),
+            'end_date': end_date_gmt8.strftime('%Y-%m-%d')
+        }
+
         return render_template('dashboard_features.html',
-                             analytics=analytics_data)
+                             analytics=analytics_data,
+                             window=window_params)
 
     except Exception as e:
         logger.error(f"Error loading feature dashboard: {str(e)}", exc_info=True)

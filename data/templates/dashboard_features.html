@@ -12,6 +12,50 @@
             </button>
         </div>
 
+        <!-- Window Controls -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-3"><i class="bi bi-sliders"></i> 时间窗口控制</h5>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <!-- Days control -->
+                            <span class="badge bg-secondary">窗口大小:</span>
+                            <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(-1)">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <span class="badge bg-primary fs-6 px-3">{{ window.days }} 天</span>
+                            <button class="btn btn-sm btn-outline-primary" onclick="adjustDays(1)">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+                            <!-- Offset control -->
+                            <span class="badge bg-secondary">窗口位置:</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(-1)">
+                                <i class="bi bi-arrow-left"></i>
+                            </button>
+                            <span class="badge bg-secondary fs-6 px-3">偏移 {{ window.offset }} 天</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="adjustOffset(1)">
+                                <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                        <h6 class="text-muted">当前时间范围 (GMT+8)</h6>
+                        <h5 class="mb-0">
+                            <span class="text-primary">{{ window.start_date }}</span>
+                            <i class="bi bi-arrow-right mx-2"></i>
+                            <span class="text-success">{{ window.end_date }}</span>
+                        </h5>
+                        <button class="btn btn-sm btn-warning mt-2" onclick="resetWindow()">
+                            <i class="bi bi-arrow-counterclockwise"></i> 重置为最近30天
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Statistics Cards -->
         <div class="row mb-4">
             <div class="col-md-3">
@@ -108,7 +152,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <i class="bi bi-graph-up-arrow"></i> 30天使用趋势
+                            <i class="bi bi-graph-up-arrow"></i> 功能使用趋势 ({{ window.days }}天)
                         </h5>
                         <canvas id="usageTrendChart"></canvas>
                     </div>
@@ -131,6 +175,10 @@
 
 {% block extra_scripts %}
 <script>
+// Get window parameters
+const currentDays = {{ window.days }};
+const currentOffset = {{ window.offset }};
+
 // Usage Trend Chart (Line Chart)
 const usageTrendCtx = document.getElementById('usageTrendChart').getContext('2d');
 const dailyUsage = {{ analytics.daily_usage | tojson }};
@@ -236,5 +284,28 @@ new Chart(featurePopularityCtx, {
         }
     }
 });
+
+// Window control functions
+function adjustDays(delta) {
+    const newDays = currentDays + delta;
+    if (newDays < 7 || newDays > 365) {
+        alert('窗口天数范围: 7-365天');
+        return;
+    }
+    window.location.href = `?days=${newDays}&offset=${currentOffset}`;
+}
+
+function adjustOffset(delta) {
+    const newOffset = currentOffset + delta;
+    if (newOffset < -1000 || newOffset > 0) {
+        alert('最多可查看1000天前的数据');
+        return;
+    }
+    window.location.href = `?days=${currentDays}&offset=${newOffset}`;
+}
+
+function resetWindow() {
+    window.location.href = '?days=30&offset=0';
+}
 </script>
 {% endblock %}
