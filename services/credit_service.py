@@ -218,15 +218,17 @@ class CreditService:
         self,
         user_id: int,
         feature_name: str,
-        reference_id: str = None
+        reference_id: str = None,
+        feature_type: str = None
     ) -> Tuple[bool, float]:
         """
         Deduct credits for using a feature.
 
         Args:
             user_id: User ID
-            feature_name: Feature name
+            feature_name: Feature name (e.g., 'image_processing', 'video_processing')
             reference_id: Optional reference (e.g., prompt_id)
+            feature_type: Optional specific feature type (e.g., 'image_undress', 'video_style_a')
 
         Returns:
             Tuple of (success, new_balance)
@@ -249,7 +251,8 @@ class CreditService:
                             balance_before=balance,
                             balance_after=balance,  # Balance unchanged
                             description=f"免费使用: {feature_name}",
-                            reference_id=reference_id
+                            reference_id=reference_id,
+                            feature_type=feature_type or 'image_undress'
                         )
 
                         logger.info(f"User {user_id} used free trial for {feature_name}")
@@ -286,7 +289,8 @@ class CreditService:
                     balance_before=balance,
                     balance_after=new_balance,
                     description=f"使用功能: {feature_name}",
-                    reference_id=reference_id
+                    reference_id=reference_id,
+                    feature_type=feature_type
                 )
                 logger.info(
                     f"Deducted {cost} credits from user {user_id}, "
@@ -493,6 +497,87 @@ class CreditService:
             logger.error(f"Error checking VIP status for user {user_id}: {str(e)}")
             return False, 'none'
 
+    async def check_vip_daily_limit(self, user_id: int) -> Tuple[bool, int, int]:
+        """
+        Check if VIP user has reached their daily usage limit.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Tuple of (limit_reached, current_usage, limit)
+            - limit_reached: True if limit is reached
+            - current_usage: Current daily usage count
+            - limit: Daily limit (50 for VIP, 100 for Black Gold)
+        """
+        try:
+            # Check if user is VIP
+            is_vip, tier = await self.is_vip_user(user_id)
+
+            # Non-VIP users have no daily limits
+            if not is_vip:
+                return False, 0, 0
+
+            # Get daily limit based on tier
+            if tier == 'vip':
+                daily_limit = 50
+            elif tier == 'black_gold':
+                daily_limit = 100
+            else:
+                return False, 0, 0
+
+            # Get current date in GMT+8
+            from datetime import datetime, timezone, timedelta
+            gmt8 = timezone(timedelta(hours=8))
+            current_date = datetime.now(gmt8).strftime('%Y-%m-%d')
+
+            # Get current usage count
+            current_usage = self.db.get_daily_usage_count(user_id, current_date)
+
+            # Check if limit is reached
+            limit_reached = current_usage >= daily_limit
+
+            logger.info(
+                f"VIP daily limit check for user {user_id} (tier: {tier}): "
+                f"{current_usage}/{daily_limit} (limit_reached: {limit_reached})"
+            )
+
+            return limit_reached, current_usage, daily_limit
+
+        except Exception as e:
+            logger.error(f"Error checking VIP daily limit for user {user_id}: {str(e)}")
+            return False, 0, 0
+
+    async def increment_vip_daily_usage(self, user_id: int) -> bool:
+        """
+        Increment VIP user's daily usage count.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            True if successful
+        """
+        try:
+            # Get current date in GMT+8
+            from datetime import datetime, timezone, timedelta
+            gmt8 = timezone(timedelta(hours=8))
+            current_date = datetime.now(gmt8).strftime('%Y-%m-%d')
+
+            # Increment usage
+            success = self.db.increment_daily_usage(user_id, current_date)
+
+            if success:
+                logger.info(f"Incremented daily usage for VIP user {user_id}")
+            else:
+                logger.error(f"Failed to increment daily usage for VIP user {user_id}")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"Error incrementing VIP daily usage for user {user_id}: {str(e)}")
+            return False
+
     async def check_sufficient_credits_with_vip(
         self,
         user_id: int,
@@ -516,7 +601,7 @@ class CreditService:
             cost = self.db.get_feature_cost(feature_name) or 0.0
 
             if is_vip:
-                # VIP users always have sufficient credits
+                # VIP users always have sufficient credits (but still subject to daily limits)
                 logger.info(f"VIP user {user_id} (tier: {tier}) - bypassing credit check")
                 return True, True, balance, cost
 

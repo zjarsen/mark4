@@ -32,22 +32,33 @@ class PaymentStatus(Enum):
 # Menu text constants
 MENU_OPTION_IMAGE = "1. 📸 图生图类脱衣！✨"
 MENU_OPTION_VIDEO = "2. 🎬 图生成视频类脱衣！✨"
-MENU_OPTION_CHECK_QUEUE = "3. 查看当前队列"
+MENU_OPTION_TOPUP = "3. 💳 充值积分 🎁 每日抽最高5折！"
 MENU_OPTION_BALANCE_HISTORY = "4. 📊 积分余额 & 充值记录"
-MENU_OPTION_TOPUP = "5. 💳 充值积分"
+MENU_OPTION_CHECK_QUEUE = "5. 查看当前队列"
 
 # Message templates
-WELCOME_MESSAGE = """✨ 欢迎体验AI智能脱衣！
+WELCOME_MESSAGE = """✨ 欢迎体验顶级AI脱衣神器！
 
-🎁 限时免费：每2天免费体验1次
-无需充值，立即开始！
+🎰 **每日幸运折扣**
+• 💰 最高可享5折优惠！
+• 🎁 每日24:00重置，手慢无
+• ⚡ **充值前记得先抽折扣！**
 
-💡 使用技巧：
-• 上传清晰正脸照片效果最佳
-• 支持半身或全身照
-• AI自动识别并处理
+🎁 **新人福利**
+• 粉色蕾丝风格 - 永久免费
+• 脱到精光风格 - 每2天免费1次
 
-准备好了吗？选择功能开始体验～"""
+🎨 **核心功能**
+• 📸 图片脱衣（10积分/次）- 多种风格
+• 🎬 动态视频（30积分/次）- 3种特效
+• 🔥 顶级AI模型 - 效果逼真
+
+💎 **VIP会员特权**
+• 永久VIP（¥173）- 无限使用所有功能
+• 黑金VIP（¥281）- 无限使用 + 优先处理
+• 一次付费，终身享用
+
+🎁 **点击下方按钮，立即抽取今日幸运折扣！**"""
 
 SELECT_FUNCTION_MESSAGE = ""
 SEND_IMAGE_PROMPT = """📸 请上传您的照片，让AI开始创作～
@@ -176,7 +187,36 @@ BALANCE_MESSAGE = """💰 我的积分
 • 图片脱衣：10 积分/次
 • 视频生成：30 积分/次"""
 
-TOPUP_PACKAGES_MESSAGE = """💳 充值套餐
+# Top-up packages message variants (based on discount tier)
+TOPUP_PACKAGES_MESSAGE_WITH_DISCOUNT = """💳 充值套餐
+
+🔥🔥🔥 **今日超级幸运！** 🔥🔥🔥
+⚡ _您的专属折扣已解锁，点击下方按钮查看！_
+💰 **最高可享5折优惠** - 限今日24:00前有效
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 超值套餐推荐：
+1️⃣ ¥11 = 30积分 ⭐
+2️⃣ ¥32 = 120积分 🔥
+3️⃣ ¥54 = 250积分 💎
+4️⃣ ¥108 = 600积分 👑
+5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】
+6️⃣ ¥281 = 永久黑金VIP 👑👑👑 【无限使用+无需排队】
+
+✨ 充值优势：
+• 积分永久有效
+• 充值后立即到账
+• 支持微信/支付宝
+
+⏰ **别忘了先领取今日折扣！点击下方【幸运折扣】按钮** ⏰"""
+
+TOPUP_PACKAGES_MESSAGE_NORMAL = """💳 充值套餐
+
+🎰 **今日幸运折扣已开启** - 点击下方按钮查看折扣！
+💡 _每日随机5%-50%折扣，今天试试运气？_
+
+━━━━━━━━━━━━━━━━━━━━
 
 🔥 超值套餐推荐：
 1️⃣ ¥11 = 30积分 ⭐
@@ -190,6 +230,29 @@ TOPUP_PACKAGES_MESSAGE = """💳 充值套餐
 • 积分永久有效
 • 充值后立即到账
 • 支持微信/支付宝"""
+
+TOPUP_PACKAGES_MESSAGE_NO_DISCOUNT = """💳 充值套餐
+
+🎁 **首次充值福利** - 先抽取今日幸运折扣！
+💰 _最高可享5折优惠_ | 每日重置 | 限时24小时
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 超值套餐推荐：
+1️⃣ ¥11 = 30积分 ⭐
+2️⃣ ¥32 = 120积分 🔥
+3️⃣ ¥54 = 250积分 💎
+4️⃣ ¥108 = 600积分 👑
+5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】
+6️⃣ ¥281 = 永久黑金VIP 👑👑👑 【无限使用+无需排队】
+
+✨ 充值优势：
+• 积分永久有效
+• 充值后立即到账
+• 支持微信/支付宝"""
+
+# Legacy message (kept for backwards compatibility)
+TOPUP_PACKAGES_MESSAGE = TOPUP_PACKAGES_MESSAGE_NO_DISCOUNT
 
 TRANSACTION_HISTORY_HEADER = "📊 最近消费记录\n\n"
 TRANSACTION_ITEM_TEMPLATE = "{date} | {type} | {amount:+.0f}分 | 余额 {balance:.0f}\n"
@@ -363,6 +426,19 @@ VIP_BENEFITS_BLACK_GOLD = """• 无限使用所有功能
 
 VIP_STATUS_BADGE = "👑 {tier}用户"
 
+# VIP Daily Limit Messages (cute and flirty)
+VIP_DAILY_LIMIT_REACHED_REGULAR = """主人~♡ 人家今天已经帮你处理50次了，累死宝宝了啦~ 🥺
+
+明天0点就能继续玩啦，记得想人家哦~ 💋
+
+当前使用：{current_usage}/{limit} 次 ✨"""
+
+VIP_DAILY_LIMIT_REACHED_BLACK_GOLD = """主人大人~♡ 100次都被你玩遍了呢~ 人家真的需要休息啦~ 😘
+
+明天0点就能继续陪你玩啦，等我哦~ 💕
+
+当前使用：{current_usage}/{limit} 次 ✨"""
+
 # VIP Balance Display
 BALANCE_MESSAGE_VIP = """💰 我的账户
 
@@ -380,34 +456,61 @@ DISCOUNT_TIERS = {
     'C': {'rate': 0.95, 'display': 'C普通运气', 'emoji': '🍀', 'off': '5%'}
 }
 
-LUCKY_DISCOUNT_BUTTON = "🎰 每日幸运折扣"
-LUCKY_DISCOUNT_BUTTON_REVEALED = "{emoji} {tier} - {off}折扣"
+# Lucky discount button labels
+LUCKY_DISCOUNT_BUTTON_HOT = "🔥💰 点我领取今日超级折扣！ 💰🔥"
+LUCKY_DISCOUNT_BUTTON_NORMAL = "🎰 每日幸运折扣 - 点击查看"
+LUCKY_DISCOUNT_BUTTON = LUCKY_DISCOUNT_BUTTON_NORMAL  # Default
+LUCKY_DISCOUNT_BUTTON_REVEALED = "{emoji} **{tier}** - {off}折扣已激活"
 
-LUCKY_DISCOUNT_CELEBRATION_SSR = """🎊🎊🎊 恭喜恭喜！🎊🎊🎊
+LUCKY_DISCOUNT_CELEBRATION_SSR = """🎊🎊🎊 **恭喜恭喜！神级运气！** 🎊🎊🎊
 
-您今天抽到了 **SSR神级运气**！
-🔥 全场5折优惠 🔥
+**您抽到了 SSR 神级折扣！**
+🔥🔥 **全场5折优惠** 🔥🔥
 
-所有套餐均享受50%折扣！
-限今日有效，快去选购吧～"""
+💰 **永久VIP 仅需 ¥87**（原价¥173）
+💎 **所有套餐5折** - 省钱一半！
 
-LUCKY_DISCOUNT_CELEBRATION_SR = """🎉🎉🎉 恭喜您！🎉🎉🎉
+⏰ 限今日24:00前有效 - 抓紧时间抢购！
 
-您今天抽到了 **SR超级运气**！
-⭐ 全场7折优惠 ⭐
+_立即选择套餐，享受神级折扣！_"""
 
-所有套餐均享受30%折扣！
-限今日有效，快去选购吧～"""
+LUCKY_DISCOUNT_CELEBRATION_SR = """🎉🎉🎉 **恭喜您！超级幸运！** 🎉🎉🎉
 
-LUCKY_DISCOUNT_REVEALED_R = """✨ 您今天的运气：R运气不错
-全场85折，享受15%折扣！"""
+**您抽到了 SR 超级折扣！**
+⭐⭐ **全场7折优惠** ⭐⭐
 
-LUCKY_DISCOUNT_REVEALED_C = """🍀 您今天的运气：C普通运气
-全场95折，享受5%折扣！"""
+💰 **永久VIP 仅需 ¥121**（原价¥173）
+💎 **所有套餐7折** - 超值划算！
 
-LUCKY_DISCOUNT_ALREADY_REVEALED = """您今天已经使用过幸运折扣了！
+⏰ 限今日24:00前有效 - 机不可失！
 
-当前折扣：{tier} ({off}折)
-有效期至：今日24:00
+_立即选择套餐，享受超级折扣！_"""
 
-所有套餐价格已显示折扣后价格～"""
+LUCKY_DISCOUNT_REVEALED_R = """✨ **今日运气不错！R级折扣**
+
+全场85折，省15%！
+💡 _提示：连续使用可提升折扣等级哦_
+
+💰 **永久VIP 仅需 ¥147**（原价¥173）
+
+⏰ 限今日有效 - 立即使用！"""
+
+LUCKY_DISCOUNT_REVEALED_C = """🍀 **今日折扣已开启！C级折扣**
+
+全场95折，虽然不多但也是优惠！
+🎯 _坚持使用，下次可能抽到5折哦_
+
+💰 **永久VIP 仅需 ¥164**（原价¥173）
+
+⏰ 限今日有效 - 不用白不用！"""
+
+LUCKY_DISCOUNT_ALREADY_REVEALED = """⚡ **您今日的折扣已激活！**
+
+当前折扣：**{tier}** ({off}折)
+有效期至：**今日24:00** ⏰
+
+💡 所有套餐价格已显示折扣后价格
+🔥 _限时优惠，抓紧充值！_
+
+━━━━━━━━━━━━━━━━━━━━
+选择下方套餐，立即享受折扣！"""

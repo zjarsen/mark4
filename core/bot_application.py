@@ -331,6 +331,15 @@ class BotApplication:
             )
         )
 
+        # Open topup menu callback handler (for welcome message button)
+        from handlers.callback_handlers import open_topup_menu_callback
+        self.app.add_handler(
+            CallbackQueryHandler(
+                open_topup_menu_callback,
+                pattern="^open_topup_menu$"
+            )
+        )
+
         # Queue refresh callback handler (for refresh button in queue position message)
         async def refresh_queue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             """Handle refresh_queue callback to update position in same message."""

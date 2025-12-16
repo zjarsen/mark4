@@ -51,19 +51,19 @@ async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TY
             logger.info(f"[MENU_SELECTION] Matched option 2 (video processing) for user {user_id}")
             await handle_video_processing(update, context, user_id)
 
-        elif text.startswith("3.") or "查看队列" in text:
-            logger.info(f"[MENU_SELECTION] Matched option 3 (check queue) for user {user_id}")
-            await handle_check_queue(update, context, user_id)
+        elif text.startswith("3.") or "充值积分" in text:
+            logger.info(f"[MENU_SELECTION] Matched option 3 (topup) for user {user_id}")
+            from handlers.credit_handlers import show_topup_packages
+            await show_topup_packages(update, context)
 
         elif text.startswith("4.") or "积分余额" in text or "充值记录" in text:
             logger.info(f"[MENU_SELECTION] Matched option 4 (balance history) for user {user_id}")
             from handlers.credit_handlers import show_balance_and_history
             await show_balance_and_history(update, context)
 
-        elif text.startswith("5.") or "充值积分" in text:
-            logger.info(f"[MENU_SELECTION] Matched option 5 (topup) for user {user_id}")
-            from handlers.credit_handlers import show_topup_packages
-            await show_topup_packages(update, context)
+        elif text.startswith("5.") or "查看队列" in text:
+            logger.info(f"[MENU_SELECTION] Matched option 5 (check queue) for user {user_id}")
+            await handle_check_queue(update, context, user_id)
 
         else:
             # Unknown menu option

@@ -359,3 +359,32 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
             text="处理确认时发生错误，请稍后重试"
         )
         state_manager.reset_state(user_id)
+
+
+async def open_topup_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle callback for opening top-up menu from inline button.
+    This is triggered by the button in the welcome message.
+    """
+    try:
+        query = update.callback_query
+        await query.answer()
+
+        # Import and call show_topup_packages
+        from handlers.credit_handlers import show_topup_packages
+
+        # Create a new update object with the message from callback
+        # This allows show_topup_packages to work properly
+        class FakeUpdate:
+            def __init__(self, message, effective_user):
+                self.message = message
+                self.effective_user = effective_user
+
+        fake_update = FakeUpdate(query.message, update.effective_user)
+        await show_topup_packages(fake_update, context)
+
+        logger.info(f"User {update.effective_user.id} opened top-up menu from welcome button")
+
+    except Exception as e:
+        logger.error(f"Error opening top-up menu: {str(e)}")
+        await query.answer("打开充值菜单失败，请稍后重试", show_alert=True)

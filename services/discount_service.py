@@ -80,6 +80,37 @@ class DiscountService:
         except Exception as e:
             logger.error(f"Error tracking interaction for user {user_id}: {str(e)}")
 
+    async def peek_discount_tier(self, user_id: int) -> Optional[str]:
+        """
+        Peek at what discount tier the user would get WITHOUT revealing it.
+        Used to determine which message variant to show in top-up menu.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Discount tier ('SSR', 'SR', 'R', 'C') or None if not available
+        """
+        try:
+            discount_info = self.db.get_user_discount_info(user_id)
+
+            if not discount_info:
+                return None
+
+            # If already revealed today, return the revealed tier
+            current_date = self.get_current_date_gmt8()
+            if discount_info['daily_discount_date'] == current_date:
+                return discount_info['daily_discount_tier']
+
+            # Otherwise, calculate what tier they would get (without revealing)
+            interaction_days = discount_info['interaction_days'] or 1
+            tier, _ = self.calculate_discount_tier(interaction_days)
+            return tier
+
+        except Exception as e:
+            logger.error(f"Error peeking discount tier for user {user_id}: {str(e)}")
+            return None
+
     async def get_or_reveal_daily_discount(self, user_id: int) -> Dict:
         """
         Get today's discount for user. If not revealed yet, calculate and save it.

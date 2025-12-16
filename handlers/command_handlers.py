@@ -1,6 +1,6 @@
 """Command handlers for /start, /help, etc."""
 
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import logging
 from core.constants import (
@@ -32,9 +32,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_id = update.effective_user.id
 
-        # First-time welcome message
+        # First-time welcome message with inline button to open topup menu
         if not state_manager.has_state(user_id):
-            await update.message.reply_text(WELCOME_MESSAGE)
+            # Create inline keyboard with button to open topup menu
+            keyboard = [[
+                InlineKeyboardButton("🎁 立即抽取幸运折扣", callback_data="open_topup_menu")
+            ]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await update.message.reply_text(
+                WELCOME_MESSAGE,
+                parse_mode='Markdown',
+                reply_markup=reply_markup
+            )
             state_manager.set_state(user_id, {'first_contact': True})
 
         # Show main menu
@@ -163,9 +173,9 @@ async def show_main_menu(update: Update):
     keyboard = [
         [KeyboardButton(MENU_OPTION_IMAGE)],
         [KeyboardButton(MENU_OPTION_VIDEO)],
-        [KeyboardButton(MENU_OPTION_CHECK_QUEUE)],
+        [KeyboardButton(MENU_OPTION_TOPUP)],
         [KeyboardButton(MENU_OPTION_BALANCE_HISTORY)],
-        [KeyboardButton(MENU_OPTION_TOPUP)]
+        [KeyboardButton(MENU_OPTION_CHECK_QUEUE)]
     ]
     reply_markup = ReplyKeyboardMarkup(
         keyboard,

@@ -1007,9 +1007,31 @@ class WorkflowService:
                 is_black_gold = (tier == 'black_gold')
 
                 if is_vip:
-                    # VIP users: no credit checks, no credit deduction
+                    # Check VIP daily usage limit
+                    limit_reached, current_usage, daily_limit = await self.credit_service.check_vip_daily_limit(user_id)
+
+                    if limit_reached:
+                        # Show cute flirty limit message
+                        from core.constants import VIP_DAILY_LIMIT_REACHED_REGULAR, VIP_DAILY_LIMIT_REACHED_BLACK_GOLD
+
+                        if tier == 'vip':
+                            message = VIP_DAILY_LIMIT_REACHED_REGULAR.format(
+                                current_usage=current_usage,
+                                limit=daily_limit
+                            )
+                        else:  # black_gold
+                            message = VIP_DAILY_LIMIT_REACHED_BLACK_GOLD.format(
+                                current_usage=current_usage,
+                                limit=daily_limit
+                            )
+
+                        await bot.send_message(user_id, message, parse_mode='Markdown')
+                        self.state_manager.reset_state(user_id)
+                        return False
+
+                    # VIP users: no credit checks, no credit deduction (but subject to daily limits)
                     logger.info(
-                        f"VIP user {user_id} (tier: {tier}) - bypassing all credit operations"
+                        f"VIP user {user_id} (tier: {tier}) - bypassing credit operations ({current_usage}/{daily_limit} today)"
                     )
                 else:
                     # Non-VIP users: re-check credits based on style
@@ -1081,7 +1103,8 @@ class WorkflowService:
                 success, new_balance = await self.credit_service.deduct_credits(
                     user_id,
                     'image_processing',
-                    reference_id=f"image_{style}_{user_id}_{filename}"
+                    reference_id=f"image_{style}_{user_id}_{filename}",
+                    feature_type='image_undress'
                 )
                 if success:
                     logger.info(
@@ -1103,7 +1126,8 @@ class WorkflowService:
                     balance_before=balance,
                     balance_after=balance,
                     description="免费使用: 粉色蕾丝内衣",
-                    reference_id=f"image_{style}_{user_id}_{filename}"
+                    reference_id=f"image_{style}_{user_id}_{filename}",
+                    feature_type='image_bra'
                 )
                 logger.info(f"Created free transaction record for user {user_id} (bra style)")
 
@@ -1125,6 +1149,10 @@ class WorkflowService:
 
             # Queue job via image queue manager (black_gold gets priority)
             await self.image_queue_manager.queue_job(job, is_vip=is_black_gold)
+
+            # Increment VIP daily usage counter if VIP user
+            if is_vip and self.credit_service:
+                await self.credit_service.increment_vip_daily_usage(user_id)
 
             logger.info(
                 f"Queued job for user {user_id}, "
@@ -1341,77 +1369,108 @@ class WorkflowService:
 
             video_workflow = self.video_workflows[style]
 
-            # Re-check credits (in case balance changed)
-            if self.credit_service:
-                has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
-                    user_id,
-                    'video_processing'
-                )
-
-                if not has_sufficient:
-                    # Insufficient credits - show error and topup menu
-                    from core.constants import (
-                        CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
-                        TOPUP_PACKAGES_MESSAGE,
-                        TOPUP_10_BUTTON,
-                        TOPUP_30_BUTTON,
-                        TOPUP_50_BUTTON,
-                        TOPUP_100_BUTTON
-                    )
-                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
-                    # Send insufficient credits message
-                    await bot.send_message(
-                        chat_id=user_id,
-                        text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
-                            balance=int(balance),
-                            cost=int(cost)
-                        )
-                    )
-
-                    # Show topup packages inline keyboard
-                    keyboard = [
-                        [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                        [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                        [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                        [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
-                    ]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-
-                    await bot.send_message(
-                        chat_id=user_id,
-                        text=TOPUP_PACKAGES_MESSAGE,
-                        reply_markup=reply_markup
-                    )
-
-                    self.state_manager.reset_state(user_id)
-                    return False
-
-                # DEDUCT CREDITS BEFORE QUEUEING (no refund policy)
-                success, new_balance = await self.credit_service.deduct_credits(
-                    user_id,
-                    'video_processing',
-                    reference_id=None
-                )
-
-                if not success:
-                    await bot.send_message(
-                        chat_id=user_id,
-                        text="扣除积分失败，请重试"
-                    )
-                    self.state_manager.reset_state(user_id)
-                    return False
-
-                logger.info(
-                    f"Deducted {cost} credits from user {user_id} for video, "
-                    f"new balance: {new_balance}"
-                )
-
-            # Check VIP status for priority queue (Black Gold only)
+            # Check VIP status first
             is_vip = False
+            is_black_gold = False
+            cost = 0
+
             if self.credit_service:
-                is_vip_user, tier = await self.credit_service.is_vip_user(user_id)
-                is_vip = (tier == 'black_gold')
+                is_vip, tier = await self.credit_service.is_vip_user(user_id)
+                is_black_gold = (tier == 'black_gold')
+
+                if is_vip:
+                    # Check VIP daily usage limit
+                    limit_reached, current_usage, daily_limit = await self.credit_service.check_vip_daily_limit(user_id)
+
+                    if limit_reached:
+                        # Show cute flirty limit message
+                        from core.constants import VIP_DAILY_LIMIT_REACHED_REGULAR, VIP_DAILY_LIMIT_REACHED_BLACK_GOLD
+
+                        if tier == 'vip':
+                            message = VIP_DAILY_LIMIT_REACHED_REGULAR.format(
+                                current_usage=current_usage,
+                                limit=daily_limit
+                            )
+                        else:  # black_gold
+                            message = VIP_DAILY_LIMIT_REACHED_BLACK_GOLD.format(
+                                current_usage=current_usage,
+                                limit=daily_limit
+                            )
+
+                        await bot.send_message(user_id, message, parse_mode='Markdown')
+                        self.state_manager.reset_state(user_id)
+                        return False
+
+                    # VIP users: no credit checks, no credit deduction (but subject to daily limits)
+                    logger.info(
+                        f"VIP user {user_id} (tier: {tier}) - bypassing credit operations for video ({current_usage}/{daily_limit} today)"
+                    )
+                else:
+                    # Non-VIP users: check and deduct credits
+                    has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
+                        user_id,
+                        'video_processing'
+                    )
+
+                    if not has_sufficient:
+                        # Insufficient credits - show error and topup menu
+                        from core.constants import (
+                            CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
+                            TOPUP_PACKAGES_MESSAGE,
+                            TOPUP_10_BUTTON,
+                            TOPUP_30_BUTTON,
+                            TOPUP_50_BUTTON,
+                            TOPUP_100_BUTTON
+                        )
+                        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+                        # Send insufficient credits message
+                        await bot.send_message(
+                            chat_id=user_id,
+                            text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
+                                balance=int(balance),
+                                cost=int(cost)
+                            )
+                        )
+
+                        # Show topup packages inline keyboard
+                        keyboard = [
+                            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
+                            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
+                            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+                            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                        ]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+
+                        await bot.send_message(
+                            chat_id=user_id,
+                            text=TOPUP_PACKAGES_MESSAGE,
+                            reply_markup=reply_markup
+                        )
+
+                        self.state_manager.reset_state(user_id)
+                        return False
+
+                    # DEDUCT CREDITS BEFORE QUEUEING (no refund policy)
+                    success, new_balance = await self.credit_service.deduct_credits(
+                        user_id,
+                        'video_processing',
+                        reference_id=None,
+                        feature_type=f'video_{style}'
+                    )
+
+                    if not success:
+                        await bot.send_message(
+                            chat_id=user_id,
+                            text="扣除积分失败，请重试"
+                        )
+                        self.state_manager.reset_state(user_id)
+                        return False
+
+                    logger.info(
+                        f"Deducted {cost} credits from user {user_id} for video, "
+                        f"new balance: {new_balance}"
+                    )
 
             # Prepare workflow
             workflow_dict = await video_workflow.prepare_workflow(filename=filename)
@@ -1433,10 +1492,14 @@ class WorkflowService:
             )
 
             # Queue job via video queue manager (black_gold gets priority)
-            await self.video_queue_manager.queue_job(job, is_vip=is_vip)
+            await self.video_queue_manager.queue_job(job, is_vip=is_black_gold)
+
+            # Increment VIP daily usage counter if VIP user
+            if is_vip and self.credit_service:
+                await self.credit_service.increment_vip_daily_usage(user_id)
 
             logger.info(
-                f"Queued video job for user {user_id}, style: {style}, VIP: {is_vip}, Priority: {is_vip}"
+                f"Queued video job for user {user_id}, style: {style}, VIP: {is_vip}, Priority: {is_black_gold}"
             )
             return True
 

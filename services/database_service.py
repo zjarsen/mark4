@@ -70,6 +70,7 @@ class DatabaseService:
                     balance_after REAL NOT NULL,
                     description TEXT,
                     reference_id TEXT,
+                    feature_type TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users(user_id)
                 )
@@ -171,6 +172,26 @@ class DatabaseService:
             try:
                 cursor.execute("ALTER TABLE users ADD COLUMN daily_discount_date TEXT")
                 logger.info("Added daily_discount_date column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            # Migration: Add feature_type column to transactions for tracking specific features
+            try:
+                cursor.execute("ALTER TABLE transactions ADD COLUMN feature_type TEXT")
+                logger.info("Added feature_type column to transactions table")
+            except Exception:
+                pass  # Column already exists
+
+            # Migration: Add daily usage tracking columns for VIP limits
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN daily_usage_count INTEGER DEFAULT 0")
+                logger.info("Added daily_usage_count column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN daily_usage_date TEXT")
+                logger.info("Added daily_usage_date column to users table")
             except Exception:
                 pass  # Column already exists
 
@@ -304,7 +325,8 @@ class DatabaseService:
         balance_before: float,
         balance_after: float,
         description: str = None,
-        reference_id: str = None
+        reference_id: str = None,
+        feature_type: str = None
     ) -> Optional[int]:
         """
         Create a transaction record.
@@ -317,6 +339,7 @@ class DatabaseService:
             balance_after: Balance after transaction
             description: Optional description
             reference_id: Optional reference (payment_id or prompt_id)
+            feature_type: Optional feature type (e.g., 'image_bra', 'image_undress', 'video_style_a', 'video_style_b', 'video_style_c')
 
         Returns:
             Transaction ID if successful
@@ -327,13 +350,13 @@ class DatabaseService:
 
             cursor.execute("""
                 INSERT INTO transactions
-                (user_id, transaction_type, amount, balance_before, balance_after, description, reference_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (user_id, transaction_type, amount, balance_before, balance_after, description, reference_id))
+                (user_id, transaction_type, amount, balance_before, balance_after, description, reference_id, feature_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (user_id, transaction_type, amount, balance_before, balance_after, description, reference_id, feature_type))
 
             conn.commit()
             transaction_id = cursor.lastrowid
-            logger.info(f"Created transaction {transaction_id} for user {user_id}: {transaction_type} {amount}")
+            logger.info(f"Created transaction {transaction_id} for user {user_id}: {transaction_type} {amount} (feature: {feature_type})")
             return transaction_id
 
         except Exception as e:
@@ -702,6 +725,96 @@ class DatabaseService:
 
         except Exception as e:
             logger.error(f"Error saving daily discount for user {user_id}: {str(e)}")
+
+    # Daily usage tracking for VIP limits
+    def get_daily_usage_count(self, user_id: int, current_date: str) -> int:
+        """
+        Get user's daily usage count.
+
+        Args:
+            user_id: User ID
+            current_date: Current date in YYYY-MM-DD format (GMT+8)
+
+        Returns:
+            Daily usage count
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT daily_usage_count, daily_usage_date
+                FROM users
+                WHERE user_id = ?
+            """, (user_id,))
+
+            result = cursor.fetchone()
+            if not result:
+                return 0
+
+            usage_date = result['daily_usage_date']
+            usage_count = result['daily_usage_count'] or 0
+
+            # If it's a new day, reset the count
+            if usage_date != current_date:
+                return 0
+
+            return usage_count
+
+        except Exception as e:
+            logger.error(f"Error getting daily usage for user {user_id}: {str(e)}")
+            return 0
+
+    def increment_daily_usage(self, user_id: int, current_date: str) -> bool:
+        """
+        Increment user's daily usage count.
+
+        Args:
+            user_id: User ID
+            current_date: Current date in YYYY-MM-DD format (GMT+8)
+
+        Returns:
+            True if successful
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            # Get current usage
+            cursor.execute("""
+                SELECT daily_usage_count, daily_usage_date
+                FROM users
+                WHERE user_id = ?
+            """, (user_id,))
+
+            result = cursor.fetchone()
+            if not result:
+                return False
+
+            usage_date = result['daily_usage_date']
+            usage_count = result['daily_usage_count'] or 0
+
+            # If it's a new day, reset count to 1
+            if usage_date != current_date:
+                new_count = 1
+            else:
+                new_count = usage_count + 1
+
+            # Update usage
+            cursor.execute("""
+                UPDATE users
+                SET daily_usage_count = ?,
+                    daily_usage_date = ?
+                WHERE user_id = ?
+            """, (new_count, current_date, user_id))
+
+            conn.commit()
+            logger.info(f"Updated daily usage for user {user_id}: {new_count} (date: {current_date})")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error incrementing daily usage for user {user_id}: {str(e)}")
+            return False
 
     def close(self):
         """Close database connection."""
