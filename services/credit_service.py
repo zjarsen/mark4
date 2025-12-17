@@ -548,6 +548,45 @@ class CreditService:
             logger.error(f"Error checking VIP daily limit for user {user_id}: {str(e)}")
             return False, 0, 0
 
+    async def check_bra_daily_limit(self, user_id: int) -> Tuple[bool, int, int]:
+        """
+        Check if regular (non-VIP) user has reached their daily bra usage limit.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Tuple of (limit_reached, current_usage, limit)
+            - limit_reached: True if limit is reached
+            - current_usage: Current daily bra usage count
+            - limit: Daily limit (5 for regular users)
+        """
+        try:
+            # Daily limit for regular users on bra feature
+            daily_limit = 5
+
+            # Get current date in GMT+8
+            from datetime import datetime, timezone, timedelta
+            gmt8 = timezone(timedelta(hours=8))
+            current_date = datetime.now(gmt8).strftime('%Y-%m-%d')
+
+            # Get current bra usage count from transactions table
+            current_usage = self.db.get_bra_usage_count(user_id, current_date)
+
+            # Check if limit is reached
+            limit_reached = current_usage >= daily_limit
+
+            logger.info(
+                f"Bra daily limit check for user {user_id}: "
+                f"{current_usage}/{daily_limit} (limit_reached: {limit_reached})"
+            )
+
+            return limit_reached, current_usage, daily_limit
+
+        except Exception as e:
+            logger.error(f"Error checking bra daily limit for user {user_id}: {str(e)}")
+            return False, 0, 5
+
     async def increment_vip_daily_usage(self, user_id: int) -> bool:
         """
         Increment VIP user's daily usage count.

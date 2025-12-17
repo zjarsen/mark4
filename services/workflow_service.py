@@ -1035,7 +1035,28 @@ class WorkflowService:
                     )
                 else:
                     # Non-VIP users: re-check credits based on style
-                    if style == 'undress':
+                    # Special handling for bra feature: check daily limit for non-VIP users
+                    if style == 'bra':
+                        # Check non-VIP bra daily usage limit (5 per day)
+                        limit_reached, current_usage, daily_limit = await self.credit_service.check_bra_daily_limit(user_id)
+
+                        if limit_reached:
+                            # Show limit reached message
+                            from core.constants import BRA_DAILY_LIMIT_REACHED
+
+                            message = BRA_DAILY_LIMIT_REACHED.format(
+                                current_usage=current_usage,
+                                limit=daily_limit
+                            )
+
+                            await bot.send_message(user_id, message, parse_mode='Markdown')
+                            self.state_manager.reset_state(user_id)
+                            return False
+
+                        logger.info(
+                            f"Non-VIP user {user_id} - bra usage allowed ({current_usage}/{daily_limit} today)"
+                        )
+                    elif style == 'undress':
                         # Check with free trial support
                         has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
                             user_id,

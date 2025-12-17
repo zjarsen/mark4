@@ -816,6 +816,36 @@ class DatabaseService:
             logger.error(f"Error incrementing daily usage for user {user_id}: {str(e)}")
             return False
 
+    def get_bra_usage_count(self, user_id: int, current_date: str) -> int:
+        """
+        Get count of bra feature uses today for a specific user.
+
+        Args:
+            user_id: User ID
+            current_date: Current date in YYYY-MM-DD format (GMT+8)
+
+        Returns:
+            Count of bra feature uses today
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT COUNT(*) as count
+                FROM transactions
+                WHERE user_id = ?
+                AND feature_type = 'image_bra'
+                AND DATE(created_at, '+8 hours') = ?
+            """, (user_id, current_date))
+
+            result = cursor.fetchone()
+            return result['count'] if result else 0
+
+        except Exception as e:
+            logger.error(f"Error getting bra usage count for user {user_id}: {str(e)}")
+            return 0
+
     def close(self):
         """Close database connection."""
         if self.connection:

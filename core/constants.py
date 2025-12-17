@@ -439,6 +439,20 @@ VIP_DAILY_LIMIT_REACHED_BLACK_GOLD = """主人大人~♡ 100次都被你玩遍�
 
 当前使用：{current_usage}/{limit} 次 ✨"""
 
+BRA_DAILY_LIMIT_REACHED = """哎呀！你今天的粉色蕾丝内衣免费使用次数已经用完啦！😅
+
+📊 今日使用情况:
+   • 已使用: {current_usage}/{limit} 次
+   • 重置时间: 明天凌晨 00:00 (GMT+8)
+
+💡 小贴士：
+   • 其他付费功能（脱到精光、视频处理等）没有每日限制
+   • 有积分就能随时使用哦！
+
+💎 或者升级VIP享受无限使用！
+
+明天见！💕"""
+
 # VIP Balance Display
 BALANCE_MESSAGE_VIP = """💰 我的账户
 
