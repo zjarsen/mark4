@@ -836,7 +836,7 @@ class DatabaseService:
                 FROM transactions
                 WHERE user_id = ?
                 AND feature_type = 'image_bra'
-                AND DATE(created_at, '+8 hours') = ?
+                AND DATE(created_at) = ?
             """, (user_id, current_date))
 
             result = cursor.fetchone()

@@ -40,10 +40,10 @@ def get_db_connection():
 
 def format_timestamp_gmt8(utc_timestamp_str: str) -> str:
     """
-    Convert UTC timestamp to GMT+8 display format.
+    Format timestamp for display (database stores local GMT+8 time).
 
     Args:
-        utc_timestamp_str: UTC timestamp string in format 'YYYY-MM-DD HH:MM:SS'
+        utc_timestamp_str: Timestamp string in format 'YYYY-MM-DD HH:MM:SS' (already in GMT+8)
 
     Returns:
         Formatted timestamp string in GMT+8 timezone
@@ -52,15 +52,9 @@ def format_timestamp_gmt8(utc_timestamp_str: str) -> str:
         return "N/A"
 
     try:
-        # Parse UTC timestamp
+        # Database stores local time (GMT+8), just return as-is with proper formatting
         dt = datetime.strptime(utc_timestamp_str, '%Y-%m-%d %H:%M:%S')
-        dt_utc = pytz.utc.localize(dt)
-
-        # Convert to GMT+8
-        gmt8 = pytz.timezone('Asia/Shanghai')
-        dt_gmt8 = dt_utc.astimezone(gmt8)
-
-        return dt_gmt8.strftime('%Y-%m-%d %H:%M:%S')
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
     except Exception as e:
         logger.error(f"Error formatting timestamp {utc_timestamp_str}: {str(e)}")
         return utc_timestamp_str
@@ -281,17 +275,18 @@ def dashboard_features():
         window_days = max(7, min(365, window_days))  # 7-365 days
         window_offset = max(-1000, min(0, window_offset))  # Max 1000 days back, 0 for current
 
-        # Calculate date range in GMT+8
+        # Calculate date range in GMT+8 (database stores local time)
         gmt8 = pytz.timezone('Asia/Shanghai')
         now_gmt8 = datetime.now(gmt8)
 
-        # Apply offset (move window forward/backward)
-        end_date_gmt8 = now_gmt8 + timedelta(days=window_offset + 1)
+        # Use midnight boundaries for clean daily buckets
+        # End date: midnight of tomorrow (to include all of today)
+        end_date_gmt8 = now_gmt8.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=window_offset + 1)
         start_date_gmt8 = end_date_gmt8 - timedelta(days=window_days)
 
-        # Convert to UTC for database query
-        start_date_utc = start_date_gmt8.astimezone(pytz.utc)
-        end_date_utc = end_date_gmt8.astimezone(pytz.utc)
+        # Use GMT+8 datetime strings directly (database stores local time, not UTC)
+        start_date_str = start_date_gmt8.strftime('%Y-%m-%d %H:%M:%S')
+        end_date_str = end_date_gmt8.strftime('%Y-%m-%d %H:%M:%S')
 
         # Feature display names and costs
         FEATURE_DISPLAY_NAMES = {
@@ -325,15 +320,14 @@ def dashboard_features():
                 AND created_at >= ? AND created_at < ?
             GROUP BY feature_type
             ORDER BY usage_count DESC
-        """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
-              end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
+        """, (start_date_str, end_date_str))
 
         feature_stats = cursor.fetchall()
 
         # Get daily usage trends by feature_type
         cursor.execute("""
             SELECT
-                DATE(created_at, '+8 hours') as date_gmt8,
+                DATE(created_at) as date_gmt8,
                 feature_type,
                 COUNT(*) as usage_count
             FROM transactions
@@ -342,8 +336,7 @@ def dashboard_features():
                 AND created_at >= ? AND created_at < ?
             GROUP BY date_gmt8, feature_type
             ORDER BY date_gmt8 ASC
-        """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
-              end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
+        """, (start_date_str, end_date_str))
 
         daily_trends = cursor.fetchall()
 
@@ -479,56 +472,56 @@ def dashboard_daily_data():
         window_days = max(7, min(365, window_days))  # 7-365 days
         window_offset = max(-1000, min(0, window_offset))  # Max 1000 days back, 0 for current
 
-        # Calculate date range in GMT+8
+        # Calculate date range in GMT+8 (database stores local time)
         gmt8 = pytz.timezone('Asia/Shanghai')
         now_gmt8 = datetime.now(gmt8)
 
-        # Apply offset (move window forward/backward)
-        end_date_gmt8 = now_gmt8 + timedelta(days=window_offset + 1)
+        # Use midnight boundaries for clean daily buckets
+        # End date: midnight of tomorrow (to include all of today)
+        end_date_gmt8 = now_gmt8.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=window_offset + 1)
         start_date_gmt8 = end_date_gmt8 - timedelta(days=window_days)
 
-        # Convert to UTC for database query
-        start_date_utc = start_date_gmt8.astimezone(pytz.utc)
-        end_date_utc = end_date_gmt8.astimezone(pytz.utc)
+        # Use GMT+8 datetime strings directly (database stores local time, not UTC)
+        start_date_str = start_date_gmt8.strftime('%Y-%m-%d %H:%M:%S')
+        end_date_str = end_date_gmt8.strftime('%Y-%m-%d %H:%M:%S')
 
         # Query 1: Daily Active Users (any transaction activity)
         cursor.execute("""
             SELECT
-                DATE(created_at, '+8 hours') as date_gmt8,
+                DATE(created_at) as date_gmt8,
                 COUNT(DISTINCT user_id) as active_users
             FROM transactions
             WHERE created_at >= ? AND created_at < ?
-            GROUP BY DATE(created_at, '+8 hours')
+            GROUP BY DATE(created_at)
             ORDER BY date_gmt8 ASC
-        """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
-              end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
+        """, (start_date_str, end_date_str))
 
         active_users_data = cursor.fetchall()
 
         # Query 2: Daily Paying Users + Revenue (completed payments only)
         cursor.execute("""
             SELECT
-                DATE(completed_at, '+8 hours') as date_gmt8,
+                DATE(completed_at) as date_gmt8,
                 COUNT(DISTINCT user_id) as paying_users,
                 SUM(amount) as revenue_cny
             FROM payments
             WHERE status = 'completed'
                 AND completed_at >= ? AND completed_at < ?
-            GROUP BY DATE(completed_at, '+8 hours')
+            GROUP BY DATE(completed_at)
             ORDER BY date_gmt8 ASC
-        """, (start_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
-              end_date_utc.strftime('%Y-%m-%d %H:%M:%S')))
+        """, (start_date_str, end_date_str))
 
         payment_data = cursor.fetchall()
 
         # Query 3: Next-Day Retention Rate
         # Need to extend query range by 1 day before start to calculate retention for first day
-        extended_start_utc = (start_date_gmt8 - timedelta(days=1)).astimezone(pytz.utc)
+        extended_start_gmt8 = start_date_gmt8 - timedelta(days=1)
+        extended_start_str = extended_start_gmt8.strftime('%Y-%m-%d %H:%M:%S')
 
         cursor.execute("""
             WITH daily_users AS (
                 SELECT DISTINCT
-                    DATE(created_at, '+8 hours') as date_gmt8,
+                    DATE(created_at) as date_gmt8,
                     user_id
                 FROM transactions
                 WHERE created_at >= ? AND created_at < ?
@@ -567,8 +560,8 @@ def dashboard_daily_data():
                 ON y.date_gmt8 = DATE(r.date_gmt8, '-1 day')
             ORDER BY r.date_gmt8 ASC
         """, (
-            extended_start_utc.strftime('%Y-%m-%d %H:%M:%S'),
-            end_date_utc.strftime('%Y-%m-%d %H:%M:%S'),
+            extended_start_str,
+            end_date_str,
             start_date_gmt8.strftime('%Y-%m-%d'),
             end_date_gmt8.strftime('%Y-%m-%d')
         ))
