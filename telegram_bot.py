@@ -5,7 +5,7 @@ Mark4 Telegram Bot - Entry Point
 A modular Telegram bot for image processing with ComfyUI integration.
 """
 
-from core.bot_application import BotApplication
+from core.bot_application_v2 import BotApplication
 from config import Config
 from utils.logger import setup_logger
 
