@@ -614,7 +614,8 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 🔥 **折扣已应用** - 为您节省 ¥{savings}！
 ⏰ _今日24:00前有效，请尽快完成支付_
 
-⚠️ **支付宝通道正在维护，请使用微信支付** ⚠️
+⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️
+📞 如需充值请联系客服
 
 请选择支付方式："""
             else:
@@ -624,19 +625,21 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 # Show payment method selection without discount
                 message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}
 
-⚠️ **支付宝通道正在维护，请使用微信支付** ⚠️
+⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️
+📞 如需充值请联系客服
 
 请选择支付方式："""
 
+            # Payment buttons temporarily disabled during maintenance
             keyboard = [
-                [InlineKeyboardButton(
-                    "~~💰 支付宝支付~~",
-                    callback_data=f"topup_{amount_cny}_alipay"
-                )],
-                [InlineKeyboardButton(
-                    "💚 微信支付",
-                    callback_data=f"topup_{amount_cny}_wechat"
-                )]
+                # [InlineKeyboardButton(
+                #     "~~💰 支付宝支付~~",
+                #     callback_data=f"topup_{amount_cny}_alipay"
+                # )],
+                # [InlineKeyboardButton(
+                #     "💚 微信支付",
+                #     callback_data=f"topup_{amount_cny}_wechat"
+                # )]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 

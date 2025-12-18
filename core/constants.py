@@ -207,9 +207,9 @@ TOPUP_PACKAGES_MESSAGE_WITH_DISCOUNT = """💳 充值套餐
 ✨ 充值优势：
 • 积分永久有效
 • 充值后立即到账
-• 支持微信/支付宝
 
-⚠️ **重要提示：支付宝通道正在维护，请使用微信支付** ⚠️
+⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️
+📞 如需充值请联系客服
 
 ⏰ **别忘了先领取今日折扣！点击下方【幸运折扣】按钮** ⏰"""
 
@@ -231,9 +231,9 @@ TOPUP_PACKAGES_MESSAGE_NORMAL = """💳 充值套餐
 ✨ 充值优势：
 • 积分永久有效
 • 充值后立即到账
-• 支持微信/支付宝
 
-⚠️ **重要提示：支付宝通道正在维护，请使用微信支付** ⚠️"""
+⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️
+📞 如需充值请联系客服"""
 
 TOPUP_PACKAGES_MESSAGE_NO_DISCOUNT = """💳 充值套餐
 
@@ -253,9 +253,9 @@ TOPUP_PACKAGES_MESSAGE_NO_DISCOUNT = """💳 充值套餐
 ✨ 充值优势：
 • 积分永久有效
 • 充值后立即到账
-• 支持微信/支付宝
 
-⚠️ **重要提示：支付宝通道正在维护，请使用微信支付** ⚠️"""
+⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️
+📞 如需充值请联系客服"""
 
 # Legacy message (kept for backwards compatibility)
 TOPUP_PACKAGES_MESSAGE = TOPUP_PACKAGES_MESSAGE_NO_DISCOUNT
