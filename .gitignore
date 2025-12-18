@@ -77,3 +77,4 @@ htmlcov/
 *.tmp
 temp/
 tmp/
+.env.backup_before_taitaitai_20251218_154925
