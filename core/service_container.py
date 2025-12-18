@@ -196,14 +196,24 @@ class ServiceContainer:
         self.payment_provider = WeChatAlipayProvider(self.config)
         logger.info("✓ Payment provider: WeChatAlipay")
 
-        # Payment service
-        # Note: This still uses old DatabaseService, needs migration
-        from services.database_service import DatabaseService
-        legacy_db = DatabaseService(self.config)
+        # Payment service with compatibility wrapper
+        class PaymentRepoWrapper:
+            """Wrapper to make PaymentRepository compatible with old payment_service interface."""
+            def __init__(self, payment_repo):
+                self._repo = payment_repo
+
+            def create_payment_record(self, **kwargs):
+                return self._repo.create(**kwargs)
+
+            def get_payment(self, payment_id: str):
+                return self._repo.get_by_id(payment_id)
+
+            def update_payment_status(self, payment_id: str, status: str):
+                return self._repo.update_status(payment_id, status)
 
         self.payment_service = PaymentService(
             self.config,
-            legacy_db,
+            PaymentRepoWrapper(self.payment_repo),  # Use new payment repo with wrapper
             self.credits,  # Use new CreditService
             self.payment_provider
         )

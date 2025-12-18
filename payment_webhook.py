@@ -12,8 +12,13 @@ import asyncio
 import logging
 from telegram import Bot
 from config import Config
-from services.database_service import DatabaseService
-from services.credit_service import CreditService
+
+# New architecture imports
+from database.connection import DatabaseConnection
+from database.repositories.user_repo import UserRepository
+from database.repositories.payment_repo import PaymentRepository
+from database.repositories.transaction_repo import TransactionRepository
+from domain.credits.service import CreditService
 from services.payment_service import PaymentService
 from payments.wechat_alipay_provider import WeChatAlipayProvider
 
@@ -27,14 +32,44 @@ logger = logging.getLogger('payment_webhook')
 # Initialize Flask app
 app = Flask(__name__)
 
-# Initialize services
+# Initialize services with new architecture
 config = Config()
-database_service = DatabaseService(config)
-credit_service = CreditService(config, database_service)
+
+# Database layer
+conn_manager = DatabaseConnection(config.DATABASE_PATH)
+user_repo = UserRepository(conn_manager)
+payment_repo = PaymentRepository(conn_manager)
+transaction_repo = TransactionRepository(conn_manager)
+
+# Domain layer
+credit_service = CreditService(
+    user_repo=user_repo,
+    transaction_repo=transaction_repo
+)
+
+# Compatibility wrapper for payment_service (expects old database_service interface)
+class PaymentRepoWrapper:
+    """Wrapper to make PaymentRepository compatible with old database_service interface."""
+    def __init__(self, payment_repo):
+        self._repo = payment_repo
+
+    def create_payment_record(self, **kwargs):
+        """Create payment record (old interface)."""
+        return self._repo.create(**kwargs)
+
+    def get_payment(self, payment_id: str):
+        """Get payment by ID (old interface)."""
+        return self._repo.get_by_id(payment_id)
+
+    def update_payment_status(self, payment_id: str, status: str):
+        """Update payment status (old interface)."""
+        return self._repo.update_status(payment_id, status)
+
+# Payment layer
 payment_provider = WeChatAlipayProvider(config)
 payment_service = PaymentService(
     config,
-    database_service,
+    PaymentRepoWrapper(payment_repo),  # Wrap new repo with compatibility layer
     credit_service,
     payment_provider
 )
@@ -124,7 +159,7 @@ async def payment_callback():
 
             # Send notification to user
             try:
-                payment = database_service.get_payment(payment_id)
+                payment = payment_repo.get_by_id(payment_id)
                 if payment:
                     user_id = payment['user_id']
                     credits = payment['credits_amount']
