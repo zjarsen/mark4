@@ -85,11 +85,18 @@ class BotApplication:
         command_handlers.config = self.config
         command_handlers.credit_service = self.container.credits
 
+        # Create unified workflow manager (delegates to new Image/Video services)
+        from domain.workflows import UnifiedWorkflowManager
+        unified_workflows = UnifiedWorkflowManager(
+            image_service=self.container.image_workflows,
+            video_service=self.container.video_workflows
+        )
+
         # Inject into menu_handlers
         menu_handlers.state_manager = self.container.state
         menu_handlers.notification_service = self.container.notifications
-        # menu_handlers expects queue_service, but we have separate managers
-        # For now, keep the old queue_service (it's in legacy)
+        # menu_handlers needs queue_service for status display
+        # Keep legacy queue_service for now (only used for status display)
         from services.queue_service import QueueService
         from services.comfyui_service import ComfyUIService
         legacy_comfyui = ComfyUIService(self.config, 'image_undress')
@@ -104,31 +111,12 @@ class BotApplication:
         # Inject into media_handlers
         media_handlers.state_manager = self.container.state
         media_handlers.file_service = self.container.files
-        # media_handlers expects workflow_service
-        # For now, we'll need to create a compatibility wrapper
-        # But let's use the old WorkflowService temporarily
-        from services.workflow_service import WorkflowService
-        from services.comfyui_service import ComfyUIService
-        legacy_comfyui = ComfyUIService(self.config, 'image_undress')
-        legacy_queue = QueueService(
-            self.config,
-            legacy_comfyui,
-            self.container.notifications
-        )
-        media_handlers.workflow_service = WorkflowService(
-            self.config,
-            legacy_comfyui,
-            self.container.files,
-            self.container.notifications,
-            legacy_queue,
-            self.container.state,
-            credit_service=self.container.credits
-        )
+        media_handlers.workflow_service = unified_workflows  # Use new unified manager
         media_handlers.config = self.config
 
         # Inject into callback_handlers
         callback_handlers.state_manager = self.container.state
-        callback_handlers.queue_service = legacy_queue
+        callback_handlers.queue_service = menu_handlers.queue_service  # Reuse same instance
 
         # Inject into credit_handlers
         from handlers import credit_handlers
@@ -138,7 +126,7 @@ class BotApplication:
         credit_handlers.discount_service = self.container.discounts
 
         # Store services in bot_data for access from handlers
-        self.app.bot_data['workflow_service'] = media_handlers.workflow_service
+        self.app.bot_data['workflow_service'] = unified_workflows
         self.app.bot_data['state_manager'] = self.container.state
         self.app.bot_data['container'] = self.container
 
