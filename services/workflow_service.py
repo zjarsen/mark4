@@ -434,6 +434,7 @@ class WorkflowService:
                     from core.constants import (
                         INSUFFICIENT_CREDITS_MESSAGE,
                         TOPUP_PACKAGES_MESSAGE,
+                        TOPUP_2_BUTTON,
                         TOPUP_10_BUTTON,
                         TOPUP_30_BUTTON,
                         TOPUP_50_BUTTON,
@@ -451,6 +452,7 @@ class WorkflowService:
 
                     # Show topup packages inline keyboard
                     keyboard = [
+                        [InlineKeyboardButton(TOPUP_2_BUTTON, callback_data="topup_2")],
                         [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
                         [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
                         [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
@@ -833,6 +835,7 @@ class WorkflowService:
                         from core.constants import (
                             CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
                             TOPUP_PACKAGES_MESSAGE,
+                            TOPUP_2_BUTTON,
                             TOPUP_10_BUTTON,
                             TOPUP_30_BUTTON,
                             TOPUP_50_BUTTON,
@@ -851,6 +854,7 @@ class WorkflowService:
 
                         # Show topup packages inline keyboard
                         keyboard = [
+                            [InlineKeyboardButton(TOPUP_2_BUTTON, callback_data="topup_2")],
                             [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
                             [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
                             [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
@@ -1232,6 +1236,7 @@ class WorkflowService:
                     from core.constants import (
                         INSUFFICIENT_CREDITS_MESSAGE,
                         TOPUP_PACKAGES_MESSAGE,
+                        TOPUP_2_BUTTON,
                         TOPUP_10_BUTTON,
                         TOPUP_30_BUTTON,
                         TOPUP_50_BUTTON,
@@ -1249,6 +1254,7 @@ class WorkflowService:
 
                     # Show topup packages inline keyboard
                     keyboard = [
+                        [InlineKeyboardButton(TOPUP_2_BUTTON, callback_data="topup_2")],
                         [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
                         [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
                         [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
@@ -1438,6 +1444,7 @@ class WorkflowService:
                         from core.constants import (
                             CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
                             TOPUP_PACKAGES_MESSAGE,
+                            TOPUP_2_BUTTON,
                             TOPUP_10_BUTTON,
                             TOPUP_30_BUTTON,
                             TOPUP_50_BUTTON,
@@ -1456,6 +1463,7 @@ class WorkflowService:
 
                         # Show topup packages inline keyboard
                         keyboard = [
+                            [InlineKeyboardButton(TOPUP_2_BUTTON, callback_data="topup_2")],
                             [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
                             [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
                             [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],

@@ -94,6 +94,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         # Add package buttons with discount if applicable
         packages = [
+            (2, "topup_2"),
             (10, "topup_10"),
             (30, "topup_30"),
             (50, "topup_50"),
@@ -290,6 +291,7 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
         from core.constants import (
             PAYMENT_TIMEOUT_MESSAGE,
             TOPUP_PACKAGES,
+            TOPUP_2_BUTTON,
             TOPUP_10_BUTTON,
             TOPUP_30_BUTTON,
             TOPUP_50_BUTTON,
@@ -311,6 +313,7 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
 
         # Send new message with top-up packages below
         keyboard = [
+            [InlineKeyboardButton(TOPUP_2_BUTTON, callback_data="topup_2")],
             [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
             [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
             [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
@@ -611,6 +614,8 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 🔥 **折扣已应用** - 为您节省 ¥{savings}！
 ⏰ _今日24:00前有效，请尽快完成支付_
 
+⚠️ **支付宝通道正在维护，请使用微信支付** ⚠️
+
 请选择支付方式："""
             else:
                 # Calculate displayed amount (with 8% transaction fee)
@@ -619,11 +624,13 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 # Show payment method selection without discount
                 message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}
 
+⚠️ **支付宝通道正在维护，请使用微信支付** ⚠️
+
 请选择支付方式："""
 
             keyboard = [
                 [InlineKeyboardButton(
-                    "💰 支付宝支付",
+                    "~~💰 支付宝支付~~",
                     callback_data=f"topup_{amount_cny}_alipay"
                 )],
                 [InlineKeyboardButton(
