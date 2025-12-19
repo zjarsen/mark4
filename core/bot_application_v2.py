@@ -88,8 +88,8 @@ class BotApplication:
         # Create unified workflow manager (delegates to new Image/Video services)
         from domain.workflows import UnifiedWorkflowManager
         unified_workflows = UnifiedWorkflowManager(
-            image_service=self.container.image_workflows,
-            video_service=self.container.video_workflows
+            image_service=self.container.image_workflow,
+            video_service=self.container.video_workflow
         )
 
         # Inject into menu_handlers

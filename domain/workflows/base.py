@@ -29,20 +29,43 @@ class WorkflowProcessor(ABC):
     """
 
     # Subclasses should define these
-    cost: float = 0.0  # Credits per use
-    workflow_file: str = ""  # ComfyUI workflow JSON file
     feature_type: str = ""  # Feature type for tracking
 
-    def __init__(self, comfyui_client, file_service):
+    def __init__(self, comfyui_client, file_service, workflow_path=None, cost=0.0):
         """
         Initialize processor.
 
         Args:
             comfyui_client: ComfyUI client instance
             file_service: File service instance
+            workflow_path: Path to workflow JSON file (optional)
+            cost: Credit cost per use (default: 0.0)
         """
         self.comfyui = comfyui_client
+        self.client = comfyui_client  # Alias for backward compatibility
         self.files = file_service
+        self.workflow_file = workflow_path or ""
+        self.cost = cost
+
+    def _load_workflow(self) -> dict:
+        """
+        Load workflow JSON from file.
+
+        Returns:
+            Workflow dictionary
+
+        Raises:
+            FileNotFoundError: If workflow file doesn't exist
+        """
+        import json
+        from pathlib import Path
+
+        workflow_path = Path(self.workflow_file)
+        if not workflow_path.exists():
+            raise FileNotFoundError(f"Workflow file not found: {workflow_path}")
+
+        with open(workflow_path, 'r') as f:
+            return json.load(f)
 
     @abstractmethod
     async def process(self, input_path: str, user_id: int) -> WorkflowResult:

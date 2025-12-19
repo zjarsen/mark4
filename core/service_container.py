@@ -250,11 +250,13 @@ class ServiceContainer:
         image_processors = {
             'undress': ImageUndressProcessor(
                 comfyui_client=self.comfyui_clients['image_undress'],
+                file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2i_undress_final_v5.json',
                 cost=10
             ),
             'pink_bra': PinkBraProcessor(
                 comfyui_client=self.comfyui_clients['image_undress'],
+                file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2i_bra_v5.json',
                 cost=0
             )
@@ -266,7 +268,7 @@ class ServiceContainer:
             notification_service=self.notifications,
             file_service=self.files,
             queue_manager=self.image_queue,
-            processors=image_processors
+            image_processors=image_processors
         )
         logger.info("✓ Image workflow: Undress + Pink Bra")
 
@@ -281,16 +283,19 @@ class ServiceContainer:
         video_processors = {
             'style_a': VideoStyleAProcessor(
                 comfyui_client=self.comfyui_clients['video_douxiong'],
+                file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2v_undress_douxiong.json',
                 cost=30
             ),
             'style_b': VideoStyleBProcessor(
                 comfyui_client=self.comfyui_clients['video_liujing'],
+                file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2v_undress_liujing.json',
                 cost=30
             ),
             'style_c': VideoStyleCProcessor(
                 comfyui_client=self.comfyui_clients['video_shejing'],
+                file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2v_undress_shejing.json',
                 cost=30
             )

@@ -28,16 +28,17 @@ class ImageUndressProcessor(WorkflowProcessor):
     Output: Processed image
     """
 
-    def __init__(self, comfyui_client: ComfyUIClient, workflow_path: Path, cost: int = 10):
+    def __init__(self, comfyui_client: ComfyUIClient, file_service, workflow_path: Path, cost: int = 10):
         """
         Initialize image undress processor.
 
         Args:
             comfyui_client: ComfyUI client instance
+            file_service: File service instance
             workflow_path: Path to workflow JSON file
             cost: Credit cost (default: 10)
         """
-        super().__init__(comfyui_client, workflow_path, cost)
+        super().__init__(comfyui_client, file_service, workflow_path, cost)
         self.workflow_type = 'image_undress'
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
@@ -187,16 +188,17 @@ class PinkBraProcessor(WorkflowProcessor):
     Daily usage limit: 5 uses per non-VIP user
     """
 
-    def __init__(self, comfyui_client: ComfyUIClient, workflow_path: Path, cost: int = 0):
+    def __init__(self, comfyui_client: ComfyUIClient, file_service, workflow_path: Path, cost: int = 0):
         """
         Initialize pink bra processor.
 
         Args:
             comfyui_client: ComfyUI client instance
+            file_service: File service instance
             workflow_path: Path to workflow JSON file
             cost: Credit cost (default: 0)
         """
-        super().__init__(comfyui_client, workflow_path, cost)
+        super().__init__(comfyui_client, file_service, workflow_path, cost)
         self.workflow_type = 'image_pink_bra'
         self.daily_limit = 5  # 5 uses per day for non-VIP
 

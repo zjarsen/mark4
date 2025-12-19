@@ -28,16 +28,17 @@ class VideoStyleAProcessor(WorkflowProcessor):
     Output: Processed video
     """
 
-    def __init__(self, comfyui_client: ComfyUIClient, workflow_path: Path, cost: int = 30):
+    def __init__(self, comfyui_client: ComfyUIClient, file_service, workflow_path: Path, cost: int = 30):
         """
         Initialize video style A processor.
 
         Args:
             comfyui_client: ComfyUI client instance
+            file_service: File service instance
             workflow_path: Path to workflow JSON file
             cost: Credit cost (default: 30)
         """
-        super().__init__(comfyui_client, workflow_path, cost)
+        super().__init__(comfyui_client, file_service, workflow_path, cost)
         self.workflow_type = 'video_douxiong'
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
@@ -204,7 +205,7 @@ class VideoStyleBProcessor(WorkflowProcessor):
     Output: Processed video
     """
 
-    def __init__(self, comfyui_client: ComfyUIClient, workflow_path: Path, cost: int = 30):
+    def __init__(self, comfyui_client: ComfyUIClient, file_service, workflow_path: Path, cost: int = 30):
         """
         Initialize video style B processor.
 
@@ -213,7 +214,7 @@ class VideoStyleBProcessor(WorkflowProcessor):
             workflow_path: Path to workflow JSON file
             cost: Credit cost (default: 30)
         """
-        super().__init__(comfyui_client, workflow_path, cost)
+        super().__init__(comfyui_client, file_service, workflow_path, cost)
         self.workflow_type = 'video_liujing'
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
@@ -317,7 +318,7 @@ class VideoStyleCProcessor(WorkflowProcessor):
     Output: Processed video
     """
 
-    def __init__(self, comfyui_client: ComfyUIClient, workflow_path: Path, cost: int = 30):
+    def __init__(self, comfyui_client: ComfyUIClient, file_service, workflow_path: Path, cost: int = 30):
         """
         Initialize video style C processor.
 
@@ -326,7 +327,7 @@ class VideoStyleCProcessor(WorkflowProcessor):
             workflow_path: Path to workflow JSON file
             cost: Credit cost (default: 30)
         """
-        super().__init__(comfyui_client, workflow_path, cost)
+        super().__init__(comfyui_client, file_service, workflow_path, cost)
         self.workflow_type = 'video_shejing'
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
