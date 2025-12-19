@@ -98,15 +98,10 @@ class ServiceContainer:
         self.payment_repo = PaymentRepository(self.db_connection)
         logger.info("✓ Repositories: User, Transaction, Payment")
 
-        # Run migrations
-        migration_manager = MigrationManager(self.db_connection)
-        pending = migration_manager.get_pending_migrations()
-        if pending:
-            logger.info(f"Applying {len(pending)} pending migrations...")
-            migration_manager.apply_all()
-            logger.info("✓ Migrations applied")
-        else:
-            logger.info("✓ No pending migrations")
+        # Initialize migration tracking (migrations applied manually if needed)
+        self.migration_manager = MigrationManager(self.config.DATABASE_PATH)
+        current_version = self.migration_manager.get_current_version()
+        logger.info(f"✓ Migration manager ready (current version: {current_version})")
 
     # Infrastructure Layer
 
@@ -162,18 +157,23 @@ class ServiceContainer:
         """Initialize domain services."""
         logger.info("Initializing domain layer...")
 
-        # Credit service
+        # Credit service (with feature pricing)
+        feature_pricing = {
+            'image_undress': 10.0,
+            'pink_bra': 0.0,  # Free
+            'video_style_a': 30.0,
+            'video_style_b': 30.0,
+            'video_style_c': 30.0
+        }
         self.credits = CreditService(
-            conn_manager=self.db_connection,
-            users=self.user_repo,
-            transactions=self.transaction_repo
+            connection_manager=self.db_connection,
+            feature_pricing=feature_pricing
         )
         logger.info("✓ Credits: CreditService with transaction safety")
 
         # Discount service
         self.discounts = DiscountService(
-            conn_manager=self.db_connection,
-            users=self.user_repo
+            user_repository=self.user_repo
         )
         logger.info("✓ Discounts: Random daily draw system")
 

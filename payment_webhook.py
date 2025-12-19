@@ -42,9 +42,16 @@ payment_repo = PaymentRepository(conn_manager)
 transaction_repo = TransactionRepository(conn_manager)
 
 # Domain layer
+feature_pricing = {
+    'image_undress': 10.0,
+    'pink_bra': 0.0,
+    'video_style_a': 30.0,
+    'video_style_b': 30.0,
+    'video_style_c': 30.0
+}
 credit_service = CreditService(
-    user_repo=user_repo,
-    transaction_repo=transaction_repo
+    connection_manager=conn_manager,
+    feature_pricing=feature_pricing
 )
 
 # Compatibility wrapper for payment_service (expects old database_service interface)
