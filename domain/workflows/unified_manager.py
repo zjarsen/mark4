@@ -71,20 +71,18 @@ class UnifiedWorkflowManager:
         """
         self._user_workflow_types[user_id] = 'image'
 
-        # Map old workflow_type to new processor type
-        if workflow_type == 'pink_bra':
-            processor_type = 'pink_bra'
-        else:
-            processor_type = 'undress'
+        # workflow_type is already in new format (i2i_1, i2i_2) from callback handler
+        logger.info(f"UnifiedWorkflowManager.start_image_workflow - user: {user_id}, workflow_type: {workflow_type}, input_path: {input_path}")
 
-        return await self.image_service.start_workflow(
+        # Call image service with correct signature
+        success, error_msg = await self.image_service.start_workflow(
             bot=bot,
             user_id=user_id,
-            chat_id=chat_id,
-            message_id=message_id,
-            input_path=input_path,
-            processor_type=processor_type
+            image_path=input_path,
+            style=workflow_type
         )
+
+        return success
 
     async def start_image_workflow_with_style(
         self,
@@ -158,22 +156,18 @@ class UnifiedWorkflowManager:
         """
         self._user_workflow_types[user_id] = 'video'
 
-        # Map style to processor type
-        style_map = {
-            'douxiong': 'style_a',
-            'liujing': 'style_b',
-            'shejing': 'style_c'
-        }
-        processor_type = style_map.get(style, 'style_a')
+        # style is already in new format (i2v_1, i2v_2, i2v_3) from callback handler
+        logger.info(f"UnifiedWorkflowManager.start_video_workflow - user: {user_id}, style: {style}, input_path: {input_path}")
 
-        return await self.video_service.start_workflow(
+        # Call video service with correct signature
+        success, error_msg = await self.video_service.start_workflow(
             bot=bot,
             user_id=user_id,
-            chat_id=chat_id,
-            message_id=message_id,
-            input_path=input_path,
-            processor_type=processor_type
+            image_path=input_path,
+            style=style
         )
+
+        return success
 
     async def proceed_with_video_workflow(self, bot: Bot, user_id: int) -> bool:
         """
@@ -247,3 +241,33 @@ class UnifiedWorkflowManager:
                 'total_queued': image_status.get('queued', 0) + video_status.get('queued', 0),
                 'total_processing': image_status.get('processing', 0) + video_status.get('processing', 0)
             }
+
+    async def start_queue_managers(self):
+        """
+        Start all queue managers' background processing loops.
+
+        This must be called during bot initialization to enable workflow processing.
+        """
+        # Start image queue manager
+        await self.image_service.queue.start()
+        logger.info("Started image queue manager")
+
+        # Start video queue manager
+        await self.video_service.queue.start()
+        logger.info("Started video queue manager")
+
+    def get_all_queue_managers(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Get all queue managers for queue status display.
+
+        Returns:
+            Dict with structure: {workflow_type: {server_key: queue_manager}}
+        """
+        return {
+            'image': {
+                'image_undress': self.image_service.queue
+            },
+            'video': {
+                'video_unified': self.video_service.queue
+            }
+        }

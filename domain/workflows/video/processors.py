@@ -39,7 +39,7 @@ class VideoStyleAProcessor(WorkflowProcessor):
             cost: Credit cost (default: 30)
         """
         super().__init__(comfyui_client, file_service, workflow_path, cost)
-        self.workflow_type = 'video_douxiong'
+        self.workflow_type = 'i2v_1'
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
         """
@@ -215,7 +215,7 @@ class VideoStyleBProcessor(WorkflowProcessor):
             cost: Credit cost (default: 30)
         """
         super().__init__(comfyui_client, file_service, workflow_path, cost)
-        self.workflow_type = 'video_liujing'
+        self.workflow_type = 'i2v_2'
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
         """Validate input image."""
@@ -328,7 +328,7 @@ class VideoStyleCProcessor(WorkflowProcessor):
             cost: Credit cost (default: 30)
         """
         super().__init__(comfyui_client, file_service, workflow_path, cost)
-        self.workflow_type = 'video_shejing'
+        self.workflow_type = 'i2v_3'
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
         """Validate input image."""

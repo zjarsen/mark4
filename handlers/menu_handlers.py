@@ -101,7 +101,7 @@ async def handle_image_processing(
         import pytz
 
         # Check if user is already processing
-        if state_manager.is_state(user_id, 'processing'):
+        if await state_manager.is_state(user_id, 'processing'):
             logger.info(f"[IMAGE_PROCESSING] User {user_id} already processing, showing error")
             await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
             return
@@ -208,7 +208,7 @@ async def handle_video_processing(
         )
 
         # Check if user is already processing
-        if state_manager.is_state(user_id, 'processing'):
+        if await state_manager.is_state(user_id, 'processing'):
             await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
             return
 
@@ -354,7 +354,7 @@ async def handle_unexpected_text(update: Update, context: ContextTypes.DEFAULT_T
         logger.warning(f"[UNEXPECTED_TEXT] This handler should NOT be called directly - menu_selection should handle everything")
 
         # Check if user is in 'waiting_for_image' state
-        if state_manager.is_state(user_id, 'waiting_for_image'):
+        if await state_manager.is_state(user_id, 'waiting_for_image'):
             # User sent text instead of image - treat as invalid format
             from handlers.media_handlers import handle_invalid_format
             await handle_invalid_format(update, context, user_id)

@@ -159,11 +159,11 @@ class ServiceContainer:
 
         # Credit service (with feature pricing)
         feature_pricing = {
-            'image_undress': 10.0,
-            'pink_bra': 0.0,  # Free
-            'video_style_a': 30.0,
-            'video_style_b': 30.0,
-            'video_style_c': 30.0
+            'i2i_1': 0.0,   # Pink Bra - Free
+            'i2i_2': 10.0,  # Full Undress
+            'i2v_1': 30.0,  # Breast Bounce
+            'i2v_2': 30.0,  # Lower Body Fluid
+            'i2v_3': 30.0   # Oral
         }
         self.credits = CreditService(
             connection_manager=self.db_connection,
@@ -230,17 +230,11 @@ class ServiceContainer:
 
         # Create legacy ComfyUI services for queue managers
         legacy_comfyui_image = ComfyUIService(self.config, 'image_undress')
-        legacy_comfyui_douxiong = ComfyUIService(self.config, 'video_douxiong')
-        legacy_comfyui_liujing = ComfyUIService(self.config, 'video_liujing')
-        legacy_comfyui_shejing = ComfyUIService(self.config, 'video_shejing')
+        legacy_comfyui_video = ComfyUIService(self.config, 'video_douxiong')  # Single video server for all styles
 
         self.image_queue = ImageQueueManager(legacy_comfyui_image)
-        self.video_queues = {
-            'style_a': VideoQueueManager(legacy_comfyui_douxiong),
-            'style_b': VideoQueueManager(legacy_comfyui_liujing),
-            'style_c': VideoQueueManager(legacy_comfyui_shejing)
-        }
-        logger.info("✓ Queue managers: Image + 3 video styles")
+        self.video_queue = VideoQueueManager(legacy_comfyui_video)  # Single queue for all video styles
+        logger.info("✓ Queue managers: Image + Video (single queue for all styles)")
 
         # Now we can create workflow services
         # Image workflow service
@@ -248,17 +242,17 @@ class ServiceContainer:
         from domain.workflows.image.processors import ImageUndressProcessor, PinkBraProcessor
 
         image_processors = {
-            'undress': ImageUndressProcessor(
-                comfyui_client=self.comfyui_clients['image_undress'],
-                file_service=self.files,
-                workflow_path=self.config.WORKFLOWS_DIR / 'i2i_undress_final_v5.json',
-                cost=10
-            ),
-            'pink_bra': PinkBraProcessor(
+            'i2i_1': PinkBraProcessor(
                 comfyui_client=self.comfyui_clients['image_undress'],
                 file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2i_bra_v5.json',
                 cost=0
+            ),
+            'i2i_2': ImageUndressProcessor(
+                comfyui_client=self.comfyui_clients['image_undress'],
+                file_service=self.files,
+                workflow_path=self.config.WORKFLOWS_DIR / 'i2i_undress_final_v5.json',
+                cost=10
             )
         }
 
@@ -281,19 +275,19 @@ class ServiceContainer:
         )
 
         video_processors = {
-            'style_a': VideoStyleAProcessor(
+            'i2v_1': VideoStyleAProcessor(
                 comfyui_client=self.comfyui_clients['video_douxiong'],
                 file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2v_undress_douxiong.json',
                 cost=30
             ),
-            'style_b': VideoStyleBProcessor(
+            'i2v_2': VideoStyleBProcessor(
                 comfyui_client=self.comfyui_clients['video_liujing'],
                 file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2v_undress_liujing.json',
                 cost=30
             ),
-            'style_c': VideoStyleCProcessor(
+            'i2v_3': VideoStyleCProcessor(
                 comfyui_client=self.comfyui_clients['video_shejing'],
                 file_service=self.files,
                 workflow_path=self.config.WORKFLOWS_DIR / 'i2v_undress_shejing.json',
@@ -306,10 +300,10 @@ class ServiceContainer:
             state_manager=self.state,
             notification_service=self.notifications,
             file_service=self.files,
-            queue_manager=self.video_queues,  # Dict of queue managers
+            queue_manager=self.video_queue,  # Single queue for all styles
             video_processors=video_processors
         )
-        logger.info("✓ Video workflow: 3 styles (A, B, C)")
+        logger.info("✓ Video workflow: 3 styles (i2v_1, i2v_2, i2v_3) via single queue")
 
     # Cleanup
 

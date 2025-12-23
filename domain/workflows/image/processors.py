@@ -39,7 +39,7 @@ class ImageUndressProcessor(WorkflowProcessor):
             cost: Credit cost (default: 10)
         """
         super().__init__(comfyui_client, file_service, workflow_path, cost)
-        self.workflow_type = 'image_undress'
+        self.workflow_type = 'i2i_2'
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
         """
@@ -76,14 +76,18 @@ class ImageUndressProcessor(WorkflowProcessor):
         workflow = self._load_workflow()
 
         # Inject input filename into workflow
-        # Note: This depends on workflow structure, adjust node IDs as needed
-        if 'LoadImage' in workflow:
-            workflow['LoadImage']['inputs']['image'] = input_filename
-        elif '1' in workflow:  # Sometimes LoadImage is node "1"
-            if workflow['1'].get('class_type') == 'LoadImage':
-                workflow['1']['inputs']['image'] = input_filename
+        # Find the LoadImage node dynamically
+        updated = False
+        for node_id, node_data in workflow.items():
+            if isinstance(node_data, dict) and node_data.get('class_type') == 'LoadImage':
+                node_data['inputs']['image'] = input_filename
+                updated = True
+                logger.debug(f"Updated LoadImage node '{node_id}' with filename: {input_filename}")
+                break
 
-        logger.debug(f"Prepared undress workflow for user {user_id}: {input_filename}")
+        if not updated:
+            logger.warning(f"Could not find LoadImage node in workflow for user {user_id}")
+
         return workflow
 
     async def process(self, input_filename: str, user_id: int) -> WorkflowResult:
@@ -199,7 +203,7 @@ class PinkBraProcessor(WorkflowProcessor):
             cost: Credit cost (default: 0)
         """
         super().__init__(comfyui_client, file_service, workflow_path, cost)
-        self.workflow_type = 'image_pink_bra'
+        self.workflow_type = 'i2i_1'
         self.daily_limit = 5  # 5 uses per day for non-VIP
 
     async def validate_input(self, input_path: str) -> tuple[bool, Optional[str]]:
@@ -237,13 +241,18 @@ class PinkBraProcessor(WorkflowProcessor):
         workflow = self._load_workflow()
 
         # Inject input filename into workflow
-        if 'LoadImage' in workflow:
-            workflow['LoadImage']['inputs']['image'] = input_filename
-        elif '1' in workflow:
-            if workflow['1'].get('class_type') == 'LoadImage':
-                workflow['1']['inputs']['image'] = input_filename
+        # Find the LoadImage node dynamically
+        updated = False
+        for node_id, node_data in workflow.items():
+            if isinstance(node_data, dict) and node_data.get('class_type') == 'LoadImage':
+                node_data['inputs']['image'] = input_filename
+                updated = True
+                logger.debug(f"Updated LoadImage node '{node_id}' with filename: {input_filename}")
+                break
 
-        logger.debug(f"Prepared pink bra workflow for user {user_id}: {input_filename}")
+        if not updated:
+            logger.warning(f"Could not find LoadImage node in workflow for user {user_id}")
+
         return workflow
 
     async def process(self, input_filename: str, user_id: int) -> WorkflowResult:

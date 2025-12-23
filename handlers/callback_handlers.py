@@ -119,7 +119,7 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         style_name = style_map.get(style, style)
 
         # Check if already processing
-        if state_manager.is_state(user_id, 'processing'):
+        if await state_manager.is_state(user_id, 'processing'):
             from core.constants import ALREADY_PROCESSING_MESSAGE
             await query.edit_message_text(ALREADY_PROCESSING_MESSAGE)
             return
@@ -130,11 +130,19 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await query.edit_message_text("无效的风格选择")
             return
 
-        # Convert to internal format: "style_a", "style_b", "style_c"
-        internal_style = style.replace("video_", "")
+        # Convert to internal format: "style_a", "style_b", "style_c", then map to new names
+        temp_style = style.replace("video_", "")
+
+        # Map to new style names (i2v_1, i2v_2, i2v_3)
+        style_name_map = {
+            'style_a': 'i2v_1',  # 抖胸 (Breast Bounce)
+            'style_b': 'i2v_2',  # 下体流精 (Lower Body Fluid)
+            'style_c': 'i2v_3'   # 吃吊喝精 (Oral)
+        }
+        internal_style = style_name_map.get(temp_style, 'i2v_1')  # Default to i2v_1
 
         # Update state to waiting for video with selected style
-        state_manager.update_state(
+        await state_manager.update_state(
             user_id,
             state='waiting_for_video',
             video_style=internal_style,
@@ -184,11 +192,18 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await query.edit_message_text("无效的风格选择")
             return
 
-        # Convert to internal format: "bra" or "undress"
-        internal_style = style.replace("image_style_", "")
+        # Convert to internal format: "bra" or "undress", then map to new names
+        temp_style = style.replace("image_style_", "")
+
+        # Map to new style names (i2i_1, i2i_2)
+        style_name_map = {
+            'bra': 'i2i_1',       # 粉色胸罩 (Pink Bra)
+            'undress': 'i2i_2'    # 脱得精光 (Full Undress)
+        }
+        internal_style = style_name_map.get(temp_style, 'i2i_2')  # Default to i2i_2
 
         # Check if already processing
-        if state_manager.is_state(user_id, 'processing'):
+        if await state_manager.is_state(user_id, 'processing'):
             from core.constants import ALREADY_PROCESSING_MESSAGE
             await query.edit_message_text(ALREADY_PROCESSING_MESSAGE)
             return
@@ -202,7 +217,7 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         style_name = style_map.get(style, style)
 
         # Update state to waiting for image with selected style
-        state_manager.update_state(
+        await state_manager.update_state(
             user_id,
             state='waiting_for_image',
             image_style=internal_style,
@@ -215,7 +230,9 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             parse_mode='Markdown'
         )
 
-        logger.info(f"User {user_id} selected image style: {internal_style}")
+        logger.info(f"User {user_id} selected image style: {internal_style} (mapped from {temp_style})")
+        state_after = await state_manager.get_state(user_id)
+        logger.info(f"State after update: {state_after}")
 
     except Exception as e:
         logger.error(f"Error handling image style callback: {str(e)}")
@@ -247,11 +264,11 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
             await query.delete_message()
 
             # Remove from state storage
-            if state_manager.has_confirmation_message(user_id):
-                state_manager.remove_confirmation_message(user_id)
+            if await state_manager.has_confirmation_message(user_id):
+                await state_manager.remove_confirmation_message(user_id)
 
             # Get uploaded file path and delete it
-            state = state_manager.get_state(user_id)
+            state = await state_manager.get_state(user_id)
             uploaded_file = state.get('uploaded_file_path')
             if uploaded_file:
                 try:
@@ -263,7 +280,7 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
                     logger.error(f"Error deleting uploaded file: {e}")
 
             # Reset state
-            state_manager.reset_state(user_id)
+            await state_manager.reset_state(user_id)
 
             # Send cancelled message and show main menu
             from core.constants import CREDIT_CONFIRMATION_CANCELLED_MESSAGE
@@ -297,8 +314,8 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
             await query.delete_message()
 
             # Remove from state storage
-            if state_manager.has_confirmation_message(user_id):
-                state_manager.remove_confirmation_message(user_id)
+            if await state_manager.has_confirmation_message(user_id):
+                await state_manager.remove_confirmation_message(user_id)
 
             # Get workflow service from bot_data
             workflow_service = context.bot_data.get('workflow_service')
@@ -308,7 +325,7 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
                     chat_id=user_id,
                     text="系统错误，请稍后重试"
                 )
-                state_manager.reset_state(user_id)
+                await state_manager.reset_state(user_id)
                 return
 
             # Proceed with appropriate workflow
@@ -350,7 +367,7 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
                     chat_id=user_id,
                     text="系统错误，请稍后重试"
                 )
-                state_manager.reset_state(user_id)
+                await state_manager.reset_state(user_id)
 
     except Exception as e:
         logger.error(f"Error handling credit confirmation callback: {str(e)}")
@@ -358,7 +375,7 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
             chat_id=user_id,
             text="处理确认时发生错误，请稍后重试"
         )
-        state_manager.reset_state(user_id)
+        await state_manager.reset_state(user_id)
 
 
 async def open_topup_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):

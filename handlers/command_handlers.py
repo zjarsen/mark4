@@ -33,7 +33,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
 
         # First-time welcome message with inline button to open topup menu
-        if not state_manager.has_state(user_id):
+        if not await state_manager.has_state(user_id):
             # Create inline keyboard with button to open topup menu
             keyboard = [[
                 InlineKeyboardButton("🎁 立即抽取幸运折扣", callback_data="open_topup_menu")
@@ -45,7 +45,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode='Markdown',
                 reply_markup=reply_markup
             )
-            state_manager.set_state(user_id, {'first_contact': True})
+            await state_manager.set_state(user_id, {'first_contact': True})
 
         # Show main menu
         await show_main_menu(update)
@@ -137,7 +137,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     try:
         user_id = update.effective_user.id
-        state = state_manager.get_state(user_id)
+        state = await state_manager.get_state(user_id)
 
         if not state:
             await update.message.reply_text("当前没有进行中的操作")

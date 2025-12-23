@@ -94,7 +94,7 @@ class VideoWorkflowService(BaseWorkflowService):
                 return False, error_msg
 
             # Check if VIP (unlimited access, per user decision to remove VIP limits)
-            user = await self.credits.users.get_by_id(user_id)
+            user = self.credits.users.get_by_id(user_id)
             is_vip = user and user.get('vip_tier') in ['vip', 'black_gold']
 
             # Check credits (unless VIP)
@@ -104,7 +104,7 @@ class VideoWorkflowService(BaseWorkflowService):
                     raise InsufficientCreditsError(user_id, processor.cost, balance)
 
             # Update state
-            self.state.update_state(
+            await self.state.update_state(
                 user_id,
                 state='processing',
                 workflow_type='video',
@@ -112,28 +112,41 @@ class VideoWorkflowService(BaseWorkflowService):
                 uploaded_image_path=image_path
             )
 
-            # Queue the job
-            from services.queue_manager_base import QueuedJob
-            job = QueuedJob(
-                user_id=user_id,
-                workflow_type='video',
-                input_path=image_path,
-                style=style
-            )
+            # Upload image to ComfyUI first
+            from pathlib import Path
+            from datetime import datetime
+            image_filename = Path(image_path).name
 
-            # Add to queue with callbacks
-            await self.queue.add_to_queue(
-                job,
+            logger.info(f"Uploading image to ComfyUI: {image_filename}")
+            await processor.comfyui.upload_image(image_path, image_filename)
+            logger.info(f"Image uploaded successfully: {image_filename}")
+
+            # Prepare workflow with filename (not full path)
+            workflow = processor.prepare_workflow(image_filename, user_id)
+
+            # Create job with complete workflow and callbacks
+            from services.queue_manager_base import QueuedJob
+            job_id = f"{user_id}_{int(datetime.utcnow().timestamp() * 1000)}"
+
+            job = QueuedJob(
+                job_id=job_id,
+                user_id=user_id,
+                workflow=workflow,
+                workflow_type=style,
                 on_submitted=lambda prompt_id: self._handle_submitted(
-                    bot, user_id, prompt_id, image_path, style
+                    bot, user_id, prompt_id, image_filename, style
                 ),
                 on_completed=lambda prompt_id, history: self._handle_completed(
-                    bot, user_id, prompt_id, history, image_path, style
+                    bot, user_id, prompt_id, history, image_filename, style
                 ),
                 on_error=lambda error_msg: self._handle_error(
                     bot, user_id, error_msg, processor.cost
                 )
             )
+
+            # Queue the job (Black Gold VIP gets priority)
+            is_black_gold_vip = user and user.get('vip_tier') == 'black_gold'
+            await self.queue.queue_job(job, is_vip=is_black_gold_vip)
 
             logger.info(f"Started video workflow for user {user_id}, style: {style}")
             return True, None
@@ -199,13 +212,20 @@ class VideoWorkflowService(BaseWorkflowService):
         try:
             processor = self.processors[style]
 
-            # Extract output
-            result = await processor.process(filename, user_id)
+            # Extract outputs from ComfyUI history structure
+            # History structure: {prompt: [...], outputs: {node_id: {images: [...]}}}
+            outputs = history.get('outputs', {})
 
-            if result.success:
+            logger.debug(f"History keys for user {user_id}: {list(history.keys())}")
+            logger.debug(f"Outputs keys for user {user_id}: {list(outputs.keys())}")
+
+            # Extract output from ComfyUI outputs
+            output_path = await processor.extract_output(outputs, user_id)
+
+            if output_path:
                 # Send result to user
                 await self.notifier.send_processed_video(
-                    bot, user_id, result.output_path
+                    bot, user_id, output_path
                 )
 
                 # Deduct credits
@@ -236,18 +256,18 @@ class VideoWorkflowService(BaseWorkflowService):
                 await self._delete_queue_messages(bot, user_id)
 
                 # Schedule cleanup
-                self._schedule_cleanup(user_id, result.output_path)
+                await self._schedule_cleanup(user_id, output_path)
 
                 logger.info(f"Video workflow completed for user {user_id}")
 
             else:
                 await bot.send_message(
                     user_id,
-                    f"❌ 处理失败: {result.error_message}"
+                    "❌ 处理失败: No output video found"
                 )
 
             # Reset state
-            self.state.reset_state(user_id)
+            await self.state.reset_state(user_id)
 
         except Exception as e:
             logger.error(f"Error in video completed handler: {e}")
@@ -292,7 +312,7 @@ class VideoWorkflowService(BaseWorkflowService):
             await self._delete_queue_messages(bot, user_id)
 
             # Reset state
-            self.state.reset_state(user_id)
+            await self.state.reset_state(user_id)
 
         except Exception as e:
             logger.error(f"Error in error handler: {e}")
@@ -324,7 +344,7 @@ class VideoWorkflowService(BaseWorkflowService):
             logger.error(f"Error monitoring workflow: {e}")
             await self._handle_error(bot, user_id, str(e), 0)
 
-    def _schedule_cleanup(self, user_id: int, output_path: str):
+    async def _schedule_cleanup(self, user_id: int, output_path: str):
         """
         Schedule cleanup of output file after timeout.
 
@@ -341,12 +361,12 @@ class VideoWorkflowService(BaseWorkflowService):
                 logger.error(f"Error in cleanup task: {e}")
 
         # Cancel existing cleanup task if any
-        if self.state.has_cleanup_task(user_id):
-            self.state.cancel_cleanup_task(user_id)
+        if await self.state.has_cleanup_task(user_id):
+            await self.state.cancel_cleanup_task(user_id)
 
         # Start new cleanup task
         task = asyncio.create_task(cleanup_task())
-        self.state.set_cleanup_task(user_id, task)
+        await self.state.set_cleanup_task(user_id, task)
 
     async def get_queue_status(self, user_id: int) -> dict:
         """
@@ -375,10 +395,10 @@ class VideoWorkflowService(BaseWorkflowService):
             await self.queue.remove_user_job(user_id)
 
             # Cancel cleanup task
-            self.state.cancel_cleanup_task(user_id)
+            await self.state.cancel_cleanup_task(user_id)
 
             # Reset state
-            self.state.reset_state(user_id)
+            await self.state.reset_state(user_id)
 
             logger.info(f"Cancelled workflow for user {user_id}")
             return True

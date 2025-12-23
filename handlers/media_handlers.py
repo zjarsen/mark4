@@ -31,22 +31,29 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_id = update.effective_user.id
 
+        # Log current state for debugging
+        current_state = await state_manager.get_state(user_id)
+        logger.info(f"Photo received from user {user_id}, current state: {current_state}")
+
         # Check user state
-        is_waiting_image = state_manager.is_state(user_id, 'waiting_for_image')
-        is_waiting_video = state_manager.is_state(user_id, 'waiting_for_video')
+        is_waiting_image = await state_manager.is_state(user_id, 'waiting_for_image')
+        is_waiting_video = await state_manager.is_state(user_id, 'waiting_for_video')
+
+        logger.info(f"State checks - is_waiting_image: {is_waiting_image}, is_waiting_video: {is_waiting_video}")
 
         # Validate user state
         if not (is_waiting_image or is_waiting_video):
+            logger.warning(f"User {user_id} uploaded photo but not in waiting state")
             await update.message.reply_text(INVALID_STATE_MESSAGE)
             return
 
         # Check if already processing
-        if state_manager.is_state(user_id, 'processing'):
+        if await state_manager.is_state(user_id, 'processing'):
             await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
             return
 
         # Reset retry count on successful photo upload
-        state_manager.update_state(user_id, retry_count=0)
+        await state_manager.update_state(user_id, retry_count=0)
 
         # Get highest resolution photo
         photo = update.message.photo[-1]
@@ -61,17 +68,21 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Start appropriate workflow
         if is_waiting_image:
             # Get image style from state (if exists)
-            state = state_manager.get_state(user_id)
+            state = await state_manager.get_state(user_id)
             image_style = state.get('image_style')
+
+            logger.info(f"Processing image for user {user_id}, style from state: {image_style}")
 
             if image_style:
                 # Has style selection - start image workflow with style
+                logger.info(f"Calling start_image_workflow_with_style for user {user_id} with style={image_style}, path={local_path}")
                 await workflow_service.start_image_workflow_with_style(
-                    update,
-                    context,
-                    local_path,
-                    user_id,
-                    image_style
+                    bot=context.bot,
+                    user_id=user_id,
+                    chat_id=update.effective_chat.id,
+                    message_id=update.message.message_id,
+                    input_path=local_path,
+                    workflow_type=image_style
                 )
                 logger.info(f"Photo processed for user {user_id} (image workflow, style={image_style})")
             else:
@@ -80,32 +91,33 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(
                     "请先从主菜单选择图片处理选项"
                 )
-                state_manager.reset_state(user_id)
+                await state_manager.reset_state(user_id)
                 return
 
         elif is_waiting_video:
             # Get video style from state
-            state = state_manager.get_state(user_id)
+            state = await state_manager.get_state(user_id)
             video_style = state.get('video_style')
 
             if not video_style:
                 await update.message.reply_text("风格选择错误，请重新开始")
-                state_manager.reset_state(user_id)
+                await state_manager.reset_state(user_id)
                 return
 
             await workflow_service.start_video_workflow(
-                update,
-                context,
-                local_path,
-                user_id,
-                video_style
+                bot=context.bot,
+                user_id=user_id,
+                chat_id=update.effective_chat.id,
+                message_id=update.message.message_id,
+                input_path=local_path,
+                style=video_style
             )
             logger.info(f"Photo processed for user {user_id} (video workflow, style: {video_style})")
 
     except Exception as e:
         logger.error(f"Error handling photo from user {user_id}: {str(e)}")
         await update.message.reply_text(UPLOAD_FAILED_MESSAGE)
-        state_manager.reset_state(user_id)
+        await state_manager.reset_state(user_id)
 
 
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -120,15 +132,15 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
 
         # Check user state
-        is_waiting_image = state_manager.is_state(user_id, 'waiting_for_image')
-        is_waiting_video = state_manager.is_state(user_id, 'waiting_for_video')
+        is_waiting_image = await state_manager.is_state(user_id, 'waiting_for_image')
+        is_waiting_video = await state_manager.is_state(user_id, 'waiting_for_video')
 
         # Validate user state
         if not (is_waiting_image or is_waiting_video):
             return
 
         # Check if already processing
-        if state_manager.is_state(user_id, 'processing'):
+        if await state_manager.is_state(user_id, 'processing'):
             await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
             return
 
@@ -140,7 +152,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         # Valid format - reset retry count
-        state_manager.update_state(user_id, retry_count=0)
+        await state_manager.update_state(user_id, retry_count=0)
 
         # Download document
         local_path = await file_service.download_telegram_document(
@@ -152,17 +164,18 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Start appropriate workflow
         if is_waiting_image:
             # Get image style from state (if exists)
-            state = state_manager.get_state(user_id)
+            state = await state_manager.get_state(user_id)
             image_style = state.get('image_style')
 
             if image_style:
                 # Has style selection - start image workflow with style
                 await workflow_service.start_image_workflow_with_style(
-                    update,
-                    context,
-                    local_path,
-                    user_id,
-                    image_style
+                    bot=context.bot,
+                    user_id=user_id,
+                    chat_id=update.effective_chat.id,
+                    message_id=update.message.message_id,
+                    input_path=local_path,
+                    workflow_type=image_style
                 )
                 logger.info(f"Document processed for user {user_id} (image workflow, style={image_style})")
             else:
@@ -171,32 +184,33 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(
                     "请先从主菜单选择图片处理选项"
                 )
-                state_manager.reset_state(user_id)
+                await state_manager.reset_state(user_id)
                 return
 
         elif is_waiting_video:
             # Get video style from state
-            state = state_manager.get_state(user_id)
+            state = await state_manager.get_state(user_id)
             video_style = state.get('video_style')
 
             if not video_style:
                 await update.message.reply_text("风格选择错误，请重新开始")
-                state_manager.reset_state(user_id)
+                await state_manager.reset_state(user_id)
                 return
 
             await workflow_service.start_video_workflow(
-                update,
-                context,
-                local_path,
-                user_id,
-                video_style
+                bot=context.bot,
+                user_id=user_id,
+                chat_id=update.effective_chat.id,
+                message_id=update.message.message_id,
+                input_path=local_path,
+                style=video_style
             )
             logger.info(f"Document processed for user {user_id} (video workflow, style: {video_style})")
 
     except Exception as e:
         logger.error(f"Error handling document from user {user_id}: {str(e)}")
         await update.message.reply_text(UPLOAD_FAILED_MESSAGE)
-        state_manager.reset_state(user_id)
+        await state_manager.reset_state(user_id)
 
 
 async def handle_invalid_format(
@@ -213,13 +227,13 @@ async def handle_invalid_format(
         user_id: User ID
     """
     try:
-        state = state_manager.get_state(user_id)
+        state = await state_manager.get_state(user_id)
         retry_count = state.get('retry_count', 0) + 1
 
         if retry_count >= config.MAX_RETRY_COUNT:
             # Max retries reached - reset and show menu
             await update.message.reply_text(MAX_RETRY_MESSAGE)
-            state_manager.reset_state(user_id)
+            await state_manager.reset_state(user_id)
 
             # Show menu again
             from handlers.command_handlers import show_main_menu
@@ -229,7 +243,7 @@ async def handle_invalid_format(
 
         else:
             # Increment retry count and prompt again
-            state_manager.update_state(user_id, retry_count=retry_count)
+            await state_manager.update_state(user_id, retry_count=retry_count)
             await update.message.reply_text(INVALID_FORMAT_MESSAGE)
 
             logger.debug(

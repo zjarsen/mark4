@@ -43,11 +43,11 @@ transaction_repo = TransactionRepository(conn_manager)
 
 # Domain layer
 feature_pricing = {
-    'image_undress': 10.0,
-    'pink_bra': 0.0,
-    'video_style_a': 30.0,
-    'video_style_b': 30.0,
-    'video_style_c': 30.0
+    'i2i_1': 0.0,   # Pink Bra - Free
+    'i2i_2': 10.0,  # Full Undress
+    'i2v_1': 30.0,  # Breast Bounce
+    'i2v_2': 30.0,  # Lower Body Fluid
+    'i2v_3': 30.0   # Oral
 }
 credit_service = CreditService(
     connection_manager=conn_manager,
