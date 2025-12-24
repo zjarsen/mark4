@@ -467,7 +467,8 @@ class WorkflowService:
                         INSUFFICIENT_CREDITS_MESSAGE.format(
                             balance=balance,
                             required=cost
-                        )
+                        ),
+                        parse_mode='Markdown'
                     )
 
                     # Show topup packages inline keyboard
@@ -482,7 +483,8 @@ class WorkflowService:
                     await context.bot.send_message(
                         chat_id=user_id,
                         text=TOPUP_PACKAGES_MESSAGE,
-                        reply_markup=reply_markup
+                        reply_markup=reply_markup,
+                        parse_mode='Markdown'
                     )
 
                     logger.warning(
@@ -867,7 +869,8 @@ class WorkflowService:
                             text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
                                 balance=int(balance),
                                 cost=int(cost)
-                            )
+                            ),
+                            parse_mode='Markdown'
                         )
 
                         # Show topup packages inline keyboard
@@ -882,7 +885,8 @@ class WorkflowService:
                         await bot.send_message(
                             chat_id=user_id,
                             text=TOPUP_PACKAGES_MESSAGE,
-                            reply_markup=reply_markup
+                            reply_markup=reply_markup,
+                            parse_mode='Markdown'
                         )
 
                         self.state_manager.reset_state(user_id)
@@ -1265,7 +1269,8 @@ class WorkflowService:
                         INSUFFICIENT_CREDITS_MESSAGE.format(
                             balance=balance,
                             required=cost
-                        )
+                        ),
+                        parse_mode='Markdown'
                     )
 
                     # Show topup packages inline keyboard
@@ -1280,7 +1285,8 @@ class WorkflowService:
                     await context.bot.send_message(
                         chat_id=user_id,
                         text=TOPUP_PACKAGES_MESSAGE,
-                        reply_markup=reply_markup
+                        reply_markup=reply_markup,
+                        parse_mode='Markdown'
                     )
 
                     logger.warning(
@@ -1472,7 +1478,8 @@ class WorkflowService:
                             text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
                                 balance=int(balance),
                                 cost=int(cost)
-                            )
+                            ),
+                            parse_mode='Markdown'
                         )
 
                         # Show topup packages inline keyboard
@@ -1487,7 +1494,8 @@ class WorkflowService:
                         await bot.send_message(
                             chat_id=user_id,
                             text=TOPUP_PACKAGES_MESSAGE,
-                            reply_markup=reply_markup
+                            reply_markup=reply_markup,
+                            parse_mode='Markdown'
                         )
 
                         self.state_manager.reset_state(user_id)
