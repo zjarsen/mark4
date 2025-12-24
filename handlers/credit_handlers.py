@@ -415,8 +415,8 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 
             # Exclude ¥10 package from discounts
             if base_price == 10:
-                # Show regular price for ¥10 (no discount)
-                button_text = f"¥{original_price} = {credits}积分"
+                # Show regular price for ¥10 (no discount) with consistent format
+                button_text = f"💰 {credits}积分 ¥{original_price} (无折扣)"
             else:
                 # Apply discount for other packages
                 discounted_price = discount_service.apply_discount_to_price(base_price, discount_rate)
