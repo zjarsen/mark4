@@ -523,11 +523,11 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 
             # Exclude ¥10 package from discounts
             if base_price == 10:
-                # Show regular price for ¥10 (no discount) with i18n
+                # Show regular price for ¥10 (no discount) with i18n and consistent emoji format
                 if translation_service:
                     button_text = translation_service.get(user_id, 'topup.button_10_no_discount', credits=credits, price=original_price)
                 else:
-                    button_text = f"¥{original_price} = {credits}积分 (无折扣)"
+                    button_text = f"💰 {credits}积分 ¥{original_price} (无折扣)"
             else:
                 # Apply discount for other packages
                 discounted_price = discount_service.apply_discount_to_price(base_price, discount_rate)
