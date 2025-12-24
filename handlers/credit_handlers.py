@@ -786,7 +786,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
 请选择支付方式："""
 
-            # Get translated button text
+            # Get translated button text (i18n approach)
             if translation_service:
                 alipay_text = translation_service.get(user_id, 'payment.button_alipay')
                 wechat_text = translation_service.get(user_id, 'payment.button_wechat')
@@ -794,6 +794,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 alipay_text = "💰 支付宝支付"
                 wechat_text = "💚 微信支付"
 
+            # Build payment method keyboard (WeChat Pay restored for all packages including ¥10)
             keyboard = [
                 [InlineKeyboardButton(
                     alipay_text,
