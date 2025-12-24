@@ -109,15 +109,13 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
         keyboard.append([InlineKeyboardButton(lucky_button_text, callback_data="lucky_discount")])
 
         # Add package buttons with discount if applicable
-        # Temporarily only showing ¥2 test package for testing
         packages = [
-            (2, "topup_2"),
-            # (10, "topup_10"),
-            # (30, "topup_30"),
-            # (50, "topup_50"),
-            # (100, "topup_100"),
-            # (160, "topup_160"),
-            # (260, "topup_260")
+            (10, "topup_10"),
+            (30, "topup_30"),
+            (50, "topup_50"),
+            (100, "topup_100"),
+            (160, "topup_160"),
+            (260, "topup_260")
         ]
 
         for base_price, callback_data in packages:
@@ -370,7 +368,6 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
         from core.constants import (
             PAYMENT_TIMEOUT_MESSAGE,
             TOPUP_PACKAGES,
-            TOPUP_2_BUTTON,
             TOPUP_10_BUTTON,
             TOPUP_30_BUTTON,
             TOPUP_50_BUTTON,
@@ -391,13 +388,11 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
             logger.warning(f"Failed to edit timeout message {message_id}: {str(e)}")
 
         # Send new message with top-up packages below
-        # Temporarily only showing ¥2 test package for testing
         keyboard = [
-            [InlineKeyboardButton(TOPUP_2_BUTTON, callback_data="topup_2")],
-            # [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-            # [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-            # [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-            # [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
+            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
+            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
+            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -509,14 +504,13 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
         keyboard.append([InlineKeyboardButton(button_text, callback_data="lucky_discount")])
 
         # Add package buttons with discounted prices
-        # Temporarily commented out for testing - only ¥2 package available
         packages = [
-            # (10, "topup_10"),
-            # (30, "topup_30"),
-            # (50, "topup_50"),
-            # (100, "topup_100"),
-            # (160, "topup_160"),
-            # (260, "topup_260")
+            (10, "topup_10"),
+            (30, "topup_30"),
+            (50, "topup_50"),
+            (100, "topup_100"),
+            (160, "topup_160"),
+            (260, "topup_260")
         ]
 
         discount_rate = discount_info['rate']
