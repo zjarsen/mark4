@@ -605,20 +605,17 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
 请选择支付方式："""
 
-            # Build payment method keyboard - exclude WeChat Pay for ¥10 package
+            # Build payment method keyboard
             keyboard = [
                 [InlineKeyboardButton(
                     "💰 支付宝支付",
                     callback_data=f"topup_{amount_cny}_alipay"
-                )]
-            ]
-
-            # Only show WeChat Pay option for packages other than ¥10
-            if amount_cny != 10:
-                keyboard.append([InlineKeyboardButton(
+                )],
+                [InlineKeyboardButton(
                     "💚 微信支付",
                     callback_data=f"topup_{amount_cny}_wechat"
-                )])
+                )]
+            ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
             # Try to edit message, if fails (e.g., deleted by cleanup), send new message
