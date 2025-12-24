@@ -296,6 +296,7 @@ CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE = """❌ 积分不足
 PAYMENT_PENDING_MESSAGE = """⏰ 等待支付确认
 
 请在3分钟内完成支付
+⚠️ **支付完成后确认界面可能无响应，请返回机器人查看充值成功消息**
 订单将在超时后自动取消
 
 📝 订单信息：

@@ -287,14 +287,7 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
             logger.info(f"Payment {payment_id} already {payment['status']}, skipping timeout menu")
             return
 
-        from core.constants import (
-            PAYMENT_TIMEOUT_MESSAGE,
-            TOPUP_PACKAGES,
-            TOPUP_10_BUTTON,
-            TOPUP_30_BUTTON,
-            TOPUP_50_BUTTON,
-            TOPUP_100_BUTTON
-        )
+        from core.constants import PAYMENT_TIMEOUT_MESSAGE
 
         # Get bot instance from timeout_service
         bot = timeout_service.bot
@@ -309,24 +302,8 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
         except Exception as e:
             logger.warning(f"Failed to edit timeout message {message_id}: {str(e)}")
 
-        # Send new message with top-up packages below
-        keyboard = [
-            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        from core.constants import TOPUP_PACKAGES_MESSAGE
-        menu_message = await bot.send_message(
-            chat_id=chat_id,
-            text=TOPUP_PACKAGES_MESSAGE,
-            reply_markup=reply_markup
-        )
-
-        # Store both message IDs for cleanup
-        timeout_service.add_timeout_messages(user_id, message_id, menu_message.message_id)
+        # Store timeout message ID for cleanup
+        timeout_service.add_timeout_messages(user_id, message_id)
 
         logger.info(f"Payment timeout displayed for user {user_id}, payment {payment_id}")
 
