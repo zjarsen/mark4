@@ -536,12 +536,12 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             # Try to edit message, if fails (e.g., deleted by cleanup), send new message
             try:
-                await query.edit_message_text(message, reply_markup=reply_markup)
+                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
             except Exception as edit_error:
                 # Message was deleted (likely by cleanup middleware), send new message
                 logger.debug(f"Could not edit message, sending new message: {str(edit_error)}")
                 # Update message_id to the new message for timeout tracking
-                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup)
+                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
                 message_id = sent_msg.message_id
 
             logger.info(
