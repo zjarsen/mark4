@@ -124,8 +124,8 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             # Calculate displayed price (with 8% fee)
             displayed_price = int(base_price * 1.08)
 
-            # Apply discount if active
-            if discount_info:
+            # Apply discount if active (exclude ¥10 package from discounts)
+            if discount_info and base_price != 10:
                 discount_rate = discount_info['rate']
                 original_price = displayed_price
                 discounted_price = discount_service.apply_discount_to_price(base_price, discount_rate)
@@ -520,18 +520,47 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 
             # Calculate prices
             original_price = int(base_price * 1.08)
-            discounted_price = discount_service.apply_discount_to_price(base_price, discount_rate)
 
-            # Calculate savings
-            savings = original_price - discounted_price
-
-            # Format button text with emoji-based design
-            if base_price in [160, 260]:
-                # VIP packages (keep simple, show prices directly)
-                button_text = translation_service.get(user_id, 'topup.button_vip' if base_price == 160 else 'topup.button_black_gold_vip') if translation_service else (f"¥{discounted_price} = 永久VIP" if base_price == 160 else f"¥{discounted_price} = 永久黑金VIP")
+            # Exclude ¥10 package from discounts
+            if base_price == 10:
+                # Show regular price for ¥10 (no discount) with i18n
+                if translation_service:
+                    button_text = translation_service.get(user_id, 'topup.button_10_no_discount', credits=credits, price=original_price)
+                else:
+                    button_text = f"¥{original_price} = {credits}积分 (无折扣)"
             else:
-                # Credit packages
-                button_text = f"¥{discounted_price} = {credits}" + (" credits" if translation_service and translation_service.db.get_user_language(user_id) == 'en_US' else " 积分")
+                # Apply discount for other packages
+                discounted_price = discount_service.apply_discount_to_price(base_price, discount_rate)
+
+                # Calculate savings
+                savings = original_price - discounted_price
+
+                # Format button text with emoji-based design
+                if base_price in [160, 260]:
+                    # VIP packages with i18n
+                    if translation_service:
+                        button_text = translation_service.get(
+                            user_id,
+                            'topup.button_vip_with_discount' if base_price == 160 else 'topup.button_black_gold_vip_with_discount',
+                            discounted_price=discounted_price,
+                            original_price=original_price
+                        )
+                    else:
+                        vip_name = "永久VIP" if base_price == 160 else "永久黑金VIP"
+                        emoji = "💎" if base_price == 160 else "👑"
+                        button_text = f"{emoji} {vip_name} ¥{discounted_price} 🎁（原价¥{original_price}）"
+                else:
+                    # Credit packages with i18n
+                    if translation_service:
+                        button_text = translation_service.get(
+                            user_id,
+                            'topup.button_credits_with_discount',
+                            credits=credits,
+                            discounted_price=discounted_price,
+                            original_price=original_price
+                        )
+                    else:
+                        button_text = f"💰 {credits}积分 ¥{discounted_price} 🎁（原价¥{original_price}）"
 
             keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
 
@@ -580,9 +609,9 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
             base_amount_cny = int(parts[0])  # Base price before discount
             payment_method = parts[1]  # 'alipay' or 'wechat'
 
-            # Check if user has active discount and apply it
+            # Check if user has active discount and apply it (exclude ¥10 package)
             discount_info = await discount_service.get_current_discount(user_id)
-            if discount_info:
+            if discount_info and base_amount_cny != 10:
                 # Apply discount to get the actual amount to charge
                 discount_rate = discount_info['rate']
                 # Calculate: base * discount_rate (this gives the discounted base before 8% fee)
@@ -736,9 +765,9 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 tier = 'vip' if amount_cny == 160 else 'black_gold'
                 tier_name = f" ({credit_service._tier_display_name(tier)})"
 
-            # Check if user has active discount
+            # Check if user has active discount (exclude ¥10 package)
             discount_info = await discount_service.get_current_discount(user_id)
-            if discount_info:
+            if discount_info and amount_cny != 10:
                 # Apply discount to displayed amount
                 discount_rate = discount_info['rate']
                 original_displayed_amount = int(amount_cny * 1.08)
