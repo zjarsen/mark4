@@ -738,6 +738,69 @@ def api_update_vip(user_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/user/<int:user_id>/credits', methods=['POST'])
+def api_update_credits(user_id):
+    """
+    Update user's credit balance.
+
+    Args:
+        user_id: Telegram user ID
+
+    Request body:
+        {
+            "credits": <number> (can be negative)
+        }
+
+    Returns:
+        JSON response with success status
+    """
+    try:
+        data = request.get_json()
+        new_credits = data.get('credits')
+
+        # Validate credits is a number
+        try:
+            new_credits = float(new_credits)
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Credits must be a valid number'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if user exists and get old balance
+        cursor.execute("SELECT user_id, credit_balance FROM users WHERE user_id = ?", (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            conn.close()
+            return jsonify({'error': 'User not found'}), 404
+
+        old_balance = user['credit_balance']
+
+        # Update credit balance (allows negative values)
+        cursor.execute("""
+            UPDATE users
+            SET credit_balance = ?
+            WHERE user_id = ?
+        """, (new_credits, user_id))
+
+        conn.commit()
+        conn.close()
+
+        logger.info(f"Admin updated credits for user {user_id}: {old_balance} -> {new_credits}")
+
+        return jsonify({
+            'success': True,
+            'message': f'Credit balance updated successfully',
+            'old_balance': float(old_balance),
+            'new_balance': float(new_credits)
+        })
+
+    except Exception as e:
+        logger.error(f"Error updating credits: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/health')
 def health_check():
     """Health check endpoint."""

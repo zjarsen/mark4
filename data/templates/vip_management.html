@@ -64,7 +64,7 @@
         </div>
 
         <!-- VIP Update Card (Hidden initially) -->
-        <div id="vipUpdateCard" class="card" style="display: none;">
+        <div id="vipUpdateCard" class="card mb-4" style="display: none;">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0"><i class="bi bi-star-fill"></i> 修改VIP状态</h5>
             </div>
@@ -80,7 +80,29 @@
                         </select>
                     </div>
                     <button type="submit" class="btn btn-success btn-lg w-100">
-                        <i class="bi bi-check-circle"></i> 确认修改
+                        <i class="bi bi-check-circle"></i> 确认修改VIP状态
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Credits Update Card (Hidden initially) -->
+        <div id="creditsUpdateCard" class="card" style="display: none;">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-coin"></i> 修改积分余额</h5>
+            </div>
+            <div class="card-body">
+                <form id="updateCreditsForm">
+                    <div class="mb-3">
+                        <label for="newCredits" class="form-label">新的积分余额</label>
+                        <input type="number" class="form-control form-control-lg" id="newCredits"
+                               placeholder="输入新的积分余额 (可以为负数)" step="0.01" required>
+                        <div class="form-text">
+                            提示：可以输入负数。例如：100, -50, 0
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning btn-lg w-100 text-dark">
+                        <i class="bi bi-check-circle"></i> 确认修改积分
                     </button>
                 </form>
             </div>
@@ -123,12 +145,14 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
         // Display user info
         displayUserInfo(data);
 
-        // Show update form
+        // Show update forms
         document.getElementById('userInfoCard').style.display = 'block';
         document.getElementById('vipUpdateCard').style.display = 'block';
+        document.getElementById('creditsUpdateCard').style.display = 'block';
 
-        // Set current VIP tier as selected
+        // Set current values
         document.getElementById('vipTier').value = data.vip_tier;
+        document.getElementById('newCredits').value = data.credit_balance;
 
         // Clear any previous alerts
         document.getElementById('alertContainer').innerHTML = '';
@@ -195,6 +219,64 @@ document.getElementById('updateVipForm').addEventListener('submit', async (e) =>
     }
 });
 
+// Update Credits form handler
+document.getElementById('updateCreditsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const newCredits = document.getElementById('newCredits').value;
+
+    if (newCredits === '') {
+        showAlert('请输入积分余额', 'warning');
+        return;
+    }
+
+    if (!currentUserId) {
+        showAlert('请先搜索用户', 'warning');
+        return;
+    }
+
+    // Confirm action
+    if (!confirm(`确认要将用户 ${currentUserId} 的积分余额修改为 ${newCredits} 吗？\n\n注意：这将直接设置用户的积分余额为该值。`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/user/${currentUserId}/credits`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                credits: parseFloat(newCredits)
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showAlert(data.error || '更新失败', 'danger');
+            return;
+        }
+
+        // Show success message
+        showAlert(`✅ 积分余额已成功更新！<br>
+                   旧余额: ${data.old_balance} 积分<br>
+                   新余额: ${data.new_balance} 积分`, 'success');
+
+        // Refresh user info
+        const infoResponse = await fetch(`/api/user/${currentUserId}/info`);
+        const updatedInfo = await infoResponse.json();
+        displayUserInfo(updatedInfo);
+
+        // Update the input field with the new value
+        document.getElementById('newCredits').value = data.new_balance;
+
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('更新失败，请稍后重试', 'danger');
+    }
+});
+
 function displayUserInfo(user) {
     document.getElementById('displayUserId').textContent = user.user_id;
     document.getElementById('displayUsername').textContent = user.username;
@@ -209,6 +291,7 @@ function displayUserInfo(user) {
 function hideUserInfo() {
     document.getElementById('userInfoCard').style.display = 'none';
     document.getElementById('vipUpdateCard').style.display = 'none';
+    document.getElementById('creditsUpdateCard').style.display = 'none';
     currentUserId = null;
 }
 
