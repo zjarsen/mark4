@@ -46,15 +46,15 @@ def format_timestamp_gmt8(utc_timestamp_str: str) -> str:
         utc_timestamp_str: Timestamp string in format 'YYYY-MM-DD HH:MM:SS' (already in GMT+8)
 
     Returns:
-        Formatted timestamp string in GMT+8 timezone
+        Formatted timestamp string with GMT+8 indicator
     """
     if not utc_timestamp_str:
         return "N/A"
 
     try:
-        # Database stores local time (GMT+8), just return as-is with proper formatting
+        # Database stores local time (GMT+8), add timezone indicator for clarity
         dt = datetime.strptime(utc_timestamp_str, '%Y-%m-%d %H:%M:%S')
-        return dt.strftime('%Y-%m-%d %H:%M:%S')
+        return dt.strftime('%Y-%m-%d %H:%M:%S') + ' GMT+8'
     except Exception as e:
         logger.error(f"Error formatting timestamp {utc_timestamp_str}: {str(e)}")
         return utc_timestamp_str
