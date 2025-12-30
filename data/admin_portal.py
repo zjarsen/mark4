@@ -40,21 +40,30 @@ def get_db_connection():
 
 def format_timestamp_gmt8(utc_timestamp_str: str) -> str:
     """
-    Format timestamp for display (database stores local GMT+8 time).
+    Format timestamp for display, converting UTC to GMT+8.
 
     Args:
-        utc_timestamp_str: Timestamp string in format 'YYYY-MM-DD HH:MM:SS' (already in GMT+8)
+        utc_timestamp_str: Timestamp string in format 'YYYY-MM-DD HH:MM:SS' (in UTC)
 
     Returns:
-        Formatted timestamp string with GMT+8 indicator
+        Formatted timestamp string in GMT+8 timezone
     """
     if not utc_timestamp_str:
         return "N/A"
 
     try:
-        # Database stores local time (GMT+8), add timezone indicator for clarity
-        dt = datetime.strptime(utc_timestamp_str, '%Y-%m-%d %H:%M:%S')
-        return dt.strftime('%Y-%m-%d %H:%M:%S') + ' GMT+8'
+        # Parse UTC timestamp (database stores UTC)
+        dt_utc = datetime.strptime(utc_timestamp_str, '%Y-%m-%d %H:%M:%S')
+
+        # Add UTC timezone info
+        dt_utc = pytz.utc.localize(dt_utc)
+
+        # Convert to GMT+8 (Asia/Shanghai)
+        gmt8 = pytz.timezone('Asia/Shanghai')
+        dt_gmt8 = dt_utc.astimezone(gmt8)
+
+        # Format and return with timezone indicator
+        return dt_gmt8.strftime('%Y-%m-%d %H:%M:%S') + ' GMT+8'
     except Exception as e:
         logger.error(f"Error formatting timestamp {utc_timestamp_str}: {str(e)}")
         return utc_timestamp_str
