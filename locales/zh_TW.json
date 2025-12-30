@@ -140,7 +140,12 @@
     "server_status": "  └─ 伺服器 **{server_number}號**：**{total_count}** 個任務",
     "vip_count": "     • 👑 VIP：**{vip_count}** 個",
     "regular_count": "     • 👤 普通：**{regular_count}** 個",
-    "vip_priority_tip": "💡 **提示**：VIP使用者享有優先處理權"
+    "vip_priority_tip": "💡 **提示**：VIP使用者享有優先處理權",
+    "status_unavailable": "❌ 無法取得佇列狀態",
+    "in_queue_position": "📋 您的任務已加入佇列\n位置: #{position}",
+    "refresh_button": "🔄 重新整理",
+    "task_processing": "🚀 您的任務現在正在伺服器上處理！\n⏱️ 這可能需要幾分鐘...",
+    "refresh_failed": "重新整理失敗"
   },
   "processing": {
     "in_progress": "處理中...",

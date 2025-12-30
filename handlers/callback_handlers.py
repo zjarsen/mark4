@@ -9,6 +9,7 @@ logger = logging.getLogger('mark4_bot')
 # Injected dependencies
 state_manager = None
 queue_service = None
+translation_service = None
 
 
 async def refresh_queue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -27,7 +28,12 @@ async def refresh_queue_callback(update: Update, context: ContextTypes.DEFAULT_T
     )
 
     query = update.callback_query
-    await query.answer("此功能已更新，请重新提交任务", show_alert=True)
+    user_id = update.effective_user.id
+    if translation_service:
+        msg = translation_service.get(user_id, 'callbacks.deprecated_function')
+    else:
+        msg = "此功能已更新，请重新提交任务"
+    await query.answer(msg, show_alert=True)
 
 
 async def payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -42,10 +48,16 @@ async def payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
 
+        user_id = update.effective_user.id
+
         # TODO: Implement payment callback handling
         logger.info(f"Payment callback received: {query.data}")
 
-        await query.edit_message_text("支付功能开发中")
+        if translation_service:
+            msg = translation_service.get(user_id, 'callbacks.payment_in_development')
+        else:
+            msg = "支付功能开发中"
+        await query.edit_message_text(msg)
 
     except Exception as e:
         logger.error(f"Error handling payment callback: {str(e)}")
@@ -72,12 +84,24 @@ async def cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cancelled = await workflow_service.cancel_user_workflow(user_id)
 
             if cancelled:
-                await query.edit_message_text("操作已取消")
+                if translation_service:
+                    msg = translation_service.get(user_id, 'callbacks.operation_cancelled')
+                else:
+                    msg = "操作已取消"
+                await query.edit_message_text(msg)
                 logger.info(f"Cancelled workflow via callback for user {user_id}")
             else:
-                await query.edit_message_text("没有进行中的操作")
+                if translation_service:
+                    msg = translation_service.get(user_id, 'callbacks.no_operation_in_progress')
+                else:
+                    msg = "没有进行中的操作"
+                await query.edit_message_text(msg)
         else:
-            await query.edit_message_text("无法取消操作")
+            if translation_service:
+                msg = translation_service.get(user_id, 'callbacks.cannot_cancel')
+            else:
+                msg = "无法取消操作"
+            await query.edit_message_text(msg)
 
     except Exception as e:
         logger.error(f"Error handling cancel callback: {str(e)}")
@@ -99,35 +123,59 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
         # Handle back to menu
         if query.data == "back_to_menu":
-            await query.edit_message_text("已取消")
+            if translation_service:
+                msg = translation_service.get(user_id, 'callbacks.cancelled')
+            else:
+                msg = "已取消"
+            await query.edit_message_text(msg)
             return
 
         # Extract style from callback data (video_style_a, video_style_b, video_style_c)
         if not query.data.startswith("video_"):
-            await query.edit_message_text("无效的选择")
+            if translation_service:
+                msg = translation_service.get(user_id, 'callbacks.invalid_selection')
+            else:
+                msg = "无效的选择"
+            await query.edit_message_text(msg)
             return
 
         style = query.data  # Keep full format: "video_style_a"
 
-        # Map callback data to proper Chinese style names
-        from core.constants import WORKFLOW_NAME_VIDEO_A, WORKFLOW_NAME_VIDEO_B, WORKFLOW_NAME_VIDEO_C
-        style_map = {
-            'video_style_a': WORKFLOW_NAME_VIDEO_A,
-            'video_style_b': WORKFLOW_NAME_VIDEO_B,
-            'video_style_c': WORKFLOW_NAME_VIDEO_C
-        }
-        style_name = style_map.get(style, style)
+        # Map callback data to translated style names
+        if translation_service:
+            style_map = {
+                'video_style_a': translation_service.get(user_id, 'video.style_a_name'),
+                'video_style_b': translation_service.get(user_id, 'video.style_b_name'),
+                'video_style_c': translation_service.get(user_id, 'video.style_c_name')
+            }
+            style_name = style_map.get(style, style)
+        else:
+            from core.constants import WORKFLOW_NAME_VIDEO_A, WORKFLOW_NAME_VIDEO_B, WORKFLOW_NAME_VIDEO_C
+            style_map = {
+                'video_style_a': WORKFLOW_NAME_VIDEO_A,
+                'video_style_b': WORKFLOW_NAME_VIDEO_B,
+                'video_style_c': WORKFLOW_NAME_VIDEO_C
+            }
+            style_name = style_map.get(style, style)
 
         # Check if already processing
         if state_manager.is_state(user_id, 'processing'):
-            from core.constants import ALREADY_PROCESSING_MESSAGE
-            await query.edit_message_text(ALREADY_PROCESSING_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'processing.already_processing')
+            else:
+                from core.constants import ALREADY_PROCESSING_MESSAGE
+                msg = ALREADY_PROCESSING_MESSAGE
+            await query.edit_message_text(msg)
             return
 
         # Validate style
         valid_styles = ['video_style_a', 'video_style_b', 'video_style_c']
         if style not in valid_styles:
-            await query.edit_message_text("无效的风格选择")
+            if translation_service:
+                msg = translation_service.get(user_id, 'callbacks.invalid_style')
+            else:
+                msg = "无效的风格选择"
+            await query.edit_message_text(msg)
             return
 
         # Convert to internal format: "style_a", "style_b", "style_c"
@@ -141,10 +189,13 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             retry_count=0
         )
 
-        from core.constants import VIDEO_SEND_IMAGE_PROMPT
-        await query.edit_message_text(
-            f"已选择 {style_name}\n\n{VIDEO_SEND_IMAGE_PROMPT}"
-        )
+        if translation_service:
+            prompt = translation_service.get(user_id, 'video.send_image_prompt')
+            msg = translation_service.get(user_id, 'callbacks.style_selected_video', style_name=style_name, prompt=prompt)
+        else:
+            from core.constants import VIDEO_SEND_IMAGE_PROMPT
+            msg = f"已选择 {style_name}\n\n{VIDEO_SEND_IMAGE_PROMPT}"
+        await query.edit_message_text(msg)
 
         logger.info(f"User {user_id} selected video style: {internal_style}")
 
@@ -168,12 +219,20 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
         # Handle back to menu
         if query.data == "back_to_menu":
-            await query.edit_message_text("已取消")
+            if translation_service:
+                msg = translation_service.get(user_id, 'callbacks.cancelled')
+            else:
+                msg = "已取消"
+            await query.edit_message_text(msg)
             return
 
         # Extract style from callback data (image_style_bra, image_style_undress)
         if not query.data.startswith("image_style_"):
-            await query.edit_message_text("无效的选择")
+            if translation_service:
+                msg = translation_service.get(user_id, 'callbacks.invalid_selection')
+            else:
+                msg = "无效的选择"
+            await query.edit_message_text(msg)
             return
 
         style = query.data  # Keep full format: "image_style_bra" or "image_style_undress"
@@ -181,7 +240,11 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         # Validate style
         valid_styles = ['image_style_bra', 'image_style_undress']
         if style not in valid_styles:
-            await query.edit_message_text("无效的风格选择")
+            if translation_service:
+                msg = translation_service.get(user_id, 'callbacks.invalid_style')
+            else:
+                msg = "无效的风格选择"
+            await query.edit_message_text(msg)
             return
 
         # Convert to internal format: "bra" or "undress"
@@ -189,17 +252,28 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
         # Check if already processing
         if state_manager.is_state(user_id, 'processing'):
-            from core.constants import ALREADY_PROCESSING_MESSAGE
-            await query.edit_message_text(ALREADY_PROCESSING_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'processing.already_processing')
+            else:
+                from core.constants import ALREADY_PROCESSING_MESSAGE
+                msg = ALREADY_PROCESSING_MESSAGE
+            await query.edit_message_text(msg)
             return
 
-        # Map callback data to proper Chinese style names
-        from core.constants import WORKFLOW_NAME_IMAGE_BRA, WORKFLOW_NAME_IMAGE_UNDRESS
-        style_map = {
-            'image_style_bra': WORKFLOW_NAME_IMAGE_BRA,
-            'image_style_undress': WORKFLOW_NAME_IMAGE_UNDRESS
-        }
-        style_name = style_map.get(style, style)
+        # Map callback data to translated style names
+        if translation_service:
+            style_map = {
+                'image_style_bra': translation_service.get(user_id, 'image.style_bra_name'),
+                'image_style_undress': translation_service.get(user_id, 'image.style_undress_name')
+            }
+            style_name = style_map.get(style, style)
+        else:
+            from core.constants import WORKFLOW_NAME_IMAGE_BRA, WORKFLOW_NAME_IMAGE_UNDRESS
+            style_map = {
+                'image_style_bra': WORKFLOW_NAME_IMAGE_BRA,
+                'image_style_undress': WORKFLOW_NAME_IMAGE_UNDRESS
+            }
+            style_name = style_map.get(style, style)
 
         # Update state to waiting for image with selected style
         state_manager.update_state(
@@ -209,19 +283,24 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             retry_count=0
         )
 
-        from core.constants import SEND_IMAGE_PROMPT
-        await query.edit_message_text(
-            f"已选择 {style_name}\n\n{SEND_IMAGE_PROMPT}",
-            parse_mode='Markdown'
-        )
+        if translation_service:
+            prompt = translation_service.get(user_id, 'image.send_image_prompt')
+            msg = translation_service.get(user_id, 'callbacks.style_selected_image', style_name=style_name, prompt=prompt)
+        else:
+            from core.constants import SEND_IMAGE_PROMPT
+            msg = f"已选择 {style_name}\n\n{SEND_IMAGE_PROMPT}"
+        await query.edit_message_text(msg, parse_mode='Markdown')
 
         logger.info(f"User {user_id} selected image style: {internal_style}")
 
     except Exception as e:
         logger.error(f"Error handling image style callback: {str(e)}")
-        await update.effective_chat.send_message(
-            "选择风格时发生错误，请重试"
-        )
+        user_id = update.effective_user.id
+        if translation_service:
+            msg = translation_service.get(user_id, 'callbacks.style_selection_error')
+        else:
+            msg = "选择风格时发生错误，请重试"
+        await update.effective_chat.send_message(msg)
 
 
 async def credit_confirmation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -266,10 +345,14 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
             state_manager.reset_state(user_id)
 
             # Send cancelled message and show main menu
-            from core.constants import CREDIT_CONFIRMATION_CANCELLED_MESSAGE
+            if translation_service:
+                msg = translation_service.get(user_id, 'credits.confirmation_cancelled')
+            else:
+                from core.constants import CREDIT_CONFIRMATION_CANCELLED_MESSAGE
+                msg = CREDIT_CONFIRMATION_CANCELLED_MESSAGE
             await context.bot.send_message(
                 chat_id=user_id,
-                text=CREDIT_CONFIRMATION_CANCELLED_MESSAGE
+                text=msg
             )
 
             # Show main menu
@@ -304,9 +387,13 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
             workflow_service = context.bot_data.get('workflow_service')
             if not workflow_service:
                 logger.error("workflow_service not found in bot_data")
+                if translation_service:
+                    msg = translation_service.get(user_id, 'errors.system')
+                else:
+                    msg = "系统错误，请稍后重试"
                 await context.bot.send_message(
                     chat_id=user_id,
-                    text="系统错误，请稍后重试"
+                    text=msg
                 )
                 state_manager.reset_state(user_id)
                 return
@@ -346,17 +433,25 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
 
             else:
                 logger.error(f"Unknown workflow type: {workflow_type}")
+                if translation_service:
+                    msg = translation_service.get(user_id, 'errors.system')
+                else:
+                    msg = "系统错误，请稍后重试"
                 await context.bot.send_message(
                     chat_id=user_id,
-                    text="系统错误，请稍后重试"
+                    text=msg
                 )
                 state_manager.reset_state(user_id)
 
     except Exception as e:
         logger.error(f"Error handling credit confirmation callback: {str(e)}")
+        if translation_service:
+            msg = translation_service.get(user_id, 'callbacks.confirmation_error')
+        else:
+            msg = "处理确认时发生错误，请稍后重试"
         await context.bot.send_message(
             chat_id=user_id,
-            text="处理确认时发生错误，请稍后重试"
+            text=msg
         )
         state_manager.reset_state(user_id)
 
@@ -387,4 +482,9 @@ async def open_topup_menu_callback(update: Update, context: ContextTypes.DEFAULT
 
     except Exception as e:
         logger.error(f"Error opening top-up menu: {str(e)}")
-        await query.answer("打开充值菜单失败，请稍后重试", show_alert=True)
+        user_id = update.effective_user.id
+        if translation_service:
+            msg = translation_service.get(user_id, 'callbacks.topup_menu_error')
+        else:
+            msg = "打开充值菜单失败，请稍后重试"
+        await query.answer(msg, show_alert=True)

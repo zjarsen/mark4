@@ -140,7 +140,12 @@
     "server_status": "  └─ 服务器 **{server_number}号**：**{total_count}** 个任务",
     "vip_count": "     • 👑 VIP：**{vip_count}** 个",
     "regular_count": "     • 👤 普通：**{regular_count}** 个",
-    "vip_priority_tip": "💡 **提示**：VIP用户享有优先处理权"
+    "vip_priority_tip": "💡 **提示**：VIP用户享有优先处理权",
+    "status_unavailable": "❌ 无法获取队列状态",
+    "in_queue_position": "📋 您的任务已加入队列\n位置: #{position}",
+    "refresh_button": "🔄 刷新",
+    "task_processing": "🚀 您的任务现在正在服务器上处理！\n⏱️ 这可能需要几分钟...",
+    "refresh_failed": "刷新失败"
   },
   "processing": {
     "in_progress": "处理中...",

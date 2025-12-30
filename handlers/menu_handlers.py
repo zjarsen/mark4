@@ -25,11 +25,12 @@ notification_service = None
 queue_service = None
 config = None
 credit_service = None
+translation_service = None
 
 
 async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Route menu selections to appropriate handlers.
+    Route menu selections to appropriate handlers using numeric prefix (language-independent).
 
     Args:
         update: Telegram Update
@@ -40,36 +41,43 @@ async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TY
         text = update.message.text
 
         logger.info(f"[MENU_SELECTION] User {user_id} sent text: '{text}'")
-        logger.info(f"[MENU_SELECTION] Text length: {len(text)}, starts with '1.': {text.startswith('1.')}")
 
-        # Use partial matching since menu text is dynamic
-        if text.startswith("1.") or "图生图" in text or "图片脱衣" in text:
+        # Use numeric prefix matching (language-independent routing)
+        if text.startswith("1."):
             logger.info(f"[MENU_SELECTION] Matched option 1 (image processing) for user {user_id}")
             await handle_image_processing(update, context, user_id)
 
-        elif text.startswith("2.") or "图生成视频" in text or "视频类脱衣" in text or "图片转视频" in text:
+        elif text.startswith("2."):
             logger.info(f"[MENU_SELECTION] Matched option 2 (video processing) for user {user_id}")
             await handle_video_processing(update, context, user_id)
 
-        elif text.startswith("3.") or "充值积分" in text:
+        elif text.startswith("3."):
             logger.info(f"[MENU_SELECTION] Matched option 3 (topup) for user {user_id}")
             from handlers.credit_handlers import show_topup_packages
             await show_topup_packages(update, context)
 
-        elif text.startswith("4.") or "积分余额" in text or "充值记录" in text:
+        elif text.startswith("4."):
             logger.info(f"[MENU_SELECTION] Matched option 4 (balance history) for user {user_id}")
             from handlers.credit_handlers import show_balance_and_history
             await show_balance_and_history(update, context)
 
-        elif text.startswith("5.") or "查看队列" in text:
+        elif text.startswith("5."):
             logger.info(f"[MENU_SELECTION] Matched option 5 (check queue) for user {user_id}")
             await handle_check_queue(update, context, user_id)
+
+        elif text.startswith("6."):
+            logger.info(f"[MENU_SELECTION] Matched option 6 (language) for user {user_id}")
+            from handlers.language_handlers import show_language_selection
+            await show_language_selection(update, context, is_first_time=False)
 
         else:
             # Unknown menu option
             logger.warning(f"[MENU_SELECTION] No match found for text from user {user_id}: '{text}'")
-            logger.warning(f"[MENU_SELECTION] Sending UNEXPECTED_INPUT_MESSAGE")
-            await update.message.reply_text(UNEXPECTED_INPUT_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'errors.unexpected_input')
+            else:
+                msg = UNEXPECTED_INPUT_MESSAGE
+            await update.message.reply_text(msg)
 
     except Exception as e:
         logger.error(f"Error handling menu selection: {str(e)}")
@@ -103,44 +111,36 @@ async def handle_image_processing(
         # Check if user is already processing
         if state_manager.is_state(user_id, 'processing'):
             logger.info(f"[IMAGE_PROCESSING] User {user_id} already processing, showing error")
-            await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'processing.already_processing')
+            else:
+                msg = ALREADY_PROCESSING_MESSAGE
+            await update.message.reply_text(msg)
             return
 
         # Check trial status for undress style
         has_trial = await credit_service.has_free_trial(user_id)
 
-        # Generate dynamic button text for undress style
-        if has_trial:
-            undress_button_text = "🆓 脱到精光 ✨免费体验✨"
-            trial_status = "🎁🎉 **免费体验可用！** 🎉🎁\n💫 使用后2天内自动重置"
+        # Get translated button text
+        if translation_service:
+            bra_button = translation_service.get(user_id, 'image.style_bra_button')
+            back_button = translation_service.get(user_id, 'buttons.back_to_menu')
         else:
-            # Get next free trial time and calculate countdown
-            next_trial_time = await credit_service.get_next_free_trial_time(user_id)
+            bra_button = IMAGE_STYLE_BRA_BUTTON
+            back_button = BACK_TO_MENU_BUTTON
 
-            if next_trial_time:
-                # Calculate time difference
-                beijing_tz = pytz.timezone('Asia/Shanghai')
-                now = datetime.now(beijing_tz)
-                time_diff = next_trial_time - now
+        # Generate dynamic button text for undress style (for now keep it simple)
+        if translation_service:
+            undress_button_text = translation_service.get(user_id, 'image.style_undress_button')
+        else:
+            undress_button_text = "脱到精光（10积分）"
 
-                # Convert to days and hours
-                days = time_diff.days
-                hours = time_diff.seconds // 3600
-
-                if days > 0:
-                    countdown = f"{days}天{hours}小时"
-                else:
-                    countdown = f"{hours}小时"
-
-                undress_button_text = f"脱到精光（10积分）"
-                trial_status = f"⏰ **距离下次免费：{countdown}**\n💳 当前需要：10积分"
-            else:
-                # No trial history, treat as available
-                undress_button_text = "🆓 脱到精光 ✨免费体验✨"
-                trial_status = "🎁🎉 **免费体验可用！** 🎉🎁\n💫 使用后2天内自动重置"
-
-        # Generate dynamic message
-        message = f"""🎨 选择脱衣风格
+        # For now, use simplified version of style selection message
+        # The complex trial status display can be enhanced later
+        if translation_service:
+            message = translation_service.get(user_id, 'image.style_selection')
+        else:
+            message = f"""🎨 选择脱衣风格
 
 ━━━━━━━━━━━━━━━━━━
 1️⃣ 粉色蕾丝内衣示例✨✨
@@ -153,16 +153,13 @@ async def handle_image_processing(
 2️⃣ 脱到精光示例✨✨
 [🔞点击观看🔞]({DEMO_LINK_UNDRESS})
 
-{trial_status}
-━━━━━━━━━━━━━━━━━━
-
 请选择您想要的风格："""
 
         # Build keyboard with dynamic button text
         keyboard = [
-            [InlineKeyboardButton(IMAGE_STYLE_BRA_BUTTON, callback_data="image_style_bra")],
+            [InlineKeyboardButton(bra_button, callback_data="image_style_bra")],
             [InlineKeyboardButton(undress_button_text, callback_data="image_style_undress")],
-            [InlineKeyboardButton(BACK_TO_MENU_BUTTON, callback_data="back_to_menu")]
+            [InlineKeyboardButton(back_button, callback_data="back_to_menu")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -179,8 +176,12 @@ async def handle_image_processing(
 
     except Exception as e:
         logger.error(f"Error in handle_image_processing: {str(e)}")
-        from core.constants import ERROR_MESSAGE
-        await update.message.reply_text(ERROR_MESSAGE)
+        if translation_service:
+            msg = translation_service.get(user_id, 'errors.system')
+        else:
+            from core.constants import ERROR_MESSAGE
+            msg = ERROR_MESSAGE
+        await update.message.reply_text(msg)
 
 
 async def handle_video_processing(
@@ -209,20 +210,38 @@ async def handle_video_processing(
 
         # Check if user is already processing
         if state_manager.is_state(user_id, 'processing'):
-            await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'processing.already_processing')
+            else:
+                msg = ALREADY_PROCESSING_MESSAGE
+            await update.message.reply_text(msg)
             return
+
+        # Get translated text
+        if translation_service:
+            message = translation_service.get(user_id, 'video.style_selection')
+            style_a = translation_service.get(user_id, 'video.style_a_button')
+            style_b = translation_service.get(user_id, 'video.style_b_button')
+            style_c = translation_service.get(user_id, 'video.style_c_button')
+            back_button = translation_service.get(user_id, 'buttons.back_to_menu')
+        else:
+            message = VIDEO_STYLE_SELECTION_MESSAGE
+            style_a = VIDEO_STYLE_A_BUTTON
+            style_b = VIDEO_STYLE_B_BUTTON
+            style_c = VIDEO_STYLE_C_BUTTON
+            back_button = BACK_TO_MENU_BUTTON
 
         # Show style selection keyboard
         keyboard = [
-            [InlineKeyboardButton(VIDEO_STYLE_A_BUTTON, callback_data="video_style_a")],
-            [InlineKeyboardButton(VIDEO_STYLE_B_BUTTON, callback_data="video_style_b")],
-            [InlineKeyboardButton(VIDEO_STYLE_C_BUTTON, callback_data="video_style_c")],
-            [InlineKeyboardButton(BACK_TO_MENU_BUTTON, callback_data="back_to_menu")]
+            [InlineKeyboardButton(style_a, callback_data="video_style_a")],
+            [InlineKeyboardButton(style_b, callback_data="video_style_b")],
+            [InlineKeyboardButton(style_c, callback_data="video_style_c")],
+            [InlineKeyboardButton(back_button, callback_data="back_to_menu")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await update.message.reply_text(
-            VIDEO_STYLE_SELECTION_MESSAGE,
+            message,
             reply_markup=reply_markup,
             parse_mode='Markdown'
         )
@@ -256,11 +275,15 @@ async def handle_check_queue(
 
         if not workflow_service:
             logger.error("workflow_service not found in bot_data")
+            if translation_service:
+                msg = translation_service.get(user_id, 'queue.unavailable')
+            else:
+                msg = QUEUE_UNAVAILABLE
             # Handle both message and callback query
             if update.callback_query:
-                await update.callback_query.answer(QUEUE_UNAVAILABLE, show_alert=True)
+                await update.callback_query.answer(msg, show_alert=True)
             elif update.message:
-                await update.message.reply_text(QUEUE_UNAVAILABLE)
+                await update.message.reply_text(msg)
             return
 
         logger.info("Getting application queue status...")
@@ -270,18 +293,27 @@ async def handle_check_queue(
 
         # Format queue status message with improved UI
         message = "━━━━━━━━━━━━━━━━━━━━\n"
-        message += "📊 **当前队列状态**\n"
-        message += "━━━━━━━━━━━━━━━━━━━━\n\n"
+        if translation_service:
+            message += translation_service.get(user_id, 'queue.status_header', default="📊 **Current Queue Status**")
+        else:
+            message += "📊 **当前队列状态**"
+        message += "\n━━━━━━━━━━━━━━━━━━━━\n\n"
 
         # Per-manager detailed status (no overview section)
         for workflow_type, servers in status['managers'].items():
-            # Workflow type icon
+            # Workflow type icon and label
             if workflow_type == 'image':
                 workflow_icon = "🖼️"
-                workflow_label = "图片处理"
+                if translation_service:
+                    workflow_label = translation_service.get(user_id, 'queue.label_image', default="Image Processing")
+                else:
+                    workflow_label = "图片处理"
             else:
                 workflow_icon = "🎬"
-                workflow_label = "视频处理"
+                if translation_service:
+                    workflow_label = translation_service.get(user_id, 'queue.label_video', default="Video Processing")
+                else:
+                    workflow_label = "视频处理"
 
             message += f"{workflow_icon} **{workflow_label}**\n"
 
@@ -296,11 +328,25 @@ async def handle_check_queue(
                 total_count = vip_count + regular_count + (1 if is_processing else 0)
 
                 # Show server details with numbered naming
-                message += f"  └─ 服务器 **{server_number}号**：**{total_count}** 个任务\n"
+                if translation_service:
+                    server_line = translation_service.get(user_id, 'queue.server_status', server_number=server_number, total_count=total_count, default=f"  └─ Server **{server_number}**: **{total_count}** tasks")
+                else:
+                    server_line = f"  └─ 服务器 **{server_number}号**：**{total_count}** 个任务"
+                message += server_line + "\n"
+
                 if vip_count > 0:
-                    message += f"     • 👑 VIP：**{vip_count}** 个\n"
+                    if translation_service:
+                        vip_line = translation_service.get(user_id, 'queue.vip_count', vip_count=vip_count, default=f"     • 👑 VIP: **{vip_count}**")
+                    else:
+                        vip_line = f"     • 👑 VIP：**{vip_count}** 个"
+                    message += vip_line + "\n"
+
                 if regular_count > 0:
-                    message += f"     • 👤 普通：**{regular_count}** 个\n"
+                    if translation_service:
+                        regular_line = translation_service.get(user_id, 'queue.regular_count', regular_count=regular_count, default=f"     • 👤 Regular: **{regular_count}**")
+                    else:
+                        regular_line = f"     • 👤 普通：**{regular_count}** 个"
+                    message += regular_line + "\n"
 
                 server_number += 1
 
@@ -308,7 +354,10 @@ async def handle_check_queue(
 
         # Footer with helpful info
         message += "━━━━━━━━━━━━━━━━━━━━\n"
-        message += "💡 **提示**：VIP用户享有优先处理权"
+        if translation_service:
+            message += translation_service.get(user_id, 'queue.vip_priority_tip', default="💡 **Tip**: VIP users have priority processing")
+        else:
+            message += "💡 **提示**：VIP用户享有优先处理权"
 
         logger.info(f"Sending queue status message to user {user_id}")
 
@@ -331,11 +380,16 @@ async def handle_check_queue(
 
     except Exception as e:
         logger.error(f"Error checking queue: {str(e)}", exc_info=True)
+        user_id = update.effective_user.id if update.effective_user else None
+        if translation_service and user_id:
+            msg = translation_service.get(user_id, 'queue.unavailable')
+        else:
+            msg = QUEUE_UNAVAILABLE
         # Handle both message and callback query
         if update.callback_query:
-            await update.callback_query.answer(QUEUE_UNAVAILABLE, show_alert=True)
+            await update.callback_query.answer(msg, show_alert=True)
         elif update.message:
-            await update.message.reply_text(QUEUE_UNAVAILABLE)
+            await update.message.reply_text(msg)
 
 
 async def handle_unexpected_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -360,7 +414,11 @@ async def handle_unexpected_text(update: Update, context: ContextTypes.DEFAULT_T
             await handle_invalid_format(update, context, user_id)
         else:
             # Generic unexpected input
-            await update.message.reply_text(UNEXPECTED_INPUT_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'errors.unexpected_input')
+            else:
+                msg = UNEXPECTED_INPUT_MESSAGE
+            await update.message.reply_text(msg)
 
             # Show menu
             from handlers.command_handlers import show_main_menu

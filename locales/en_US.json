@@ -140,7 +140,12 @@
     "server_status": "  └─ Server **{server_number}**: **{total_count}** tasks",
     "vip_count": "     • 👑 VIP: **{vip_count}**",
     "regular_count": "     • 👤 Regular: **{regular_count}**",
-    "vip_priority_tip": "💡 **Tip**: VIP users have priority processing"
+    "vip_priority_tip": "💡 **Tip**: VIP users have priority processing",
+    "status_unavailable": "❌ Unable to get queue status",
+    "in_queue_position": "📋 Your task has been queued\nPosition: #{position}",
+    "refresh_button": "🔄 Refresh",
+    "task_processing": "🚀 Your task is now being processed on the server!\n⏱️ This may take a few minutes...",
+    "refresh_failed": "Refresh failed"
   },
   "processing": {
     "in_progress": "Processing...",

@@ -18,6 +18,7 @@ state_manager = None
 file_service = None
 workflow_service = None
 config = None
+translation_service = None
 
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -37,12 +38,20 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Validate user state
         if not (is_waiting_image or is_waiting_video):
-            await update.message.reply_text(INVALID_STATE_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'errors.invalid_state')
+            else:
+                msg = INVALID_STATE_MESSAGE
+            await update.message.reply_text(msg)
             return
 
         # Check if already processing
         if state_manager.is_state(user_id, 'processing'):
-            await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'processing.already_processing')
+            else:
+                msg = ALREADY_PROCESSING_MESSAGE
+            await update.message.reply_text(msg)
             return
 
         # Reset retry count on successful photo upload
@@ -77,9 +86,11 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 # No style selection - fallback (shouldn't happen in new flow)
                 logger.warning(f"User {user_id} uploading image without style selection")
-                await update.message.reply_text(
-                    "请先从主菜单选择图片处理选项"
-                )
+                if translation_service:
+                    msg = translation_service.get(user_id, 'errors.no_style_selected')
+                else:
+                    msg = "请先从主菜单选择图片处理选项"
+                await update.message.reply_text(msg)
                 state_manager.reset_state(user_id)
                 return
 
@@ -89,7 +100,11 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             video_style = state.get('video_style')
 
             if not video_style:
-                await update.message.reply_text("风格选择错误，请重新开始")
+                if translation_service:
+                    msg = translation_service.get(user_id, 'errors.style_selection_error')
+                else:
+                    msg = "风格选择错误，请重新开始"
+                await update.message.reply_text(msg)
                 state_manager.reset_state(user_id)
                 return
 
@@ -104,7 +119,11 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         logger.error(f"Error handling photo from user {user_id}: {str(e)}")
-        await update.message.reply_text(UPLOAD_FAILED_MESSAGE)
+        if translation_service:
+            msg = translation_service.get(user_id, 'errors.upload_failed')
+        else:
+            msg = UPLOAD_FAILED_MESSAGE
+        await update.message.reply_text(msg)
         state_manager.reset_state(user_id)
 
 
@@ -129,7 +148,11 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Check if already processing
         if state_manager.is_state(user_id, 'processing'):
-            await update.message.reply_text(ALREADY_PROCESSING_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'processing.already_processing')
+            else:
+                msg = ALREADY_PROCESSING_MESSAGE
+            await update.message.reply_text(msg)
             return
 
         document = update.message.document
@@ -168,9 +191,11 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 # No style selection - fallback (shouldn't happen in new flow)
                 logger.warning(f"User {user_id} uploading image without style selection")
-                await update.message.reply_text(
-                    "请先从主菜单选择图片处理选项"
-                )
+                if translation_service:
+                    msg = translation_service.get(user_id, 'errors.no_style_selected')
+                else:
+                    msg = "请先从主菜单选择图片处理选项"
+                await update.message.reply_text(msg)
                 state_manager.reset_state(user_id)
                 return
 
@@ -180,7 +205,11 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
             video_style = state.get('video_style')
 
             if not video_style:
-                await update.message.reply_text("风格选择错误，请重新开始")
+                if translation_service:
+                    msg = translation_service.get(user_id, 'errors.style_selection_error')
+                else:
+                    msg = "风格选择错误，请重新开始"
+                await update.message.reply_text(msg)
                 state_manager.reset_state(user_id)
                 return
 
@@ -195,7 +224,11 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         logger.error(f"Error handling document from user {user_id}: {str(e)}")
-        await update.message.reply_text(UPLOAD_FAILED_MESSAGE)
+        if translation_service:
+            msg = translation_service.get(user_id, 'errors.upload_failed')
+        else:
+            msg = UPLOAD_FAILED_MESSAGE
+        await update.message.reply_text(msg)
         state_manager.reset_state(user_id)
 
 
@@ -218,7 +251,11 @@ async def handle_invalid_format(
 
         if retry_count >= config.MAX_RETRY_COUNT:
             # Max retries reached - reset and show menu
-            await update.message.reply_text(MAX_RETRY_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'errors.max_retry')
+            else:
+                msg = MAX_RETRY_MESSAGE
+            await update.message.reply_text(msg)
             state_manager.reset_state(user_id)
 
             # Show menu again
@@ -230,7 +267,11 @@ async def handle_invalid_format(
         else:
             # Increment retry count and prompt again
             state_manager.update_state(user_id, retry_count=retry_count)
-            await update.message.reply_text(INVALID_FORMAT_MESSAGE)
+            if translation_service:
+                msg = translation_service.get(user_id, 'errors.invalid_format')
+            else:
+                msg = INVALID_FORMAT_MESSAGE
+            await update.message.reply_text(msg)
 
             logger.debug(
                 f"Invalid format from user {user_id}, "

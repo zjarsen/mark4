@@ -24,6 +24,7 @@ from services.database_service import DatabaseService
 from services.credit_service import CreditService
 from services.payment_service import PaymentService
 from services.discount_service import DiscountService
+from services.translation_service import TranslationService
 
 # Import payment provider
 from payments.wechat_alipay_provider import WeChatAlipayProvider
@@ -84,6 +85,13 @@ class BotApplication:
         self.credit_service = CreditService(self.config, self.database_service)
         self.discount_service = DiscountService(self.database_service)
 
+        # Translation service
+        self.translation_service = TranslationService(
+            self.database_service,
+            locales_dir=getattr(self.config, 'LOCALES_DIR', './locales'),
+            default_lang='zh_CN'
+        )
+
         # Payment services
         self.payment_provider = WeChatAlipayProvider(self.config)
         self.payment_service = PaymentService(
@@ -127,6 +135,7 @@ class BotApplication:
         command_handlers.state_manager = self.state_manager
         command_handlers.config = self.config
         command_handlers.credit_service = self.credit_service
+        command_handlers.translation_service = self.translation_service
 
         # Inject into menu_handlers
         menu_handlers.state_manager = self.state_manager
@@ -134,16 +143,19 @@ class BotApplication:
         menu_handlers.queue_service = self.queue_service
         menu_handlers.config = self.config
         menu_handlers.credit_service = self.credit_service
+        menu_handlers.translation_service = self.translation_service
 
         # Inject into media_handlers
         media_handlers.state_manager = self.state_manager
         media_handlers.file_service = self.file_service
         media_handlers.workflow_service = self.workflow_service
         media_handlers.config = self.config
+        media_handlers.translation_service = self.translation_service
 
         # Inject into callback_handlers
         callback_handlers.state_manager = self.state_manager
         callback_handlers.queue_service = self.queue_service
+        callback_handlers.translation_service = self.translation_service
 
         # Inject into credit_handlers
         from handlers import credit_handlers
@@ -151,10 +163,17 @@ class BotApplication:
         credit_handlers.payment_service = self.payment_service
         credit_handlers.timeout_service = self.timeout_service
         credit_handlers.discount_service = self.discount_service
+        credit_handlers.translation_service = self.translation_service
 
-        # Store workflow_service in bot_data for access from handlers
+        # Inject into language_handlers
+        from handlers import language_handlers
+        language_handlers.translation_service = self.translation_service
+
+        # Store services in bot_data for access from handlers
         self.app.bot_data['workflow_service'] = self.workflow_service
         self.app.bot_data['state_manager'] = self.state_manager
+        self.app.bot_data['translation_service'] = self.translation_service
+        self.app.bot_data['database_service'] = self.database_service
 
         logger.debug("Dependencies injected into handlers")
 
@@ -240,6 +259,7 @@ class BotApplication:
         self.app.add_handler(CommandHandler("help", command_handlers.help_command))
         self.app.add_handler(CommandHandler("cancel", command_handlers.cancel_command))
         self.app.add_handler(CommandHandler("status", command_handlers.status_command))
+        self.app.add_handler(CommandHandler("language", command_handlers.language_command))
 
         # Admin top-up handler (high priority, only matches exact password)
         # Custom filter that only matches the admin password
@@ -331,6 +351,15 @@ class BotApplication:
             )
         )
 
+        # Language selection callback handler
+        from handlers.language_handlers import handle_language_selection_callback
+        self.app.add_handler(
+            CallbackQueryHandler(
+                handle_language_selection_callback,
+                pattern="^lang_"
+            )
+        )
+
         # Open topup menu callback handler (for welcome message button)
         from handlers.callback_handlers import open_topup_menu_callback
         self.app.add_handler(
@@ -361,7 +390,11 @@ class BotApplication:
                 # Get workflow service
                 workflow_service = context.bot_data.get('workflow_service')
                 if not workflow_service:
-                    await query.edit_message_text("❌ 无法获取队列状态")
+                    if self.translation_service:
+                        msg = self.translation_service.get(user_id, 'queue.status_unavailable')
+                    else:
+                        msg = "❌ 无法获取队列状态"
+                    await query.edit_message_text(msg)
                     return
 
                 # Determine which queue manager to check based on job_id pattern
@@ -391,13 +424,21 @@ class BotApplication:
                 try:
                     if found_in_queue and position is not None:
                         # Job is still in queue - show position with refresh button
-                        message_text = f"📋 您的任务已加入队列\n位置: #{position}"
-                        keyboard = [[InlineKeyboardButton("🔄 刷新", callback_data=f"refresh_queue_{job_id}")]]
+                        if self.translation_service:
+                            message_text = self.translation_service.get(user_id, 'queue.in_queue_position', position=position)
+                            button_text = self.translation_service.get(user_id, 'queue.refresh_button')
+                        else:
+                            message_text = f"📋 您的任务已加入队列\n位置: #{position}"
+                            button_text = "🔄 刷新"
+                        keyboard = [[InlineKeyboardButton(button_text, callback_data=f"refresh_queue_{job_id}")]]
                         reply_markup = InlineKeyboardMarkup(keyboard)
                         await query.edit_message_text(message_text, reply_markup=reply_markup)
                     else:
                         # Job not found in queue - being processed, show processing message without button
-                        message_text = "🚀 您的任务现在正在服务器上处理！\n⏱️ 这可能需要几分钟..."
+                        if self.translation_service:
+                            message_text = self.translation_service.get(user_id, 'queue.task_processing')
+                        else:
+                            message_text = "🚀 您的任务现在正在服务器上处理！\n⏱️ 这可能需要几分钟..."
                         await query.edit_message_text(message_text)
 
                     logger.info(f"Refreshed queue position for user {user_id}, job {job_id}: position={position}")
@@ -412,7 +453,11 @@ class BotApplication:
             except Exception as e:
                 logger.error(f"Error refreshing queue: {e}", exc_info=True)
                 try:
-                    await query.answer("刷新失败", show_alert=True)
+                    if self.translation_service:
+                        msg = self.translation_service.get(user_id, 'queue.refresh_failed')
+                    else:
+                        msg = "刷新失败"
+                    await query.answer(msg, show_alert=True)
                 except:
                     pass
 
