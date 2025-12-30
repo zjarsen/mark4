@@ -50,7 +50,8 @@ class WeChatAlipayProvider(PaymentProvider):
         user_id: int,
         amount: float,
         currency: str,
-        payment_method: str = 'alipay'
+        payment_method: str = 'alipay',
+        language_code: str = 'zh_CN'
     ) -> Dict:
         """
         Create a payment order with the 3rd party acquirer.
@@ -60,6 +61,7 @@ class WeChatAlipayProvider(PaymentProvider):
             amount: Payment amount
             currency: Currency code (CNY)
             payment_method: 'wechat' or 'alipay' (default: 'alipay')
+            language_code: User's language preference for return page
 
         Returns:
             Dictionary with:
@@ -79,13 +81,16 @@ class WeChatAlipayProvider(PaymentProvider):
             # 剑来支付 uses: 'alipay' or 'wxpay'
             payment_type = 'alipay' if payment_method == 'alipay' else 'wxpay'
 
+            # Add language parameter to return URL for translated HTML page
+            return_url_with_lang = f"{self.callback_url}?lang={language_code}"
+
             # Prepare SIGNATURE parameters (all signed for new vendor)
             signature_params = {
                 'pid': self.merchant_id,
                 'type': payment_type,
                 'out_trade_no': payment_id,
                 'notify_url': self.notify_url,
-                'return_url': self.callback_url,
+                'return_url': return_url_with_lang,
                 'name': '积分充值',
                 'money': f"{amount:.2f}",
                 'clientip': '8.8.8.8',  # Required by vendor (TODO: use real user IP)

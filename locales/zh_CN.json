@@ -1,0 +1,197 @@
+{
+  "language": {
+    "name": "简体中文",
+    "code": "zh_CN"
+  },
+  "language_selection": {
+    "title": "🌍 选择您的语言 / Choose Your Language",
+    "subtitle": "\n请选择您偏好的语言，设置后可随时更改",
+    "success": "✅ 语言已设置为：{language_name}",
+    "change_language": "🌍 更换语言"
+  },
+  "welcome": {
+    "message": "✨ 欢迎体验顶级AI脱衣神器！\n\n🎰 **每日幸运折扣**\n• 💰 最高可享5折优惠！\n• 🎁 每日24:00重置，手慢无\n• ⚡ **充值前记得先抽折扣！**\n\n🎁 **新人福利**\n• 粉色蕾丝风格 - 永久免费\n• 脱到精光风格 - 每2天免费1次\n\n🎨 **核心功能**\n• 📸 图片脱衣（10积分/次）- 多种风格\n• 🎬 动态视频（30积分/次）- 3种特效\n• 🔥 顶级AI模型 - 效果逼真\n\n💎 **VIP会员特权**\n• 永久VIP（¥173）- 无限使用所有功能\n• 黑金VIP（¥281）- 无限使用 + 优先处理\n• 一次付费，终身享用\n\n🎁 **点击下方按钮，立即抽取今日幸运折扣！**",
+    "lucky_discount_button": "🎁 立即抽取幸运折扣"
+  },
+  "menu": {
+    "select_function": "",
+    "option_image": "1. 📸 图生图类脱衣！✨",
+    "option_video": "2. 🎬 图生成视频类脱衣！✨",
+    "option_topup": "3. 💳 充值积分 🎁 每日抽最高5折！",
+    "option_balance": "4. 📊 积分余额 & 充值记录",
+    "option_queue": "5. 查看当前队列",
+    "option_language": "6. 🌍 更换语言"
+  },
+  "image": {
+    "send_prompt": "📸 请上传您的照片，让AI开始创作～\n\n图片脱衣模型展示✨✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/5)\n\n💡 上传照片后，AI将自动开始处理",
+    "send_image_prompt": "📸 请上传您的照片，让AI开始创作～\n\n图片脱衣模型展示✨✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/5)\n\n💡 上传照片后，AI将自动开始处理",
+    "style_selection": "🎨 选择脱衣风格\n\n模型效果展示：\n\n1. 粉色蕾丝内衣示例✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/25)\n\n2. 脱到精光示例✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/29)\n\n请选择您想要的风格：",
+    "style_bra_button": "🎁 粉色蕾丝内衣 ✨永久免费✨",
+    "style_undress_button": "脱到精光（10积分）",
+    "style_bra_name": "粉色蕾丝内衣",
+    "style_undress_name": "脱到精光"
+  },
+  "video": {
+    "send_prompt": "📸 请上传照片\n\n💡 视频生成需要一些时间，请耐心等待～",
+    "send_image_prompt": "📸 请上传照片\n\n💡 视频生成需要一些时间，请耐心等待～",
+    "style_selection": "🎬 选择视频风格\n\n模型效果展示：\n\n1. 视频模型1示例：✨✨脱衣+抖胸✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/13)\n\n2. 视频模型2示例：✨✨脱衣+下体流精✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/15)\n\n3. 视频模型3示例：✨✨脱衣+吃吊喝精✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/19)\n\n请选择您想要的动态效果：",
+    "style_a_button": "脱衣+抖胸（30积分）",
+    "style_b_button": "脱衣+下体流精（30积分）",
+    "style_c_button": "脱衣+ 吃吊喝精（30积分）",
+    "style_a_name": "脱衣+抖胸",
+    "style_b_name": "脱衣+下体流精",
+    "style_c_name": "脱衣+ 吃吊喝精"
+  },
+  "workflow": {
+    "name_image_bra": "粉色蕾丝内衣",
+    "name_image_undress": "脱到精光",
+    "name_video_a": "脱衣+抖胸",
+    "name_video_b": "脱衣+下体流精",
+    "name_video_c": "脱衣+ 吃吊喝精"
+  },
+  "credits": {
+    "insufficient": "💳 积分不足\n\n当前余额：{balance} 积分\n本次需要：{required} 积分\n\n充值后立即可用，无需等待～",
+    "deducted": "已扣除 {amount} 积分，当前余额：{balance} 积分",
+    "added": "充值成功！获得 {amount} 积分，当前余额：{balance} 积分",
+    "balance_message": "💰 我的积分\n\n当前余额：{balance} 积分\n累计消费：{total_spent} 积分\n\n📋 服务价格：\n• 图片脱衣：10 积分/次\n• 视频生成：30 积分/次",
+    "confirmation": "📋 确认使用积分\n\n{workflow_name}\n\n💰 消费明细：\n• 当前余额：{balance} 积分\n• 本次消费：{cost} 积分\n• 确认后余额：{remaining} 积分\n\n✨ 确认后立即开始处理",
+    "confirmation_free_trial": "🎁 免费体验\n\n{workflow_name}\n\n本次使用：免费\n当前余额：{balance} 积分\n\n{cooldown_info}\n\n✨ 确认后立即开始处理",
+    "confirmation_cancelled": "已取消操作",
+    "insufficient_on_confirm": "❌ 积分不足\n\n当前余额：{balance} 积分\n所需积分：{cost} 积分\n\n请选择充值套餐："
+  },
+  "trial": {
+    "available": "🎁 免费体验可用！\n\n这是您的免费体验次数\n• 使用后2天内自动重置\n• 无需消耗积分\n\n请上传照片，开始体验AI魔法～",
+    "cooldown": "⏰ 免费次数冷却中\n\n下次可用：{next_available}\n\n💳 当前方案：\n• 您的余额：{balance} 积分\n• 本次需要：10 积分\n\n💡 充值可立即使用，或等待免费次数重置",
+    "bra_daily_limit": "哎呀！你今天的粉色蕾丝内衣免费使用次数已经用完啦！😅\n\n📊 今日使用情况:\n   • 已使用: {current_usage}/{limit} 次\n   • 重置时间: 明天凌晨 00:00 (GMT+8)\n\n💡 小贴士：\n   • 其他付费功能（脱到精光、视频处理等）没有每日限制\n   • 有积分就能随时使用哦！\n\n💎 或者升级VIP享受无限使用！\n\n明天见！💕"
+  },
+  "payment": {
+    "pending": "⏰ 等待支付确认\n\n请在3分钟内完成支付\n订单将在超时后自动取消\n\n📝 订单信息：\n• 订单号：{payment_id}\n• 金额：¥{amount}\n• 将获得：{credits} 积分\n\n💡 支付完成后积分自动到账",
+    "timeout": "⏰ 支付已超时\n\n订单已自动取消，积分未扣除\n您可以重新选择套餐进行充值",
+    "success": "🎉 充值成功！\n\n+{credits} 积分已到账\n现在就去体验吧～",
+    "failed": "支付失败，请重试",
+    "method_selection_with_discount": "💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}\n\n🔥 **折扣已应用** - 为您节省 ¥{savings}！\n⏰ _今日24:00前有效，请尽快完成支付_\n\n⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️\n📞 如需充值请联系客服\n\n请选择支付方式：",
+    "method_selection_normal": "💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}\n\n⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️\n📞 如需充值请联系客服\n\n请选择支付方式：",
+    "button_alipay": "💰 支付宝支付",
+    "button_wechat": "💚 微信支付",
+    "button_go_pay": "前往支付",
+    "method_label": "\n支付方式：{method}",
+    "notification_success": "✅ 支付成功！\n\n💰 充值积分：{credits}\n📊 当前余额：{new_balance} 积分\n\n订单号：{payment_id}\n\n感谢您的支持！",
+    "webhook_html_title": "支付处理中",
+    "webhook_html_heading": "支付处理中",
+    "webhook_html_body": "您的支付正在处理中，积分将在确认后自动到账。",
+    "webhook_html_return": "请返回 Telegram bot 查看您的余额。",
+    "webhook_html_footer": "此页面可以关闭",
+    "creation_error": "创建支付订单失败: {error}",
+    "creation_failed": "创建支付失败，请稍后重试",
+    "vip_already_owned": "您已经是{tier}用户了，无需重复购买！"
+  },
+  "topup": {
+    "packages_with_discount": "💳 充值套餐\n\n🔥🔥🔥 **今日超级幸运！** 🔥🔥🔥\n⚡ _您的专属折扣已解锁，点击下方按钮查看！_\n💰 **最高可享5折优惠** - 限今日24:00前有效\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 超值套餐推荐：\n1️⃣ ¥11 = 30积分 ⭐\n2️⃣ ¥32 = 120积分 🔥\n3️⃣ ¥54 = 250积分 💎\n4️⃣ ¥108 = 600积分 👑\n5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】\n6️⃣ ¥281 = 永久黑金VIP 👑👑👑 【无限使用+无需排队】\n\n✨ 充值优势：\n• 积分永久有效\n• 充值后立即到账\n\n⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️\n📞 如需充值请联系客服\n\n⏰ **别忘了先领取今日折扣！点击下方【幸运折扣】按钮** ⏰",
+    "packages_normal": "💳 充值套餐\n\n🎰 **今日幸运折扣已开启** - 点击下方按钮查看折扣！\n💡 _每日随机5%-50%折扣，今天试试运气？_\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 超值套餐推荐：\n1️⃣ ¥11 = 30积分 ⭐\n2️⃣ ¥32 = 120积分 🔥\n3️⃣ ¥54 = 250积分 💎\n4️⃣ ¥108 = 600积分 👑\n5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】\n6️⃣ ¥281 = 永久黑金VIP 👑👑👑 【无限使用+无需排队】\n\n✨ 充值优势：\n• 积分永久有效\n• 充值后立即到账\n\n⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️\n📞 如需充值请联系客服",
+    "packages_no_discount": "💳 充值套餐\n\n🎁 **首次充值福利** - 先抽取今日幸运折扣！\n💰 _最高可享5折优惠_ | 每日重置 | 限时24小时\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 超值套餐推荐：\n1️⃣ ¥11 = 30积分 ⭐\n2️⃣ ¥32 = 120积分 🔥\n3️⃣ ¥54 = 250积分 💎\n4️⃣ ¥108 = 600积分 👑\n5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【老板主推·无限使用】\n6️⃣ ¥281 = 永久黑金VIP 👑👑👑 【无限使用+无需排队】\n\n✨ 充值优势：\n• 积分永久有效\n• 充值后立即到账\n\n⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️\n📞 如需充值请联系客服",
+    "button_2": "¥2 = 5积分 (测试)",
+    "button_10": "¥11 = 30积分",
+    "button_30": "¥32 = 120积分",
+    "button_50": "¥54 = 250积分",
+    "button_100": "¥108 = 600积分",
+    "button_vip": "¥173 = 永久VIP",
+    "button_black_gold_vip": "¥281 = 永久黑金VIP"
+  },
+  "transactions": {
+    "header": "📊 最近消费记录\n\n",
+    "recent_header": "\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 最近10笔记录：\n\n",
+    "item_template": "{date} | {type} | {amount:+.0f}分 | 余额 {balance:.0f}\n",
+    "no_transactions": "暂无消费记录\n充值后即可开始使用～",
+    "type_topup": "充值",
+    "type_deduction": "消费",
+    "type_refund": "退款"
+  },
+  "vip": {
+    "confirmation": "👑 VIP会员确认\n\n本次使用：免费 (VIP特权)\n当前余额：{balance} 积分\n\n✨ VIP用户享受无限使用权限",
+    "purchase_success": "🎉 恭喜您成为{tier}！\n\n✨ 您的专属特权：\n{benefits}\n\n现在就去无限体验吧～",
+    "benefits_regular": "• 无限使用所有功能\n• 无需积分消耗\n• 永久有效",
+    "benefits_black_gold": "• 无限使用所有功能\n• 优先处理队列 ⚡\n• 无需积分消耗\n• 永久有效",
+    "status_badge": "👑 {tier}用户",
+    "balance_message": "💰 我的账户\n\n会员等级：{vip_badge}\n当前余额：{balance} 积分 (无限使用)\n累计消费：{total_spent} 积分\n\n✨ VIP特权生效中",
+    "daily_limit_regular": "主人~♡ 人家今天已经帮你处理50次了，累死宝宝了啦~ 🥺\n\n明天0点就能继续玩啦，记得想人家哦~ 💋\n\n当前使用：{current_usage}/{limit} 次 ✨",
+    "daily_limit_black_gold": "主人大人~♡ 100次都被你玩遍了呢~ 人家真的需要休息啦~ 😘\n\n明天0点就能继续陪你玩啦，等我哦~ 💕\n\n当前使用：{current_usage}/{limit} 次 ✨"
+  },
+  "discount": {
+    "button_hot": "🔥💰 点我领取今日超级折扣！ 💰🔥",
+    "button_normal": "🎰 每日幸运折扣 - 点击查看",
+    "button_revealed": "{emoji} **{tier}** - {off}折扣已激活",
+    "celebration_ssr": "🎊🎊🎊 **恭喜恭喜！神级运气！** 🎊🎊🎊\n\n**您抽到了 SSR 神级折扣！**\n🔥🔥 **全场5折优惠** 🔥🔥\n\n💰 **永久VIP 仅需 ¥87**（原价¥173）\n💎 **所有套餐5折** - 省钱一半！\n\n⏰ 限今日24:00前有效 - 抓紧时间抢购！\n\n_立即选择套餐，享受神级折扣！_",
+    "celebration_sr": "🎉🎉🎉 **恭喜您！超级幸运！** 🎉🎉🎉\n\n**您抽到了 SR 超级折扣！**\n⭐⭐ **全场7折优惠** ⭐⭐\n\n💰 **永久VIP 仅需 ¥121**（原价¥173）\n💎 **所有套餐7折** - 超值划算！\n\n⏰ 限今日24:00前有效 - 机不可失！\n\n_立即选择套餐，享受超级折扣！_",
+    "revealed_r": "✨ **今日运气不错！R级折扣**\n\n全场85折，省15%！\n💡 _提示：连续使用可提升折扣等级哦_\n\n💰 **永久VIP 仅需 ¥147**（原价¥173）\n\n⏰ 限今日有效 - 立即使用！",
+    "revealed_c": "🍀 **今日折扣已开启！C级折扣**\n\n全场95折，虽然不多但也是优惠！\n🎯 _坚持使用，下次可能抽到5折哦_\n\n💰 **永久VIP 仅需 ¥164**（原价¥173）\n\n⏰ 限今日有效 - 不用白不用！",
+    "already_revealed": "⚡ **您今日的折扣已激活！**\n\n当前折扣：**{tier}** ({off}折)\n有效期至：**今日24:00** ⏰\n\n💡 所有套餐价格已显示折扣后价格\n🔥 _限时优惠，抓紧充值！_\n\n━━━━━━━━━━━━━━━━━━━━\n选择下方套餐，立即享受折扣！",
+    "tier_ssr": "SSR神级运气",
+    "tier_sr": "SR超级运气",
+    "tier_r": "R运气不错",
+    "tier_c": "C普通运气"
+  },
+  "queue": {
+    "status": "⏳ 已进入处理队列\n\n您的位置：第 {position} 位\n队列总数：{total} 人\n\n💡 提示：点击下方按钮可随时查看最新排位",
+    "total": "当前队列总人数为：{total}",
+    "unavailable": "⚠️ 队列系统繁忙中\n请稍后再试或联系客服",
+    "status_header": "📊 **当前队列状态**",
+    "label_image": "图片处理",
+    "label_video": "视频处理",
+    "server_status": "  └─ 服务器 **{server_number}号**：**{total_count}** 个任务",
+    "vip_count": "     • 👑 VIP：**{vip_count}** 个",
+    "regular_count": "     • 👤 普通：**{regular_count}** 个",
+    "vip_priority_tip": "💡 **提示**：VIP用户享有优先处理权"
+  },
+  "processing": {
+    "in_progress": "处理中...",
+    "running": "🎨 AI正在精心处理您的照片...\n请稍候，好作品值得等待～",
+    "retrieving": "✨ 处理完成！正在为您准备作品...",
+    "complete": "🎉 创作完成！\n\n⏰ 作品将在5分钟后自动清理\n请及时保存到相册～\n\n💡 提示：长按图片即可保存",
+    "already_processing": "⏳ 您的图片正在处理中\n\n请耐心等待当前任务完成\n多次提交不会加快处理速度哦～"
+  },
+  "errors": {
+    "invalid_format": "❌ 图片格式不支持\n\n请发送以下格式的图片：\n✅ JPG / JPEG\n✅ PNG\n✅ WEBP\n\n💡 提示：直接从相册选择照片即可",
+    "upload_failed": "❌ 上传失败\n\n可能原因：\n• 网络连接不稳定\n• 图片文件过大\n\n💡 建议：\n1. 检查网络连接\n2. 尝试压缩图片后重试\n3. 如仍失败请联系客服",
+    "max_retry": "⚠️ 已达到尝试上限（3次）\n\n请返回主菜单重新开始\n如有疑问，欢迎联系客服",
+    "system": "❌ 系统繁忙\n\n请稍后重试\n如问题持续出现，请联系客服",
+    "invalid_state": "💡 操作提示\n\n请先从主菜单选择功能：\n→ 1. 图片脱衣\n\n然后按提示上传照片",
+    "unexpected_input": "💡 请选择功能\n\n请点击下方菜单按钮\n或发送对应数字（如：1、2、3）",
+    "no_style_selected": "请先从主菜单选择图片处理选项",
+    "style_selection_error": "风格选择错误，请重新开始"
+  },
+  "callbacks": {
+    "deprecated_function": "此功能已更新，请重新提交任务",
+    "payment_in_development": "支付功能开发中",
+    "operation_cancelled": "操作已取消",
+    "no_operation_in_progress": "没有进行中的操作",
+    "cannot_cancel": "无法取消操作",
+    "cancelled": "已取消",
+    "invalid_selection": "无效的选择",
+    "invalid_style": "无效的风格选择",
+    "style_selected_video": "已选择 {style_name}\n\n{prompt}",
+    "style_selected_image": "已选择 {style_name}\n\n{prompt}",
+    "style_selection_error": "选择风格时发生错误，请重试",
+    "confirmation_error": "处理确认时发生错误，请稍后重试",
+    "topup_menu_error": "打开充值菜单失败，请稍后重试"
+  },
+  "buttons": {
+    "refresh_queue": "刷新队列",
+    "confirm": "✅ 确认",
+    "cancel": "❌ 取消",
+    "back_to_menu": "🏠 返回主菜单"
+  },
+  "features": {
+    "not_implemented": "此功能仍在开发中"
+  },
+  "help": {
+    "text": "📖 使用帮助\n\n1️⃣ 图片脱衣\n   - 点击按钮后发送照片\n   - 支持格式：PNG, JPG, JPEG, WEBP\n   - 等待处理完成\n\n2️⃣ 图片转视频脱衣\n   - 功能开发中\n\n3️⃣ 查看队列\n   - 查看当前排队人数\n\n⏱️ 处理完成后，请在5分钟内保存图片。\n\n❓ 如有问题，请联系管理员。"
+  },
+  "commands": {
+    "cancel_success": "操作已取消",
+    "cancel_no_operation": "没有进行中的操作",
+    "cancel_failed": "取消操作失败",
+    "status_idle": "当前没有进行中的操作",
+    "status_text": "📊 当前状态\n\n状态: {current_state}\n任务ID: {prompt_id}",
+    "admin_topup_success": "管理员已充值"
+  }
+}

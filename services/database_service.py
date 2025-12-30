@@ -144,6 +144,13 @@ class DatabaseService:
             except Exception:
                 pass  # Column already exists
 
+            # Migration: Add language_code to payments for webhook translation
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN language_code TEXT DEFAULT 'zh_CN'")
+                logger.info("Added language_code column to payments table")
+            except Exception:
+                pass  # Column already exists
+
             # Migration: Add daily discount system columns
             try:
                 cursor.execute("ALTER TABLE users ADD COLUMN interaction_days INTEGER DEFAULT 0")
@@ -192,6 +199,13 @@ class DatabaseService:
             try:
                 cursor.execute("ALTER TABLE users ADD COLUMN daily_usage_date TEXT")
                 logger.info("Added daily_usage_date column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            # Migration: Add language preference for multi-language support
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN language_preference TEXT DEFAULT 'zh_CN'")
+                logger.info("Added language_preference column to users table")
             except Exception:
                 pass  # Column already exists
 
@@ -404,7 +418,8 @@ class DatabaseService:
         status: str,
         payment_url: str = None,
         chat_id: int = None,
-        message_id: int = None
+        message_id: int = None,
+        language_code: str = None
     ) -> bool:
         """
         Create payment record.
@@ -420,6 +435,7 @@ class DatabaseService:
             payment_url: Optional payment URL
             chat_id: Optional Telegram chat ID
             message_id: Optional Telegram message ID
+            language_code: User's language preference for webhook translation
 
         Returns:
             True if successful
@@ -428,14 +444,18 @@ class DatabaseService:
             conn = self._get_connection()
             cursor = conn.cursor()
 
+            # Get user's language if not provided
+            if language_code is None:
+                language_code = self.get_user_language(user_id)
+
             cursor.execute("""
                 INSERT INTO payments
-                (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id))
+                (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id, language_code)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id, language_code))
 
             conn.commit()
-            logger.info(f"Created payment record {payment_id} for user {user_id}")
+            logger.info(f"Created payment record {payment_id} for user {user_id} (lang: {language_code})")
             return True
 
         except Exception as e:
@@ -845,6 +865,53 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Error getting bra usage count for user {user_id}: {str(e)}")
             return 0
+
+    # Language preference operations
+    def get_user_language(self, user_id: int) -> str:
+        """
+        Get user's language preference.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Language code (default: zh_CN)
+        """
+        user = self.get_user(user_id)
+        return user.get('language_preference', 'zh_CN') if user else 'zh_CN'
+
+    def set_user_language(self, user_id: int, language: str) -> bool:
+        """
+        Set user's language preference.
+
+        Args:
+            user_id: User ID
+            language: Language code (e.g., 'zh_CN', 'en_US', 'ja_JP')
+
+        Returns:
+            True if successful
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            # Ensure user exists
+            self.get_user(user_id)
+
+            # Update language preference
+            cursor.execute("""
+                UPDATE users
+                SET language_preference = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = ?
+            """, (language, user_id))
+
+            conn.commit()
+            logger.info(f"Set language for user {user_id} to {language}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error setting language for user {user_id}: {str(e)}")
+            return False
 
     def close(self):
         """Close database connection."""

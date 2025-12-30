@@ -47,7 +47,7 @@ from services.payment_timeout_service import PaymentTimeoutService
 timeout_service = PaymentTimeoutService(bot)
 
 
-async def send_payment_notification(user_id: int, payment_id: str, credits: float, new_balance: float, chat_id: int = None, message_id: int = None):
+async def send_payment_notification(user_id: int, payment_id: str, credits: float, new_balance: float, chat_id: int = None, message_id: int = None, language_code: str = 'zh_CN'):
     """
     Send payment success notification to user via Telegram.
     If chat_id and message_id are provided, edit the existing message.
@@ -60,16 +60,26 @@ async def send_payment_notification(user_id: int, payment_id: str, credits: floa
         new_balance: New balance after payment
         chat_id: Optional chat ID for editing existing message
         message_id: Optional message ID for editing existing message
+        language_code: User's language preference for translation
     """
     try:
-        message = f"""✅ 支付成功！
+        # Import translation service
+        from services.translation_service import TranslationService
 
-💰 充值积分：{credits}
-📊 当前余额：{new_balance} 积分
+        translation_service = TranslationService(
+            database_service=database_service,
+            locales_dir='locales',
+            default_lang='zh_CN'
+        )
 
-订单号：{payment_id}
-
-感谢您的支持！"""
+        # Get translated message
+        message = translation_service.get_lang(
+            language_code,
+            'payment.notification_success',
+            credits=int(credits),
+            new_balance=int(new_balance),
+            payment_id=payment_id
+        )
 
         if chat_id and message_id:
             # Edit the existing "等待支付中" message
@@ -78,14 +88,14 @@ async def send_payment_notification(user_id: int, payment_id: str, credits: floa
                 message_id=message_id,
                 text=message
             )
-            logger.info(f"Edited payment message for user {user_id} (msg: {message_id})")
+            logger.info(f"Edited payment message for user {user_id} (msg: {message_id}, lang: {language_code})")
         else:
             # Send new message if no message_id provided
             await bot.send_message(
                 chat_id=user_id,
                 text=message
             )
-            logger.info(f"Sent payment notification to user {user_id}")
+            logger.info(f"Sent payment notification to user {user_id} (lang: {language_code})")
     except Exception as e:
         logger.error(f"Failed to send payment notification to user {user_id}: {str(e)}")
 
@@ -130,13 +140,14 @@ async def payment_callback():
                     credits = payment['credits_amount']
                     chat_id = payment.get('chat_id')
                     message_id = payment.get('message_id')
+                    language_code = payment.get('language_code', 'zh_CN')
 
                     # Get user's new balance
                     user_stats = await credit_service.get_user_stats(user_id)
                     new_balance = user_stats['balance']
 
-                    # Send notification (edit message if chat_id/message_id available)
-                    await send_payment_notification(user_id, payment_id, credits, new_balance, chat_id, message_id)
+                    # Send notification (edit message if chat_id/message_id available) with language
+                    await send_payment_notification(user_id, payment_id, credits, new_balance, chat_id, message_id, language_code)
 
                     # Cancel timeout timer and cleanup timeout messages
                     timeout_service.cancel_payment_timeout(user_id)
@@ -162,17 +173,37 @@ async def payment_callback():
 @app.route('/payment/return', methods=['GET'])
 def payment_return():
     """
-    Handle user return from payment page.
+    Handle user return from payment page with translated HTML.
 
     This is where users are redirected after completing/cancelling payment.
+    Language parameter passed via query string: ?lang=zh_CN or ?lang=en_US
     """
-    return """
+    # Get language from query parameter
+    language_code = request.args.get('lang', 'zh_CN')
+
+    # Import translation service
+    from services.translation_service import TranslationService
+
+    translation_service = TranslationService(
+        database_service=database_service,
+        locales_dir='locales',
+        default_lang='zh_CN'
+    )
+
+    # Get translated strings
+    title = translation_service.get_lang(language_code, 'payment.webhook_html_title')
+    heading = translation_service.get_lang(language_code, 'payment.webhook_html_heading')
+    body = translation_service.get_lang(language_code, 'payment.webhook_html_body')
+    return_text = translation_service.get_lang(language_code, 'payment.webhook_html_return')
+    footer = translation_service.get_lang(language_code, 'payment.webhook_html_footer')
+
+    return f"""
     <html>
     <head>
         <meta charset="utf-8">
-        <title>支付处理中</title>
+        <title>{title}</title>
         <style>
-            body {
+            body {{
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 display: flex;
                 justify-content: center;
@@ -180,27 +211,27 @@ def payment_return():
                 height: 100vh;
                 margin: 0;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            }
-            .container {
+            }}
+            .container {{
                 text-align: center;
                 background: white;
                 padding: 40px;
                 border-radius: 10px;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            }
-            h1 { color: #333; margin-bottom: 20px; }
-            p { color: #666; font-size: 16px; line-height: 1.6; }
-            .icon { font-size: 60px; margin-bottom: 20px; }
+            }}
+            h1 {{ color: #333; margin-bottom: 20px; }}
+            p {{ color: #666; font-size: 16px; line-height: 1.6; }}
+            .icon {{ font-size: 60px; margin-bottom: 20px; }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="icon">⏳</div>
-            <h1>支付处理中</h1>
-            <p>您的支付正在处理中，积分将在确认后自动到账。</p>
-            <p>请返回 Telegram bot 查看您的余额。</p>
+            <h1>{heading}</h1>
+            <p>{body}</p>
+            <p>{return_text}</p>
             <p style="margin-top: 30px; color: #999; font-size: 14px;">
-                此页面可以关闭
+                {footer}
             </p>
         </div>
     </body>

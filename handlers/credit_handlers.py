@@ -11,6 +11,7 @@ credit_service = None
 payment_service = None
 timeout_service = None
 discount_service = None
+translation_service = None
 
 
 async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -32,7 +33,11 @@ async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         logger.error(f"Error checking balance for user {user_id}: {str(e)}")
-        await update.message.reply_text("查询余额失败，请稍后重试")
+        if translation_service:
+            msg = translation_service.get(user_id, 'errors.system')
+        else:
+            msg = "查询余额失败，请稍后重试"
+        await update.message.reply_text(msg)
 
 
 async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -59,32 +64,43 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         # Select appropriate message variant and button text based on tier
         if discount_info:
+            # Get translated tier name
+            tier_name = translation_service.get(user_id, f'discount.tier_{tier.lower()}') if translation_service else DISCOUNT_TIERS[tier]['display']
+
             # Discount already revealed - use appropriate message based on tier
             if tier in ['SSR', 'SR']:
-                message_text = TOPUP_PACKAGES_MESSAGE_WITH_DISCOUNT  # Heavy reminder
-                lucky_button_text = LUCKY_DISCOUNT_BUTTON_REVEALED.format(
+                message_text = translation_service.get(user_id, 'topup.packages_with_discount') if translation_service else TOPUP_PACKAGES_MESSAGE_WITH_DISCOUNT
+                lucky_button_text = translation_service.get(user_id, 'discount.button_revealed',
                     emoji=DISCOUNT_TIERS[tier]['emoji'],
-                    tier=DISCOUNT_TIERS[tier]['display'],
+                    tier=tier_name,
+                    off=DISCOUNT_TIERS[tier]['off']
+                ) if translation_service else LUCKY_DISCOUNT_BUTTON_REVEALED.format(
+                    emoji=DISCOUNT_TIERS[tier]['emoji'],
+                    tier=tier_name,
                     off=DISCOUNT_TIERS[tier]['off']
                 )
             else:  # R or C
-                message_text = TOPUP_PACKAGES_MESSAGE_NORMAL  # Moderate reminder
-                lucky_button_text = LUCKY_DISCOUNT_BUTTON_REVEALED.format(
+                message_text = translation_service.get(user_id, 'topup.packages_normal') if translation_service else TOPUP_PACKAGES_MESSAGE_NORMAL
+                lucky_button_text = translation_service.get(user_id, 'discount.button_revealed',
                     emoji=DISCOUNT_TIERS[tier]['emoji'],
-                    tier=DISCOUNT_TIERS[tier]['display'],
+                    tier=tier_name,
+                    off=DISCOUNT_TIERS[tier]['off']
+                ) if translation_service else LUCKY_DISCOUNT_BUTTON_REVEALED.format(
+                    emoji=DISCOUNT_TIERS[tier]['emoji'],
+                    tier=tier_name,
                     off=DISCOUNT_TIERS[tier]['off']
                 )
         else:
             # Not revealed yet - select message based on future tier
             if tier in ['SSR', 'SR']:
-                message_text = TOPUP_PACKAGES_MESSAGE_WITH_DISCOUNT  # Heavy reminder
-                lucky_button_text = LUCKY_DISCOUNT_BUTTON_HOT  # Aggressive button
+                message_text = translation_service.get(user_id, 'topup.packages_with_discount') if translation_service else TOPUP_PACKAGES_MESSAGE_WITH_DISCOUNT
+                lucky_button_text = translation_service.get(user_id, 'discount.button_hot') if translation_service else LUCKY_DISCOUNT_BUTTON_HOT
             elif tier in ['R', 'C']:
-                message_text = TOPUP_PACKAGES_MESSAGE_NORMAL  # Moderate reminder
-                lucky_button_text = LUCKY_DISCOUNT_BUTTON_NORMAL
+                message_text = translation_service.get(user_id, 'topup.packages_normal') if translation_service else TOPUP_PACKAGES_MESSAGE_NORMAL
+                lucky_button_text = translation_service.get(user_id, 'discount.button_normal') if translation_service else LUCKY_DISCOUNT_BUTTON_NORMAL
             else:
-                message_text = TOPUP_PACKAGES_MESSAGE_NO_DISCOUNT  # Teaser
-                lucky_button_text = LUCKY_DISCOUNT_BUTTON_NORMAL
+                message_text = translation_service.get(user_id, 'topup.packages_no_discount') if translation_service else TOPUP_PACKAGES_MESSAGE_NO_DISCOUNT
+                lucky_button_text = translation_service.get(user_id, 'discount.button_normal') if translation_service else LUCKY_DISCOUNT_BUTTON_NORMAL
 
         # Build keyboard with discount-aware buttons
         keyboard = []
@@ -121,20 +137,17 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
                 # Format button text with emoji-based design
                 if base_price in [160, 260]:
-                    # VIP packages
-                    vip_name = "永久VIP" if base_price == 160 else "永久黑金VIP"
-                    emoji = "💎" if base_price == 160 else "👑"
-                    button_text = f"{emoji} {vip_name} ¥{discounted_price} 🎁（原价¥{original_price}）"
+                    # VIP packages (keeping simple - these are shown with discount info inline)
+                    button_text = translation_service.get(user_id, 'topup.button_vip' if base_price == 160 else 'topup.button_black_gold_vip') if translation_service else (f"¥{displayed_price} = 永久VIP" if base_price == 160 else f"¥{displayed_price} = 永久黑金VIP")
                 else:
-                    # Credit packages
-                    button_text = f"💰 {credits}积分 ¥{discounted_price} 🎁（原价¥{original_price}）"
+                    # Credit packages (keeping numbers/prices visible)
+                    button_text = f"¥{discounted_price} = {credits}" + (" credits" if translation_service and translation_service.db.get_user_language(user_id) == 'en_US' else " 积分")
             else:
                 # No discount
                 if base_price in [160, 260]:
-                    vip_name = "永久VIP" if base_price == 160 else "永久黑金VIP"
-                    button_text = f"¥{displayed_price} = {vip_name}"
+                    button_text = translation_service.get(user_id, 'topup.button_vip' if base_price == 160 else 'topup.button_black_gold_vip') if translation_service else (f"¥{displayed_price} = 永久VIP" if base_price == 160 else f"¥{displayed_price} = 永久黑金VIP")
                 else:
-                    button_text = f"¥{displayed_price} = {credits}积分"
+                    button_text = f"¥{displayed_price} = {credits}" + (" credits" if translation_service and translation_service.db.get_user_language(user_id) == 'en_US' else " 积分")
 
             keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
 
@@ -150,7 +163,12 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     except Exception as e:
         logger.error(f"Error showing top-up packages: {str(e)}")
-        await update.message.reply_text("显示充值套餐失败，请稍后重试")
+        user_id = update.effective_user.id if update.effective_user else None
+        if translation_service and user_id:
+            msg = translation_service.get(user_id, 'errors.system')
+        else:
+            msg = "显示充值套餐失败，请稍后重试"
+        await update.message.reply_text(msg)
 
 
 async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -172,28 +190,47 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
             return
 
         # Format transactions
-        message = TRANSACTION_HISTORY_HEADER
+        if translation_service:
+            message = translation_service.get(user_id, 'transactions.header')
+        else:
+            message = TRANSACTION_HISTORY_HEADER
+
         for tx in transactions:
             date = tx['created_at'][:10]  # Extract date
+            # Transaction type translation (keeping simple for now - these could be moved to translation file later)
             tx_type = {
                 'topup': '充值',
                 'deduction': '消费',
                 'refund': '退款'
             }.get(tx['transaction_type'], tx['transaction_type'])
 
-            message += TRANSACTION_ITEM_TEMPLATE.format(
-                date=date,
-                type=tx_type,
-                amount=tx['amount'],
-                balance=tx['balance_after']
-            )
+            if translation_service:
+                message += translation_service.get(
+                    user_id,
+                    'transactions.item_template',
+                    date=date,
+                    type=tx_type,
+                    amount=tx['amount'],
+                    balance=tx['balance_after']
+                )
+            else:
+                message += TRANSACTION_ITEM_TEMPLATE.format(
+                    date=date,
+                    type=tx_type,
+                    amount=tx['amount'],
+                    balance=tx['balance_after']
+                )
 
         await update.message.reply_text(message)
         logger.info(f"User {user_id} viewed transaction history")
 
     except Exception as e:
         logger.error(f"Error showing transaction history: {str(e)}")
-        await update.message.reply_text("查询记录失败，请稍后重试")
+        if translation_service and user_id:
+            msg = translation_service.get(user_id, 'errors.system')
+        else:
+            msg = "查询记录失败，请稍后重试"
+        await update.message.reply_text(msg)
 
 
 async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -221,16 +258,29 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
         if is_vip:
             # VIP balance message
             tier_display = credit_service._tier_display_name(tier)
-            vip_badge = VIP_STATUS_BADGE.format(tier=tier_display)
-
-            message = BALANCE_MESSAGE_VIP.format(
-                vip_badge=vip_badge,
-                balance=int(balance),
-                total_spent=int(total_spent)
-            )
+            if translation_service:
+                vip_badge = translation_service.get(user_id, 'vip.status_badge', tier=tier_display)
+                message = translation_service.get(user_id, 'vip.balance_message',
+                    vip_badge=vip_badge,
+                    balance=int(balance),
+                    total_spent=int(total_spent)
+                )
+            else:
+                vip_badge = VIP_STATUS_BADGE.format(tier=tier_display)
+                message = BALANCE_MESSAGE_VIP.format(
+                    vip_badge=vip_badge,
+                    balance=int(balance),
+                    total_spent=int(total_spent)
+                )
         else:
             # Regular balance message
-            message = f"""📊 积分余额 & 充值记录
+            if translation_service:
+                message = translation_service.get(user_id, 'credits.balance_message',
+                    balance=int(balance),
+                    total_spent=int(total_spent)
+                )
+            else:
+                message = f"""📊 积分余额 & 充值记录
 
 💰 当前积分：{int(balance)} 积分
 📈 累计消费：{int(total_spent)} 积分
@@ -238,33 +288,61 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
 图片脱衣：10 积分/次"""
 
         # Add transaction history section
-        message += "\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 最近10笔记录：\n\n"
+        if translation_service:
+            history_header = translation_service.get(user_id, 'transactions.recent_header', default="\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 Recent 10 Transactions:\n\n")
+        else:
+            history_header = "\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 最近10笔记录：\n\n"
+        message += history_header
 
         if not transactions:
-            message += "暂无消费记录"
+            if translation_service:
+                message += translation_service.get(user_id, 'transactions.no_transactions')
+            else:
+                message += "暂无消费记录"
         else:
             # Format transactions
             for tx in transactions:
                 date = tx['created_at'][:10]  # Extract date
-                tx_type = {
-                    'topup': '充值',
-                    'deduction': '消费',
-                    'refund': '退款'
-                }.get(tx['transaction_type'], tx['transaction_type'])
+                # Get translated transaction type
+                if translation_service:
+                    tx_type = {
+                        'topup': translation_service.get(user_id, 'transactions.type_topup', default='Topup'),
+                        'deduction': translation_service.get(user_id, 'transactions.type_deduction', default='Usage'),
+                        'refund': translation_service.get(user_id, 'transactions.type_refund', default='Refund')
+                    }.get(tx['transaction_type'], tx['transaction_type'])
+                else:
+                    tx_type = {
+                        'topup': '充值',
+                        'deduction': '消费',
+                        'refund': '退款'
+                    }.get(tx['transaction_type'], tx['transaction_type'])
 
-                message += TRANSACTION_ITEM_TEMPLATE.format(
-                    date=date,
-                    type=tx_type,
-                    amount=tx['amount'],
-                    balance=tx['balance_after']
-                )
+                if translation_service:
+                    message += translation_service.get(user_id, 'transactions.item_template',
+                        date=date,
+                        type=tx_type,
+                        amount=tx['amount'],
+                        balance=tx['balance_after']
+                    )
+                else:
+                    message += TRANSACTION_ITEM_TEMPLATE.format(
+                        date=date,
+                        type=tx_type,
+                        amount=tx['amount'],
+                        balance=tx['balance_after']
+                    )
 
         await update.message.reply_text(message)
         logger.info(f"User {user_id} viewed balance and history (VIP: {is_vip})")
 
     except Exception as e:
         logger.error(f"Error showing balance and history: {str(e)}")
-        await update.message.reply_text("查询失败，请稍后重试")
+        user_id = update.effective_user.id if update.effective_user else None
+        if translation_service and user_id:
+            msg = translation_service.get(user_id, 'errors.system')
+        else:
+            msg = "查询失败，请稍后重试"
+        await update.message.reply_text(msg)
 
 
 async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, payment_id: str, amount_cny: int):
@@ -363,7 +441,11 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
         discount_info = await discount_service.get_or_reveal_daily_discount(user_id)
 
         if not discount_info:
-            await query.answer("获取折扣信息失败，请稍后再试", show_alert=True)
+            if translation_service:
+                msg = translation_service.get(user_id, 'errors.system')
+            else:
+                msg = "获取折扣信息失败，请稍后再试"
+            await query.answer(msg, show_alert=True)
             return
 
         tier = discount_info['tier']
@@ -372,20 +454,37 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
         # Show celebration message for new SSR/SR, or simple message for R/C
         if is_new:
             if tier == 'SSR':
-                await query.answer(LUCKY_DISCOUNT_CELEBRATION_SSR, show_alert=True)
+                msg = translation_service.get(user_id, 'discount.celebration_ssr') if translation_service else LUCKY_DISCOUNT_CELEBRATION_SSR
+                logger.info(f"User {user_id} got SSR discount, translation_service={'exists' if translation_service else 'None'}, msg preview: {msg[:50]}")
+                await query.answer(msg, show_alert=True)
             elif tier == 'SR':
-                await query.answer(LUCKY_DISCOUNT_CELEBRATION_SR, show_alert=True)
+                msg = translation_service.get(user_id, 'discount.celebration_sr') if translation_service else LUCKY_DISCOUNT_CELEBRATION_SR
+                logger.info(f"User {user_id} got SR discount, translation_service={'exists' if translation_service else 'None'}, msg preview: {msg[:50]}")
+                await query.answer(msg, show_alert=True)
             elif tier == 'R':
-                await query.answer(LUCKY_DISCOUNT_REVEALED_R, show_alert=True)
+                msg = translation_service.get(user_id, 'discount.revealed_r') if translation_service else LUCKY_DISCOUNT_REVEALED_R
+                logger.info(f"User {user_id} got R discount, translation_service={'exists' if translation_service else 'None'}, msg preview: {msg[:50]}")
+                await query.answer(msg, show_alert=True)
             else:  # C
-                await query.answer(LUCKY_DISCOUNT_REVEALED_C, show_alert=True)
+                msg = translation_service.get(user_id, 'discount.revealed_c') if translation_service else LUCKY_DISCOUNT_REVEALED_C
+                logger.info(f"User {user_id} got C discount, translation_service={'exists' if translation_service else 'None'}, msg preview: {msg[:50]}")
+                await query.answer(msg, show_alert=True)
         else:
             # Already revealed today
             tier_data = DISCOUNT_TIERS[tier]
-            message = LUCKY_DISCOUNT_ALREADY_REVEALED.format(
-                tier=tier_data['display'],
-                off=tier_data['off']
-            )
+            # Get translated tier name
+            tier_name = translation_service.get(user_id, f'discount.tier_{tier.lower()}') if translation_service else tier_data['display']
+            if translation_service:
+                message = translation_service.get(user_id, 'discount.already_revealed',
+                    tier=tier_name,
+                    off=tier_data['off']
+                )
+            else:
+                message = LUCKY_DISCOUNT_ALREADY_REVEALED.format(
+                    tier=tier_name,
+                    off=tier_data['off']
+                )
+            logger.info(f"User {user_id} discount already revealed (tier={tier}), translation_service={'exists' if translation_service else 'None'}, msg preview: {message[:50]}")
             await query.answer(message, show_alert=True)
 
         # Update keyboard with discount-aware prices
@@ -393,11 +492,20 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 
         # Update lucky discount button to show tier
         tier_data = DISCOUNT_TIERS[tier]
-        button_text = LUCKY_DISCOUNT_BUTTON_REVEALED.format(
-            emoji=tier_data['emoji'],
-            tier=tier_data['display'],
-            off=tier_data['off']
-        )
+        # Get translated tier name
+        tier_name = translation_service.get(user_id, f'discount.tier_{tier.lower()}') if translation_service else tier_data['display']
+        if translation_service:
+            button_text = translation_service.get(user_id, 'discount.button_revealed',
+                emoji=tier_data['emoji'],
+                tier=tier_name,
+                off=tier_data['off']
+            )
+        else:
+            button_text = LUCKY_DISCOUNT_BUTTON_REVEALED.format(
+                emoji=tier_data['emoji'],
+                tier=tier_name,
+                off=tier_data['off']
+            )
         keyboard.append([InlineKeyboardButton(button_text, callback_data="lucky_discount")])
 
         # Add package buttons with discounted prices
@@ -425,13 +533,11 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 
             # Format button text with emoji-based design
             if base_price in [160, 260]:
-                # VIP packages
-                vip_name = "永久VIP" if base_price == 160 else "永久黑金VIP"
-                emoji = "💎" if base_price == 160 else "👑"
-                button_text = f"{emoji} {vip_name} ¥{discounted_price} 🎁（原价¥{original_price}）"
+                # VIP packages (keep simple, show prices directly)
+                button_text = translation_service.get(user_id, 'topup.button_vip' if base_price == 160 else 'topup.button_black_gold_vip') if translation_service else (f"¥{discounted_price} = 永久VIP" if base_price == 160 else f"¥{discounted_price} = 永久黑金VIP")
             else:
                 # Credit packages
-                button_text = f"💰 {credits}积分 ¥{discounted_price} 🎁（原价¥{original_price}）"
+                button_text = f"¥{discounted_price} = {credits}" + (" credits" if translation_service and translation_service.db.get_user_language(user_id) == 'en_US' else " 积分")
 
             keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
 
@@ -448,7 +554,12 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 
     except Exception as e:
         logger.error(f"Error handling lucky discount: {str(e)}")
-        await query.answer("操作失败，请稍后再试", show_alert=True)
+        user_id = update.effective_user.id if update.effective_user else None
+        if translation_service and user_id:
+            msg = translation_service.get(user_id, 'errors.system')
+        else:
+            msg = "操作失败，请稍后再试"
+        await query.answer(msg, show_alert=True)
 
 
 async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -504,10 +615,15 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
                 if current_tier == vip_tier:
                     tier_name = credit_service._tier_display_name(vip_tier)
-                    await query.edit_message_text(
-                        f"您已经是{tier_name}了，无需重复购买！"
-                    )
+                    if translation_service:
+                        msg = translation_service.get(user_id, 'payment.vip_already_owned', tier=tier_name)
+                    else:
+                        msg = f"您已经是{tier_name}了，无需重复购买！"
+                    await query.edit_message_text(msg)
                     return
+
+            # Get user's language for payment record
+            user_language = database_service.get_user_language(user_id) if database_service else 'zh_CN'
 
             # Create payment
             success, payment_info, error = await payment_service.create_topup_payment(
@@ -515,11 +631,16 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 amount_cny,
                 payment_method,
                 chat_id=chat_id,
-                message_id=message_id
+                message_id=message_id,
+                language_code=user_language
             )
 
             if not success:
-                await query.edit_message_text(f"创建支付失败: {error}")
+                if translation_service:
+                    msg = translation_service.get(user_id, 'payment.creation_error', error=str(error))
+                else:
+                    msg = f"创建支付失败: {error}"
+                await query.edit_message_text(msg)
                 return
 
             # If VIP purchase, store VIP tier in payment metadata
@@ -536,21 +657,40 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     f"Stored VIP tier metadata for payment {payment_info['payment_id']}: {vip_tier}"
                 )
 
-            from core.constants import PAYMENT_PENDING_MESSAGE
-            payment_method_cn = "支付宝" if payment_method == "alipay" else "微信支付"
             # Calculate displayed amount (with 8% transaction fee)
             displayed_amount = int(payment_info['amount_cny'] * 1.08)
-            message = PAYMENT_PENDING_MESSAGE.format(
-                payment_id=payment_info['payment_id'],
-                amount=displayed_amount,
-                credits=payment_info['credits_amount']
-            )
-            message += f"\n支付方式：{payment_method_cn}"
+
+            # Get translated payment pending message
+            if translation_service:
+                message = translation_service.get(
+                    user_id,
+                    'payment.pending',
+                    payment_id=payment_info['payment_id'],
+                    amount=displayed_amount,
+                    credits=int(payment_info['credits_amount'])
+                )
+                # Get payment method display name
+                method_key = 'payment.button_alipay' if payment_method == 'alipay' else 'payment.button_wechat'
+                method_name = translation_service.get(user_id, method_key)
+                method_line = translation_service.get(user_id, 'payment.method_label', method=method_name)
+                message += method_line
+
+                button_text = translation_service.get(user_id, 'payment.button_go_pay')
+            else:
+                from core.constants import PAYMENT_PENDING_MESSAGE
+                message = PAYMENT_PENDING_MESSAGE.format(
+                    payment_id=payment_info['payment_id'],
+                    amount=displayed_amount,
+                    credits=payment_info['credits_amount']
+                )
+                payment_method_cn = "支付宝" if payment_method == "alipay" else "微信支付"
+                message += f"\n支付方式：{payment_method_cn}"
+                button_text = "前往支付"
 
             # Add payment URL button
             keyboard = [[
                 InlineKeyboardButton(
-                    "前往支付",
+                    button_text,
                     url=payment_info['payment_url']
                 )
             ]]
@@ -612,7 +752,17 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 savings = original_displayed_amount - displayed_amount
 
                 # Show payment method selection with discount reminder
-                message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}
+                if translation_service:
+                    message = translation_service.get(
+                        user_id,
+                        'payment.method_selection_with_discount',
+                        displayed_amount=displayed_amount,
+                        credits=credits,
+                        tier_name=tier_name,
+                        savings=savings
+                    )
+                else:
+                    message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}
 
 🔥 **折扣已应用** - 为您节省 ¥{savings}！
 ⏰ _今日24:00前有效，请尽快完成支付_
@@ -626,20 +776,37 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 displayed_amount = int(amount_cny * 1.08)
 
                 # Show payment method selection without discount
-                message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}
+                if translation_service:
+                    message = translation_service.get(
+                        user_id,
+                        'payment.method_selection_normal',
+                        displayed_amount=displayed_amount,
+                        credits=credits,
+                        tier_name=tier_name
+                    )
+                else:
+                    message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}
 
 ⚠️ **重要提示：支付通道正在维护中，暂时无法充值** ⚠️
 📞 如需充值请联系客服
 
 请选择支付方式："""
 
+            # Get translated button text
+            if translation_service:
+                alipay_text = translation_service.get(user_id, 'payment.button_alipay')
+                wechat_text = translation_service.get(user_id, 'payment.button_wechat')
+            else:
+                alipay_text = "💰 支付宝支付"
+                wechat_text = "💚 微信支付"
+
             keyboard = [
                 [InlineKeyboardButton(
-                    "💰 支付宝支付",
+                    alipay_text,
                     callback_data=f"topup_{amount_cny}_alipay"
                 )],
                 [InlineKeyboardButton(
-                    "💚 微信支付",
+                    wechat_text,
                     callback_data=f"topup_{amount_cny}_wechat"
                 )]
             ]
@@ -657,7 +824,12 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
     except Exception as e:
         logger.error(f"Error handling top-up callback: {str(e)}")
+        user_id = update.effective_user.id if update.effective_user else None
+        if translation_service and user_id:
+            msg = translation_service.get(user_id, 'payment.failed')
+        else:
+            msg = "创建支付失败，请稍后重试"
         try:
-            await query.edit_message_text("创建支付失败，请稍后重试")
+            await query.edit_message_text(msg)
         except:
             pass

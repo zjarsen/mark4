@@ -68,7 +68,8 @@ class PaymentService:
         amount_cny: int,
         payment_method: str = 'alipay',
         chat_id: int = None,
-        message_id: int = None
+        message_id: int = None,
+        language_code: str = None
     ) -> Tuple[bool, Optional[Dict], Optional[str]]:
         """
         Create a top-up payment order.
@@ -79,12 +80,17 @@ class PaymentService:
             payment_method: Payment method ('alipay' or 'wechat', default: 'alipay')
             chat_id: Optional Telegram chat ID for message editing
             message_id: Optional Telegram message ID for editing after payment
+            language_code: User's language preference for webhook translation
 
         Returns:
             Tuple of (success, payment_info, error_message)
             payment_info contains: payment_id, payment_url, credits_amount
         """
         try:
+            # Get user's language if not provided
+            if language_code is None:
+                language_code = self.db.get_user_language(user_id)
+
             # Validate payment method
             if payment_method not in ['alipay', 'wechat']:
                 return False, None, f"Invalid payment method: {payment_method}. Must be 'alipay' or 'wechat'."
@@ -94,19 +100,20 @@ class PaymentService:
             if credits_amount is None:
                 return False, None, f"Invalid top-up amount: {amount_cny}. Please select a valid package."
 
-            # Create payment with provider
+            # Create payment with provider (pass language for return URL)
             payment_result = await self.payment_provider.create_payment(
                 user_id=user_id,
                 amount=float(amount_cny),
                 currency='CNY',
-                payment_method=payment_method
+                payment_method=payment_method,
+                language_code=language_code
             )
 
             payment_id = payment_result['payment_id']
             payment_url = payment_result['payment_url']
             status = payment_result['status']
 
-            # Record payment in database
+            # Record payment in database with language
             success = self.db.create_payment_record(
                 payment_id=payment_id,
                 user_id=user_id,
@@ -117,7 +124,8 @@ class PaymentService:
                 status=status.value,
                 payment_url=payment_url,
                 chat_id=chat_id,
-                message_id=message_id
+                message_id=message_id,
+                language_code=language_code
             )
 
             if not success:
