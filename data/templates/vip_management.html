@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}VIP管理{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-star"></i> VIP管理</h2>
+        </div>
+
+        <!-- Search User Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-search"></i> 搜索用户</h5>
+            </div>
+            <div class="card-body">
+                <form id="searchForm">
+                    <div class="mb-3">
+                        <label for="userId" class="form-label">Telegram 用户ID</label>
+                        <input type="number" class="form-control form-control-lg" id="userId"
+                               placeholder="输入用户ID..." required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-search"></i> 查找用户
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- User Info Card (Hidden initially) -->
+        <div id="userInfoCard" class="card mb-4" style="display: none;">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-person-circle"></i> 用户信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>用户ID:</strong>
+                        <p class="mb-0"><code id="displayUserId"></code></p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>用户名:</strong>
+                        <p class="mb-0" id="displayUsername"></p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>积分余额:</strong>
+                        <p class="mb-0" id="displayCredits"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>注册时间:</strong>
+                        <p class="mb-0"><small id="displayCreatedAt"></small></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>当前VIP状态:</strong>
+                        <p class="mb-0" id="displayVipStatus"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIP Update Card (Hidden initially) -->
+        <div id="vipUpdateCard" class="card" style="display: none;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-star-fill"></i> 修改VIP状态</h5>
+            </div>
+            <div class="card-body">
+                <form id="updateVipForm">
+                    <div class="mb-3">
+                        <label for="vipTier" class="form-label">选择新的VIP等级</label>
+                        <select class="form-select form-select-lg" id="vipTier" required>
+                            <option value="">-- 选择VIP等级 --</option>
+                            <option value="none">普通用户</option>
+                            <option value="vip">永久VIP</option>
+                            <option value="black_gold">永久黑金VIP</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-lg w-100">
+                        <i class="bi bi-check-circle"></i> 确认修改
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer" class="mt-4"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentUserId = null;
+
+// Search form handler
+document.getElementById('searchForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const userId = document.getElementById('userId').value;
+
+    if (!userId) {
+        showAlert('请输入用户ID', 'warning');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/user/${userId}/info`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            showAlert(data.error || '用户未找到', 'danger');
+            hideUserInfo();
+            return;
+        }
+
+        // Store current user ID
+        currentUserId = userId;
+
+        // Display user info
+        displayUserInfo(data);
+
+        // Show update form
+        document.getElementById('userInfoCard').style.display = 'block';
+        document.getElementById('vipUpdateCard').style.display = 'block';
+
+        // Set current VIP tier as selected
+        document.getElementById('vipTier').value = data.vip_tier;
+
+        // Clear any previous alerts
+        document.getElementById('alertContainer').innerHTML = '';
+
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('查询失败，请稍后重试', 'danger');
+        hideUserInfo();
+    }
+});
+
+// Update VIP form handler
+document.getElementById('updateVipForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const newVipTier = document.getElementById('vipTier').value;
+
+    if (!newVipTier) {
+        showAlert('请选择VIP等级', 'warning');
+        return;
+    }
+
+    if (!currentUserId) {
+        showAlert('请先搜索用户', 'warning');
+        return;
+    }
+
+    // Confirm action
+    if (!confirm(`确认要将用户 ${currentUserId} 的VIP状态修改为 "${getVipDisplayName(newVipTier)}" 吗？`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/user/${currentUserId}/vip`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                vip_tier: newVipTier
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showAlert(data.error || '更新失败', 'danger');
+            return;
+        }
+
+        // Show success message
+        showAlert(`✅ VIP状态已成功更新！<br>
+                   旧状态: ${getVipDisplayName(data.old_tier)}<br>
+                   新状态: ${data.new_tier_display}`, 'success');
+
+        // Refresh user info
+        const infoResponse = await fetch(`/api/user/${currentUserId}/info`);
+        const updatedInfo = await infoResponse.json();
+        displayUserInfo(updatedInfo);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('更新失败，请稍后重试', 'danger');
+    }
+});
+
+function displayUserInfo(user) {
+    document.getElementById('displayUserId').textContent = user.user_id;
+    document.getElementById('displayUsername').textContent = user.username;
+    document.getElementById('displayCredits').textContent = user.credit_balance + ' 积分';
+    document.getElementById('displayCreatedAt').textContent = user.created_at;
+
+    // Display VIP status with badge
+    const vipBadge = getVipBadgeHTML(user.vip_tier, user.vip_display);
+    document.getElementById('displayVipStatus').innerHTML = vipBadge;
+}
+
+function hideUserInfo() {
+    document.getElementById('userInfoCard').style.display = 'none';
+    document.getElementById('vipUpdateCard').style.display = 'none';
+    currentUserId = null;
+}
+
+function getVipBadgeHTML(tier, display) {
+    if (tier === 'black_gold') {
+        return `<span class="badge bg-warning text-dark fs-5">
+                    <i class="bi bi-gem"></i> ${display}
+                </span>`;
+    } else if (tier === 'vip') {
+        return `<span class="badge bg-primary fs-5">
+                    <i class="bi bi-star-fill"></i> ${display}
+                </span>`;
+    } else {
+        return `<span class="badge bg-secondary fs-5">${display}</span>`;
+    }
+}
+
+function getVipDisplayName(tier) {
+    const names = {
+        'none': '普通用户',
+        'vip': '永久VIP',
+        'black_gold': '永久黑金VIP'
+    };
+    return names[tier] || tier;
+}
+
+function showAlert(message, type) {
+    const alertHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    document.getElementById('alertContainer').innerHTML = alertHTML;
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
