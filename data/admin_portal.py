@@ -615,6 +615,120 @@ def dashboard_daily_data():
         return f"Error loading dashboard: {str(e)}", 500
 
 
+@app.route('/vip-management')
+def vip_management():
+    """
+    VIP management interface.
+
+    Allows admin to search for users by ID and modify their VIP status.
+    """
+    return render_template('vip_management.html')
+
+
+@app.route('/api/user/<int:user_id>/info')
+def api_user_info(user_id):
+    """
+    Get user information including VIP status.
+
+    Args:
+        user_id: Telegram user ID
+
+    Returns:
+        JSON object with user details
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT user_id, telegram_username, vip_tier, credit_balance, created_at
+            FROM users
+            WHERE user_id = ?
+        """, (user_id,))
+
+        user = cursor.fetchone()
+        conn.close()
+
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        return jsonify({
+            'user_id': user['user_id'],
+            'username': user['telegram_username'] or 'N/A',
+            'vip_tier': user['vip_tier'],
+            'vip_display': get_vip_display_name(user['vip_tier']),
+            'credit_balance': int(user['credit_balance']),
+            'created_at': format_timestamp_gmt8(user['created_at'])
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting user info: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/user/<int:user_id>/vip', methods=['POST'])
+def api_update_vip(user_id):
+    """
+    Update user's VIP status.
+
+    Args:
+        user_id: Telegram user ID
+
+    Request body:
+        {
+            "vip_tier": "none" | "vip" | "black_gold"
+        }
+
+    Returns:
+        JSON response with success status
+    """
+    try:
+        data = request.get_json()
+        new_vip_tier = data.get('vip_tier')
+
+        # Validate VIP tier
+        valid_tiers = ['none', 'vip', 'black_gold']
+        if new_vip_tier not in valid_tiers:
+            return jsonify({'error': f'Invalid VIP tier. Must be one of: {", ".join(valid_tiers)}'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if user exists
+        cursor.execute("SELECT user_id, vip_tier FROM users WHERE user_id = ?", (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            conn.close()
+            return jsonify({'error': 'User not found'}), 404
+
+        old_vip_tier = user['vip_tier']
+
+        # Update VIP tier
+        cursor.execute("""
+            UPDATE users
+            SET vip_tier = ?
+            WHERE user_id = ?
+        """, (new_vip_tier, user_id))
+
+        conn.commit()
+        conn.close()
+
+        logger.info(f"Admin updated VIP status for user {user_id}: {old_vip_tier} -> {new_vip_tier}")
+
+        return jsonify({
+            'success': True,
+            'message': f'VIP status updated successfully',
+            'old_tier': old_vip_tier,
+            'new_tier': new_vip_tier,
+            'new_tier_display': get_vip_display_name(new_vip_tier)
+        })
+
+    except Exception as e:
+        logger.error(f"Error updating VIP status: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/health')
 def health_check():
     """Health check endpoint."""
@@ -635,6 +749,7 @@ if __name__ == '__main__':
     logger.info(f"Transaction Ledger: http://localhost:{port}/transactions")
     logger.info(f"Feature Analytics: http://localhost:{port}/features")
     logger.info(f"Daily Data: http://localhost:{port}/daily-data")
+    logger.info(f"VIP Management: http://localhost:{port}/vip-management")
 
     # Use simple Flask development server
     app.run(host='0.0.0.0', port=port, debug=False)

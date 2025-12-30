@@ -58,6 +58,12 @@
                             <i class="bi bi-calendar3"></i> 每日数据
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'vip_management' %}active{% endif %}"
+                           href="{{ url_for('vip_management') }}">
+                            <i class="bi bi-star"></i> VIP管理
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
