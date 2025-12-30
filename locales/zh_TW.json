@@ -162,7 +162,9 @@
     "invalid_state": "💡 操作提示\n\n請先從主選單選擇功能：\n→ 1. 圖片脫衣\n\n然後按提示上傳照片",
     "unexpected_input": "💡 請選擇功能\n\n請點擊下方選單按鈕\n或發送對應數字（如：1、2、3）",
     "no_style_selected": "請先從主選單選擇圖片處理選項",
-    "style_selection_error": "風格選擇錯誤，請重新開始"
+    "style_selection_error": "風格選擇錯誤，請重新開始",
+    "processing_failed": "❌ 處理失敗: {error_msg}",
+    "processing_failed_with_refund": "❌ 處理失敗: {error_msg}\n💰 {cost} 積分已退還。"
   },
   "callbacks": {
     "deprecated_function": "此功能已更新，請重新提交任務",

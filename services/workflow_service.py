@@ -25,7 +25,9 @@ class WorkflowService:
         notification_service,
         queue_service,
         state_manager,
-        credit_service=None
+        credit_service=None,
+        database_service=None,
+        translation_service=None
     ):
         """
         Initialize workflow service.
@@ -38,6 +40,8 @@ class WorkflowService:
             queue_service: Queue service instance
             state_manager: State manager instance
             credit_service: CreditService instance (optional for backwards compatibility)
+            database_service: DatabaseService instance (optional, for translation)
+            translation_service: TranslationService instance (optional, for i18n)
         """
         self.config = config
         self.file_service = file_service
@@ -45,6 +49,8 @@ class WorkflowService:
         self.queue_service = queue_service
         self.state_manager = state_manager
         self.credit_service = credit_service
+        self.database_service = database_service
+        self.translation_service = translation_service
 
         # Create workflow-specific ComfyUI service instances
         from services.comfyui_service import ComfyUIService
@@ -151,7 +157,13 @@ class WorkflowService:
         """Send queue position message to user with refresh button and store message ID"""
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-        message_text = f"📋 您的任务已加入队列\n位置: #{position}"
+        # Get translated message text
+        if self.translation_service and self.database_service:
+            message_text = self.translation_service.get(user_id, 'queue.in_queue_position', position=position)
+            button_text = self.translation_service.get(user_id, 'queue.refresh_button')
+        else:
+            message_text = f"📋 您的任务已加入队列\n位置: #{position}"
+            button_text = "🔄 刷新"
 
         # Add refresh button with job_id for position lookup
         # Store job_id in callback_data so refresh can look up current position
@@ -159,7 +171,7 @@ class WorkflowService:
         if job_id:
             callback_data = f"refresh_queue_{job_id}"
 
-        keyboard = [[InlineKeyboardButton("🔄 刷新", callback_data=callback_data)]]
+        keyboard = [[InlineKeyboardButton(button_text, callback_data=callback_data)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         try:
@@ -175,7 +187,11 @@ class WorkflowService:
 
     async def _send_processing_message(self, bot, user_id):
         """Update queue position message to show processing (removes refresh button)"""
-        message_text = "🚀 您的任务现在正在服务器上处理！\n⏱️ 这可能需要几分钟..."
+        # Get translated message text
+        if self.translation_service and self.database_service:
+            message_text = self.translation_service.get(user_id, 'queue.task_processing')
+        else:
+            message_text = "🚀 您的任务现在正在服务器上处理！\n⏱️ 这可能需要几分钟..."
         try:
             state = self.state_manager.get_state(user_id)
             queue_msg_id = state.get('queue_message_id')
@@ -227,11 +243,16 @@ class WorkflowService:
 
         # Notify user
         try:
-            await bot.send_message(
-                user_id,
-                f"❌ 处理失败: {error_msg}\n"
-                f"💰 {cost} 积分已退还。" if cost > 0 else f"❌ 处理失败: {error_msg}"
-            )
+            # Get translated error message
+            if self.translation_service and self.database_service:
+                if cost > 0:
+                    message = self.translation_service.get(user_id, 'errors.processing_failed_with_refund', error_msg=error_msg, cost=cost)
+                else:
+                    message = self.translation_service.get(user_id, 'errors.processing_failed', error_msg=error_msg)
+            else:
+                message = f"❌ 处理失败: {error_msg}\n💰 {cost} 积分已退还。" if cost > 0 else f"❌ 处理失败: {error_msg}"
+
+            await bot.send_message(user_id, message)
         except Exception as e:
             logger.error(f"Error sending error message: {e}")
 

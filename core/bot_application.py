@@ -124,7 +124,9 @@ class BotApplication:
             self.notification_service,
             self.queue_service,
             self.state_manager,
-            credit_service=self.credit_service
+            credit_service=self.credit_service,
+            database_service=self.database_service,
+            translation_service=self.translation_service
         )
 
         logger.debug("All services initialized")

@@ -162,7 +162,9 @@
     "invalid_state": "💡 Operation Guide\n\nPlease select function from main menu first:\n→ 1. Image Undressing\n\nThen upload photo as instructed",
     "unexpected_input": "💡 Please Select Function\n\nPlease click menu buttons below\nOr send corresponding number (e.g., 1, 2, 3)",
     "no_style_selected": "Please select image processing option from main menu first",
-    "style_selection_error": "Style selection error, please restart"
+    "style_selection_error": "Style selection error, please restart",
+    "processing_failed": "❌ Processing Failed: {error_msg}",
+    "processing_failed_with_refund": "❌ Processing Failed: {error_msg}\n💰 {cost} credits have been refunded."
   },
   "callbacks": {
     "deprecated_function": "This function has been updated, please resubmit task",
