@@ -1,0 +1,208 @@
+{
+  "language": {
+    "name": "한국어",
+    "code": "ko_KR"
+  },
+  "language_selection": {
+    "title": "🌍 언어 선택 / Choose Your Language",
+    "subtitle": "\n원하는 언어를 선택하세요. 나중에 언제든지 변경할 수 있습니다",
+    "success": "✅ 언어가 {language_name}(으)로 설정되었습니다",
+    "change_language": "🌍 언어 변경"
+  },
+  "welcome": {
+    "message": "✨ 최강 AI 탈의 도구에 오신 것을 환영합니다!\n\n🎰 **매일 럭키 할인**\n• 💰 최대 50% OFF!\n• 🎁 매일 24:00에 리셋, 선착순\n• ⚡ **충전 전에 꼭 할인을 뽑으세요!**\n\n🎁 **신규 유저 혜택**\n• 핑크 레이스 스타일 - 영구 무료\n• 완전 누드 스타일 - 2일마다 1회 무료\n\n🎨 **핵심 기능**\n• 📸 이미지 탈의(10포인트/회) - 다양한 스타일\n• 🎬 동영상 생성(30포인트/회) - 3가지 효과\n• 🔥 최고급 AI 모델 - 초현실적\n\n💎 **VIP 회원 특전**\n• 평생 VIP(¥173) - 모든 기능 무제한\n• 블랙골드 VIP(¥281) - 무제한 + 우선 처리\n• 한 번 결제로 평생 이용\n\n🎁 **아래 버튼을 클릭해서 지금 바로 럭키 할인을 뽑으세요!**",
+    "lucky_discount_button": "🎁 럭키 할인 뽑기"
+  },
+  "menu": {
+    "select_function": "",
+    "option_image": "1. 📸 画像脱衣！✨",
+    "option_video": "2. 🎬 動画脱衣！✨",
+    "option_topup": "3. 💳 ポイント購入 🎁 毎日最大50%OFF！",
+    "option_balance": "4. 📊 残高＆履歴",
+    "option_queue": "5. キュー確認",
+    "option_language": "6. 🌍 言語を変更"
+  },
+  "image": {
+    "send_prompt": "📸 写真をアップロードして、AIに作成させましょう〜\n\n画像脱衣モデルのデモ✨✨✨：\n[🔞クリックして見る🔞](https://t.me/zuiqiangtuoyi/5)\n\n💡 写真をアップロード後、AIが自動的に処理を開始します",
+    "send_image_prompt": "📸 写真をアップロードして、AIに作成させましょう〜\n\n画像脱衣モデルのデモ✨✨✨：\n[🔞クリックして見る🔞](https://t.me/zuiqiangtuoyi/5)\n\n💡 写真をアップロード後、AIが自動的に処理を開始します",
+    "style_selection": "🎨 脱衣スタイルを選択\n\nモデル効果デモ：\n\n1. ピンクレース下着サンプル✨✨：\n[🔞クリックして見る🔞](https://t.me/zuiqiangtuoyi/25)\n\n2. 全裸サンプル✨✨：\n[🔞クリックして見る🔞](https://t.me/zuiqiangtuoyi/29)\n\nお好みのスタイルを選択してください：",
+    "style_bra_button": "🎁 ピンクレース下着 ✨永久無料✨",
+    "style_undress_button": "全裸（10ポイント）",
+    "style_bra_name": "ピンクレース下着",
+    "style_undress_name": "全裸"
+  },
+  "video": {
+    "send_prompt": "📸 写真をアップロードしてください\n\n💡 動画生成には少し時間がかかります。お待ちください〜",
+    "send_image_prompt": "📸 写真をアップロードしてください\n\n💡 動画生成には少し時間がかかります。お待ちください〜",
+    "style_selection": "🎬 動画スタイルを選択\n\nモデル効果デモ：\n\n1. 動画モデル1サンプル：✨✨脱衣+揺れ✨✨：\n[🔞クリックして見る🔞](https://t.me/zuiqiangtuoyi/13)\n\n2. 動画モデル2サンプル：✨✨脱衣+液体✨✨：\n[🔞クリックして見る🔞](https://t.me/zuiqiangtuoyi/15)\n\n3. 動画モデル3サンプル：✨✨脱衣+露骨✨✨：\n[🔞クリックして見る🔞](https://t.me/zuiqiangtuoyi/19)\n\nお好みの動画エフェクトを選択してください：",
+    "style_a_button": "脱衣+揺れ（30ポイント）",
+    "style_b_button": "脱衣+液体（30ポイント）",
+    "style_c_button": "脱衣+露骨（30ポイント）",
+    "style_a_name": "脱衣+揺れ",
+    "style_b_name": "脱衣+液体",
+    "style_c_name": "脱衣+露骨"
+  },
+  "workflow": {
+    "name_image_bra": "ピンクレース下着",
+    "name_image_undress": "全裸",
+    "name_video_a": "脱衣+揺れ",
+    "name_video_b": "脱衣+液体",
+    "name_video_c": "脱衣+露骨"
+  },
+  "credits": {
+    "insufficient": "💳 ポイント不足\n\n現在の残高：{balance} ポイント\n必要ポイント：{required} ポイント\n\nチャージ後すぐに利用可能、待ち時間なし〜",
+    "deducted": "{amount} ポイントを消費しました。現在の残高：{balance} ポイント",
+    "added": "チャージ成功！{amount} ポイント獲得、現在の残高：{balance} ポイント",
+    "balance_message": "💰 マイポイント\n\n現在の残高：{balance} ポイント\n累計消費：{total_spent} ポイント\n\n📋 サービス料金：\n• 画像脱衣：10 ポイント/回\n• 動画生成：30 ポイント/回",
+    "confirmation": "📋 ポイント使用確認\n\n{workflow_name}\n\n💰 消費詳細：\n• 現在の残高：{balance} ポイント\n• 今回の消費：{cost} ポイント\n• 確認後の残高：{remaining} ポイント\n\n✨ 確認後すぐに処理を開始します",
+    "confirmation_free_trial": "🎁 無料体験\n\n{workflow_name}\n\n今回の利用：無料\n現在の残高：{balance} ポイント\n\n{cooldown_info}\n\n✨ 確認後すぐに処理を開始します",
+    "confirmation_cancelled": "操作をキャンセルしました",
+    "insufficient_on_confirm": "❌ ポイント不足\n\n現在の残高：{balance} ポイント\n必要ポイント：{cost} ポイント\n\nチャージパッケージを選択してください："
+  },
+  "trial": {
+    "available": "🎁 無料体験が利用可能！\n\nこれはあなたの無料体験回数です\n• 使用後2日以内に自動リセット\n• ポイント消費なし\n\n写真をアップロードして、AIの魔法を体験しましょう〜",
+    "cooldown": "⏰ 無料回数クールダウン中\n\n次回利用可能：{next_available}\n\n💳 現在のオプション：\n• あなたの残高：{balance} ポイント\n• 今回必要：10 ポイント\n\n💡 チャージですぐに利用可能、または無料回数のリセットをお待ちください",
+    "bra_daily_limit": "おっと！今日のピンクレース下着無料利用回数を使い切りました！😅\n\n📊 本日の利用状況：\n   • 利用済み：{current_usage}/{limit} 回\n   • リセット時刻：明日0時（GMT+8）\n\n💡 豆知識：\n   • 有料機能（全裸、動画処理など）は毎日の制限がありません\n   • ポイントがあればいつでも利用できます！\n\n💎 またはVIPにアップグレードして無制限利用！\n\nまた明日！💕"
+  },
+  "payment": {
+    "pending": "⏰ 支払い確認待ち\n\n3分以内にお支払いを完了してください\n💡 *Alipayが「制限付き支払い」と表示された場合、再起動すると利用可能なQRコードに切り替わります*\n⚠️ *支払い完了後、確認ページが応答しない場合があります。ボットに戻ってチャージ成功メッセージを確認してください*\nタイムアウト後、注文は自動的にキャンセルされます\n\n📝 注文情報：\n• 注文番号：{payment_id}\n• 金額：¥{amount}\n• 獲得ポイント：{credits} ポイント\n\n💡 支払い完了後、ポイントは自動的に入金されます",
+    "timeout": "⏰ 支払いタイムアウト\n\n注文はキャンセルされました - ポイントは差し引かれていません\nいつでも再度お試しください",
+    "success": "🎉 チャージ成功！\n\n+{credits} ポイントが追加されました\n早速楽しんでください〜",
+    "failed": "支払いに失敗しました - もう一度お試しください",
+    "method_selection_with_discount": "💳 チャージ ¥{displayed_amount} = {credits}ポイント{tier_name}\n\n🔥 **割引適用済み** - ¥{savings}お得！\n⏰ _本日24:00まで有効、お早めにお支払いを完了してください_\n\n⚠️ **重要：決済ゲートウェイはメンテナンス中 - 一時的に利用できません** ⚠️\n📞 チャージが必要な場合はサポートにお問い合わせください\n\n支払い方法を選択してください：",
+    "method_selection_normal": "💳 チャージ ¥{displayed_amount} = {credits}ポイント{tier_name}\n\n⚠️ **重要：決済ゲートウェイはメンテナンス中 - 一時的に利用できません** ⚠️\n📞 チャージが必要な場合はサポートにお問い合わせください\n\n支払い方法を選択してください：",
+    "button_alipay": "💰 Alipay",
+    "button_wechat": "💚 WeChat Pay",
+    "button_go_pay": "支払いへ進む",
+    "method_label": "\n支払い方法：{method}",
+    "notification_success": "✅ 支払い成功！\n\n💰 追加ポイント：{credits}\n📊 新しい残高：{new_balance} ポイント\n\n注文：{payment_id}\n\nご支援ありがとうございます！",
+    "webhook_html_title": "支払い処理中",
+    "webhook_html_heading": "支払い処理中",
+    "webhook_html_body": "お支払いを処理中です。確認後、ポイントが自動的に入金されます。",
+    "webhook_html_return": "Telegramボットに戻って残高を確認してください。",
+    "webhook_html_footer": "このページを閉じることができます",
+    "creation_error": "注文の作成に失敗しました：{error}",
+    "creation_failed": "支払いに失敗しました - 後でもう一度お試しください",
+    "vip_already_owned": "すでに{tier}です！再度購入する必要はありません！"
+  },
+  "topup": {
+    "packages_with_discount": "💳 チャージパッケージ\n\n🔥🔥🔥 **今日は超ラッキー！** 🔥🔥🔥\n⚡ _あなた専用の割引がアンロックされました - 下をタップして確認！_\n💰 **最大50%OFF** - 本日24:00まで有効\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 おすすめ：\n1️⃣ ¥11 = 30ポイント ⭐\n2️⃣ ¥32 = 120ポイント 🔥\n3️⃣ ¥54 = 250ポイント 💎\n4️⃣ ¥108 = 600ポイント 👑\n5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【オーナー推奨・使い放題】\n6️⃣ ¥281 = ブラックゴールドVIP 👑👑👑 【使い放題+優先処理】\n\n✨ チャージのメリット：\n• ポイントは永久有効\n• 即時入金\n\n⚠️ **重要：決済ゲートウェイはメンテナンス中 - 一時的に利用できません** ⚠️\n📞 チャージが必要な場合はサポートにお問い合わせください\n\n⏰ **今日の割引を忘れずに！下の【ラッキー割引】ボタンをクリック** ⏰",
+    "packages_normal": "💳 チャージパッケージ\n\n🎰 **本日のラッキー割引実施中** - 下をタップして割引を確認！\n💡 _毎日ランダムで5%〜50%OFF - 今日の運試し？_\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 おすすめ：\n1️⃣ ¥11 = 30ポイント ⭐\n2️⃣ ¥32 = 120ポイント 🔥\n3️⃣ ¥54 = 250ポイント 💎\n4️⃣ ¥108 = 600ポイント 👑\n5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【オーナー推奨・使い放題】\n6️⃣ ¥281 = ブラックゴールドVIP 👑👑👑 【使い放題+優先処理】\n\n✨ チャージのメリット：\n• ポイントは永久有効\n• 即時入金\n\n⚠️ **重要：決済ゲートウェイはメンテナンス中 - 一時的に利用できません** ⚠️\n📞 チャージが必要な場合はサポートにお問い合わせください",
+    "packages_no_discount": "💳 チャージパッケージ\n\n🎁 **初回特典** - まず今日のラッキー割引を引こう！\n💰 _最大50%OFF_ | 毎日リセット | 24時間限定\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 おすすめ：\n1️⃣ ¥11 = 30ポイント ⭐\n2️⃣ ¥32 = 120ポイント 🔥\n3️⃣ ¥54 = 250ポイント 💎\n4️⃣ ¥108 = 600ポイント 👑\n5️⃣ ¥173 = 永久VIP ⭐⭐⭐ 【オーナー推奨・使い放題】\n6️⃣ ¥281 = ブラックゴールドVIP 👑👑👑 【使い放題+優先処理】\n\n✨ チャージのメリット：\n• ポイントは永久有効\n• 即時入金\n\n⚠️ **重要：決済ゲートウェイはメンテナンス中 - 一時的に利用できません** ⚠️\n📞 チャージが必要な場合はサポートにお問い合わせください",
+    "button_2": "¥2 = 5ポイント（テスト）",
+    "button_10": "¥11 = 30ポイント",
+    "button_30": "¥32 = 120ポイント",
+    "button_50": "¥54 = 250ポイント",
+    "button_100": "¥108 = 600ポイント",
+    "button_vip": "¥173 = 永久VIP",
+    "button_black_gold_vip": "¥281 = ブラックゴールドVIP",
+    "button_10_no_discount": "💰 {credits}ポイント ¥{price}（割引なし）",
+    "button_vip_with_discount": "💎 永久VIP ¥{discounted_price} 🎁（通常価格¥{original_price}）",
+    "button_black_gold_vip_with_discount": "👑 ブラックゴールドVIP ¥{discounted_price} 🎁（通常価格¥{original_price}）",
+    "button_credits_with_discount": "💰 {credits}ポイント ¥{discounted_price} 🎁（通常価格¥{original_price}）"
+  },
+  "transactions": {
+    "header": "📊 最近の消費記録\n\n",
+    "recent_header": "\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 最近10件の記録：\n\n",
+    "item_template": "{date} | {type} | {amount:+.0f}pt | 残高 {balance:.0f}\n",
+    "no_transactions": "消費記録はまだありません\nチャージ後すぐに利用開始できます〜",
+    "type_topup": "チャージ",
+    "type_deduction": "消費",
+    "type_refund": "返金"
+  },
+  "vip": {
+    "confirmation": "👑 VIP会員確認\n\n今回の利用：無料（VIP特典）\n現在の残高：{balance} ポイント\n\n✨ VIPユーザーは無制限利用可能",
+    "purchase_success": "🎉 おめでとうございます、{tier}になりました！\n\n✨ あなた専用の特典：\n{benefits}\n\n今すぐ無制限で体験しましょう〜",
+    "benefits_regular": "• すべての機能が無制限利用\n• ポイント消費なし\n• 永久有効",
+    "benefits_black_gold": "• すべての機能が無制限利用\n• 優先処理キュー ⚡\n• ポイント消費なし\n• 永久有効",
+    "status_badge": "👑 {tier}ユーザー",
+    "balance_message": "💰 マイアカウント\n\n会員ランク：{vip_badge}\n現在の残高：{balance} ポイント（無制限利用）\n累計消費：{total_spent} ポイント\n\n✨ VIP特典有効中",
+    "daily_limit_regular": "ご主人様〜♡ 今日は50回も処理してあげたから、すっごく疲れちゃった〜 🥺\n\n明日の0時にまた続きをしましょうね〜 💋\n\n本日の利用：{current_usage}/{limit} 回 ✨",
+    "daily_limit_black_gold": "ご主人様〜♡ 100回全部やっちゃったから、本当に休憩が必要なの〜 😘\n\n明日の0時にまた会いましょう〜 💕\n\n本日の利用：{current_usage}/{limit} 回 ✨"
+  },
+  "discount": {
+    "button_hot": "🔥💰 今日のメガ割引をゲット！ 💰🔥",
+    "button_normal": "🎰 毎日ラッキー割引 - タップして確認",
+    "button_revealed": "{emoji} **{tier}** - {off}%割引有効化",
+    "celebration_ssr": "🎊🎊🎊 **おめでとう！神レベルの運！** 🎊🎊🎊\n\n**SSR神の割引を引き当てました！**\n🔥🔥 **全品50%OFF** 🔥🔥\n\n💰 **永久VIPがたった¥87**（通常価格¥173）\n💎 **全パッケージ50%OFF** - 半額！\n\n⏰ 本日24:00まで有効 - 今すぐゲット！\n\n_今すぐパッケージを選んで神割引を楽しもう！_",
+    "celebration_sr": "🎉🎉🎉 **おめでとう！超ラッキー！** 🎉🎉🎉\n\n**SR超割引を引き当てました！**\n⭐⭐ **全品30%OFF** ⭐⭐\n\n💰 **永久VIPがたった¥121**（通常価格¥173）\n💎 **全パッケージ30%OFF** - 超お得！\n\n⏰ 本日24:00まで有効 - お見逃しなく！\n\n_今すぐパッケージを選んで超割引を楽しもう！_",
+    "revealed_r": "✨ **なかなか良い！R級割引**\n\n全品15%OFF！\n💡 _ヒント：継続利用で割引レベルアップ_\n\n💰 **永久VIPがたった¥147**（通常価格¥173）\n\n⏰ 本日のみ有効 - 今すぐ利用！",
+    "revealed_c": "🍀 **割引アンロック！C級**\n\n5%OFF - 少ないけど割引は割引！\n🎯 _頑張って - 次は50%かも_\n\n💰 **永久VIPがたった¥164**（通常価格¥173）\n\n⏰ 本日のみ有効 - 使わなきゃ損！",
+    "already_revealed": "⚡ **あなたの割引は有効化されています！**\n\n現在の割引：**{tier}**（{off}%OFF）\n有効期限：**本日24:00** ⏰\n\n💡 全パッケージ価格は割引後の価格を表示しています\n🔥 _期間限定オファー、今すぐチャージ！_\n\n━━━━━━━━━━━━━━━━━━━━\n下のパッケージを選んで割引を楽しもう！",
+    "tier_ssr": "SSR神レベルの運",
+    "tier_sr": "SR超運",
+    "tier_r": "Rなかなか良い運",
+    "tier_c": "C普通の運"
+  },
+  "queue": {
+    "status": "⏳ 処理キューに入りました\n\nあなたの位置：#{position}\nキュー合計：{total}人\n\n💡 ヒント：いつでも下をタップして最新の位置を確認できます",
+    "total": "現在のキュー合計：{total}",
+    "unavailable": "⚠️ キューシステムが混雑中\n後でもう一度試すか、サポートにお問い合わせください",
+    "status_header": "📊 **現在のキュー状態**",
+    "label_image": "画像処理",
+    "label_video": "動画処理",
+    "server_status": "  └─ サーバー **{server_number}号**：**{total_count}** 件のタスク",
+    "vip_count": "     • 👑 VIP：**{vip_count}** 件",
+    "regular_count": "     • 👤 通常：**{regular_count}** 件",
+    "vip_priority_tip": "💡 **ヒント**：VIPユーザーは優先処理されます",
+    "status_unavailable": "❌ キュー状態を取得できません",
+    "in_queue_position": "📋 あなたのタスクがキューに追加されました\n位置：#{position}",
+    "refresh_button": "🔄 更新",
+    "task_processing": "🚀 あなたのタスクは現在サーバーで処理中です！\n⏱️ 数分かかる場合があります...",
+    "refresh_failed": "更新に失敗しました"
+  },
+  "processing": {
+    "in_progress": "処理中...",
+    "running": "🎨 AIが丁寧にあなたの写真を処理しています...\nお待ちください、良い作品は待つ価値があります〜",
+    "retrieving": "✨ 処理完了！作品を準備しています...",
+    "complete": "🎉 作成完了！\n\n⏰ 5分後に自動削除されます\nアルバムにすぐ保存してください〜\n\n💡 ヒント：画像を長押しして保存",
+    "already_processing": "⏳ あなたの画像は処理中です\n\n現在のタスクが完了するまでお待ちください\n複数回送信しても処理は速くなりません〜"
+  },
+  "errors": {
+    "invalid_format": "❌ サポートされていない形式\n\n以下の形式を使用してください：\n✅ JPG / JPEG\n✅ PNG\n✅ WEBP\n\n💡 ヒント：ギャラリーから写真を選択するだけ",
+    "upload_failed": "❌ アップロード失敗\n\n考えられる原因：\n• 接続が不安定\n• ファイルが大きすぎる\n\n💡 試してみて：\n1. 接続を確認\n2. 画像を圧縮してリトライ\n3. それでもダメならサポートに連絡",
+    "max_retry": "⚠️ 試行回数の上限に達しました（3回）\n\nメインメニューに戻って再開してください\n質問がある場合は、サポートにお問い合わせください",
+    "system": "❌ システムが混雑中\n\n後でもう一度お試しください\n問題が続く場合は、サポートにお問い合わせください",
+    "invalid_state": "💡 操作のヒント\n\nまずメインメニューから機能を選択してください：\n→ 1. 画像脱衣\n\n次に指示に従って写真をアップロード",
+    "unexpected_input": "💡 機能を選択してください\n\n下のメニューボタンをタップ\nまたは対応する番号を送信（例：1、2、3）",
+    "no_style_selected": "まずメインメニューから画像処理オプションを選択してください",
+    "style_selection_error": "スタイル選択エラー、再開してください",
+    "processing_failed": "❌ 処理に失敗しました：{error_msg}",
+    "processing_failed_with_refund": "❌ 処理に失敗しました：{error_msg}\n💰 {cost} ポイントを返金しました。"
+  },
+  "callbacks": {
+    "deprecated_function": "この機能は更新されました - もう一度お試しください",
+    "payment_in_development": "支払い機能は近日公開",
+    "operation_cancelled": "キャンセルしました",
+    "no_operation_in_progress": "進行中の操作はありません",
+    "cannot_cancel": "これはキャンセルできません",
+    "cancelled": "キャンセルしました",
+    "invalid_selection": "無効な選択",
+    "invalid_style": "無効なスタイル",
+    "style_selected_video": "{style_name}を選択しました\n\n{prompt}",
+    "style_selected_image": "{style_name}を選択しました\n\n{prompt}",
+    "style_selection_error": "スタイル選択中にエラーが発生しました - もう一度お試しください",
+    "confirmation_error": "何か問題が発生しました - 後でもう一度お試しください",
+    "topup_menu_error": "チャージメニューを開けませんでした - もう一度お試しください"
+  },
+  "buttons": {
+    "refresh_queue": "キューを更新",
+    "confirm": "✅ 確認",
+    "cancel": "❌ キャンセル",
+    "back_to_menu": "🏠 メインメニューに戻る"
+  },
+  "features": {
+    "not_implemented": "この機能は開発中です"
+  },
+  "help": {
+    "text": "📖 利用ヘルプ\n\n1️⃣ 画像脱衣\n   - ボタンをタップして写真を送信\n   - サポート形式：PNG、JPG、JPEG、WEBP\n   - 処理が完了するまで待つ\n\n2️⃣ 画像から動画への脱衣\n   - 機能開発中\n\n3️⃣ キューを確認\n   - 現在の待機人数を確認\n\n⏱️ 処理完了後、5分以内に画像を保存してください。\n\n❓ 質問がある場合は、管理者にお問い合わせください。"
+  },
+  "commands": {
+    "cancel_success": "操作をキャンセルしました",
+    "cancel_no_operation": "進行中の操作はありません",
+    "cancel_failed": "操作のキャンセルに失敗しました",
+    "status_idle": "現在進行中の操作はありません",
+    "status_text": "📊 現在の状態\n\n状態：{current_state}\nタスクID：{prompt_id}",
+    "admin_topup_success": "管理者がチャージしました"
+  }
+}
