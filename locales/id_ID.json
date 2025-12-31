@@ -96,10 +96,10 @@
     "button_100": "¥108 = 600 kredit",
     "button_vip": "¥173 = VIP Seumur Hidup",
     "button_black_gold_vip": "¥281 = VIP Black Gold Seumur Hidup",
-    "button_10_no_discount": "💰 {credits}kredit ¥{price} (tanpa diskon)",
+    "button_10_no_discount": "💰 {credits} kredit ¥{price} (tanpa diskon)",
     "button_vip_with_discount": "💎 VIP Seumur Hidup ¥{discounted_price} 🎁 (Harga asli ¥{original_price})",
     "button_black_gold_vip_with_discount": "👑 VIP Black Gold Seumur Hidup ¥{discounted_price} 🎁 (Harga asli ¥{original_price})",
-    "button_credits_with_discount": "💰 {credits}kredit ¥{discounted_price} 🎁 (Harga asli ¥{original_price})"
+    "button_credits_with_discount": "💰 {credits} kredit ¥{discounted_price} 🎁 (Harga asli ¥{original_price})"
   },
   "transactions": {
     "header": "📊 Riwayat Pengeluaran Terbaru\n\n",

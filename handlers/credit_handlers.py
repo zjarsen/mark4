@@ -424,25 +424,31 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
         is_new = discount_info['is_new']
 
         # Show celebration message for new SSR/SR, or simple message for R/C
+        # Note: query.answer() with show_alert has 200 char limit, use edit_message_text for longer messages
         if is_new:
+            await query.answer()  # Acknowledge the callback first
+
             if tier == 'SSR':
                 msg = translation_service.get(user_id, 'discount.celebration_ssr') if translation_service else LUCKY_DISCOUNT_CELEBRATION_SSR
                 logger.info(f"User {user_id} got SSR discount, translation_service={'exists' if translation_service else 'None'}, msg preview: {msg[:50]}")
-                await query.answer(msg, show_alert=True)
             elif tier == 'SR':
                 msg = translation_service.get(user_id, 'discount.celebration_sr') if translation_service else LUCKY_DISCOUNT_CELEBRATION_SR
                 logger.info(f"User {user_id} got SR discount, translation_service={'exists' if translation_service else 'None'}, msg preview: {msg[:50]}")
-                await query.answer(msg, show_alert=True)
             elif tier == 'R':
                 msg = translation_service.get(user_id, 'discount.revealed_r') if translation_service else LUCKY_DISCOUNT_REVEALED_R
                 logger.info(f"User {user_id} got R discount, translation_service={'exists' if translation_service else 'None'}, msg preview: {msg[:50]}")
-                await query.answer(msg, show_alert=True)
             else:  # C
                 msg = translation_service.get(user_id, 'discount.revealed_c') if translation_service else LUCKY_DISCOUNT_REVEALED_C
                 logger.info(f"User {user_id} got C discount, translation_service={'exists' if translation_service else 'None'}, msg preview: {msg[:50]}")
-                await query.answer(msg, show_alert=True)
+
+            # Send as new message (not as alert) to avoid 200 char limit
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=msg,
+                parse_mode='Markdown'
+            )
         else:
-            # Already revealed today
+            # Already revealed today - short message can use alert
             tier_data = DISCOUNT_TIERS[tier]
             # Get translated tier name
             tier_name = translation_service.get(user_id, f'discount.tier_{tier.lower()}') if translation_service else tier_data['display']
@@ -457,7 +463,17 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
                     off=tier_data['off']
                 )
             logger.info(f"User {user_id} discount already revealed (tier={tier}), translation_service={'exists' if translation_service else 'None'}, msg preview: {message[:50]}")
-            await query.answer(message, show_alert=True)
+
+            # Check message length - if over 200 chars, send as message instead of alert
+            if len(message) > 200:
+                await query.answer()
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text=message,
+                    parse_mode='Markdown'
+                )
+            else:
+                await query.answer(message, show_alert=True)
 
         # Update keyboard with discount-aware prices
         keyboard = []
