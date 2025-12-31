@@ -65,7 +65,7 @@
     "bra_daily_limit": "哎呀！你今天的粉色蕾絲內衣免費使用次數已經用完啦！😅\n\n📊 今日使用情況:\n   • 已使用: {current_usage}/{limit} 次\n   • 重置時間: 明天凌晨 00:00 (GMT+8)\n\n💡 小貼士：\n   • 其他付費功能（脫到精光、影片處理等）沒有每日限制\n   • 有積分就能隨時使用哦！\n\n💎 或者升級VIP享受無限使用！\n\n明天見！💕"
   },
   "payment": {
-    "pending": "⏰ 等待支付確認\n\n請在3分鐘內完成支付\n訂單將在超時後自動取消\n\n📝 訂單資訊：\n• 訂單號：{payment_id}\n• 金額：¥{amount}\n• 將獲得：{credits} 積分\n\n💡 支付完成後積分自動到帳",
+    "pending": "⏰ 等待支付確認\n\n請在3分鐘內完成支付\n💡 *若支付寶顯示「限制收款」，重新發起即可切換可用的二維碼*\n⚠️ *支付完成後確認介面可能無回應，請返回機器人查看充值成功訊息*\n訂單將在超時後自動取消\n\n📝 訂單資訊：\n• 訂單號：{payment_id}\n• 金額：¥{amount}\n• 將獲得：{credits} 積分\n\n💡 支付完成後積分自動到帳",
     "timeout": "⏰ 支付已超時\n\n訂單已自動取消，積分未扣除\n您可以重新選擇套餐進行充值",
     "success": "🎉 充值成功！\n\n+{credits} 積分已到帳\n現在就去體驗吧～",
     "failed": "支付失敗，請重試",
@@ -95,7 +95,11 @@
     "button_50": "¥54 = 250積分",
     "button_100": "¥108 = 600積分",
     "button_vip": "¥173 = 永久VIP",
-    "button_black_gold_vip": "¥281 = 永久黑金VIP"
+    "button_black_gold_vip": "¥281 = 永久黑金VIP",
+    "button_10_no_discount": "💰 {credits}積分 ¥{price} (無折扣)",
+    "button_vip_with_discount": "💎 永久VIP ¥{discounted_price} 🎁（原價¥{original_price}）",
+    "button_black_gold_vip_with_discount": "👑 永久黑金VIP ¥{discounted_price} 🎁（原價¥{original_price}）",
+    "button_credits_with_discount": "💰 {credits}積分 ¥{discounted_price} 🎁（原價¥{original_price}）"
   },
   "transactions": {
     "header": "📊 最近消費記錄\n\n",

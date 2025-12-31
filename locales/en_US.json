@@ -65,7 +65,7 @@
     "bra_daily_limit": "Oops! You've used up today's free Pink Lace Lingerie quota! 😅\n\n📊 Today's Usage:\n   • Used: {current_usage}/{limit} times\n   • Reset: Tomorrow 00:00 (GMT+8)\n\n💡 Tips:\n   • Other paid features (Full Undress, Video) have no daily limit\n   • Use anytime with credits!\n\n💎 Or upgrade to VIP for unlimited access!\n\nSee you tomorrow! 💕"
   },
   "payment": {
-    "pending": "⏰ Awaiting Payment Confirmation\n\nPlease complete payment within 3 minutes\nOrder will be cancelled after timeout\n\n📝 Order Info:\n• Order ID: {payment_id}\n• Amount: ¥{amount}\n• Will Receive: {credits} credits\n\n💡 Credits arrive automatically after payment",
+    "pending": "⏰ Awaiting Payment Confirmation\n\nPlease complete payment within 3 minutes\n💡 *If Alipay shows \"Restricted Payment\", restart to switch to an available QR code*\n⚠️ *The confirmation page may be unresponsive after payment, please return to the bot to check for success message*\nOrder will be cancelled after timeout\n\n📝 Order Info:\n• Order ID: {payment_id}\n• Amount: ¥{amount}\n• Will Receive: {credits} credits\n\n💡 Credits arrive automatically after payment",
     "timeout": "⏰ Payment Timeout\n\nOrder automatically cancelled, credits not deducted\nYou can select package again to recharge",
     "success": "🎉 Recharge Successful!\n\n+{credits} credits added\nEnjoy now～",
     "failed": "Payment failed, please try again",
@@ -95,7 +95,11 @@
     "button_50": "¥54 = 250 credits",
     "button_100": "¥108 = 600 credits",
     "button_vip": "¥173 = Lifetime VIP",
-    "button_black_gold_vip": "¥281 = Lifetime Black Gold VIP"
+    "button_black_gold_vip": "¥281 = Lifetime Black Gold VIP",
+    "button_10_no_discount": "💰 {credits} credits ¥{price} (No Discount)",
+    "button_vip_with_discount": "💎 Lifetime VIP ¥{discounted_price} 🎁 (Was ¥{original_price})",
+    "button_black_gold_vip_with_discount": "👑 Lifetime Black Gold VIP ¥{discounted_price} 🎁 (Was ¥{original_price})",
+    "button_credits_with_discount": "💰 {credits} credits ¥{discounted_price} 🎁 (Was ¥{original_price})"
   },
   "transactions": {
     "header": "📊 Recent Transaction History\n\n",
