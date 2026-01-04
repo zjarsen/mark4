@@ -151,6 +151,13 @@ class DatabaseService:
             except Exception:
                 pass  # Column already exists
 
+            # Migration: Add payment_method to track payment method used
+            try:
+                cursor.execute("ALTER TABLE payments ADD COLUMN payment_method TEXT DEFAULT 'alipay'")
+                logger.info("Added payment_method column to payments table")
+            except Exception:
+                pass  # Column already exists
+
             # Migration: Add daily discount system columns
             try:
                 cursor.execute("ALTER TABLE users ADD COLUMN interaction_days INTEGER DEFAULT 0")
@@ -419,7 +426,8 @@ class DatabaseService:
         payment_url: str = None,
         chat_id: int = None,
         message_id: int = None,
-        language_code: str = None
+        language_code: str = None,
+        payment_method: str = 'alipay'
     ) -> bool:
         """
         Create payment record.
@@ -436,6 +444,7 @@ class DatabaseService:
             chat_id: Optional Telegram chat ID
             message_id: Optional Telegram message ID
             language_code: User's language preference for webhook translation
+            payment_method: Payment method used ('stars', 'alipay', 'wechat')
 
         Returns:
             True if successful
@@ -450,12 +459,12 @@ class DatabaseService:
 
             cursor.execute("""
                 INSERT INTO payments
-                (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id, language_code)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id, language_code))
+                (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id, language_code, payment_method)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (payment_id, user_id, provider, amount, currency, credits_amount, status, payment_url, chat_id, message_id, language_code, payment_method))
 
             conn.commit()
-            logger.info(f"Created payment record {payment_id} for user {user_id} (lang: {language_code})")
+            logger.info(f"Created payment record {payment_id} for user {user_id} (method: {payment_method}, lang: {language_code})")
             return True
 
         except Exception as e:

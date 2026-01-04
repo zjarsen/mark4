@@ -11,7 +11,7 @@ logger = logging.getLogger('mark4_bot')
 class PaymentService:
     """Service for managing payments and connecting with credit system."""
 
-    def __init__(self, config, database_service, credit_service, payment_provider):
+    def __init__(self, config, database_service, credit_service, payment_provider, stars_provider=None):
         """
         Initialize payment service.
 
@@ -20,11 +20,13 @@ class PaymentService:
             database_service: DatabaseService instance
             credit_service: CreditService instance
             payment_provider: Payment provider instance (WeChatAlipayProvider)
+            stars_provider: Telegram Stars payment provider (optional)
         """
         self.config = config
         self.db = database_service
         self.credit_service = credit_service
         self.payment_provider = payment_provider
+        self.stars_provider = stars_provider
 
     def get_topup_packages(self) -> Dict[int, int]:
         """
@@ -125,7 +127,8 @@ class PaymentService:
                 payment_url=payment_url,
                 chat_id=chat_id,
                 message_id=message_id,
-                language_code=language_code
+                language_code=language_code,
+                payment_method=payment_method
             )
 
             if not success:
@@ -146,6 +149,89 @@ class PaymentService:
 
         except Exception as e:
             logger.error(f"Error creating top-up payment for user {user_id}: {str(e)}")
+            return False, None, str(e)
+
+    async def create_topup_payment_stars(
+        self,
+        user_id: int,
+        amount_stars: int,
+        base_amount_cny: int,
+        credits_amount: int,
+        chat_id: int = None,
+        language_code: str = None
+    ) -> Tuple[bool, Optional[Dict], Optional[str]]:
+        """
+        Create a Telegram Stars top-up payment order.
+
+        Args:
+            user_id: User ID
+            amount_stars: Amount in Telegram Stars (XTR)
+            base_amount_cny: Base CNY amount for reference (10, 30, 50, 100, 160, 260)
+            credits_amount: Credits to award
+            chat_id: Optional Telegram chat ID for invoice
+            language_code: User's language preference
+
+        Returns:
+            Tuple of (success, payment_info, error_message)
+            payment_info contains: payment_id, stars_amount
+        """
+        try:
+            # Validate stars provider
+            if not self.stars_provider:
+                return False, None, "Telegram Stars provider not available"
+
+            # Get user's language if not provided
+            if language_code is None:
+                language_code = self.db.get_user_language(user_id)
+
+            # Create payment with Stars provider
+            payment_result = await self.stars_provider.create_payment(
+                user_id=user_id,
+                amount=float(amount_stars),
+                currency='XTR',
+                credits_amount=credits_amount,
+                chat_id=chat_id or user_id,
+                base_amount_cny=base_amount_cny
+            )
+
+            payment_id = payment_result['payment_id']
+            stars_amount = payment_result['stars_amount']
+            status = payment_result['status']
+
+            # Record payment in database
+            success = self.db.create_payment_record(
+                payment_id=payment_id,
+                user_id=user_id,
+                provider='telegram_stars',
+                amount=float(stars_amount),
+                currency='XTR',
+                credits_amount=float(credits_amount),
+                status=status.value,
+                payment_url=None,  # No external URL for Stars
+                chat_id=chat_id,
+                message_id=None,  # Stars don't need message tracking
+                language_code=language_code,
+                payment_method='stars'
+            )
+
+            if not success:
+                logger.error(f"Failed to record Stars payment {payment_id} in database")
+                return False, None, "Failed to create payment record"
+
+            logger.info(
+                f"Created Stars payment {payment_id} for user {user_id}: "
+                f"{stars_amount} Stars (¥{base_amount_cny}) = {credits_amount} credits"
+            )
+
+            return True, {
+                'payment_id': payment_id,
+                'stars_amount': stars_amount,
+                'credits_amount': credits_amount,
+                'base_amount_cny': base_amount_cny
+            }, None
+
+        except Exception as e:
+            logger.error(f"Error creating Stars payment for user {user_id}: {str(e)}", exc_info=True)
             return False, None, str(e)
 
     async def check_payment_status(self, payment_id: str) -> Optional[PaymentStatus]:

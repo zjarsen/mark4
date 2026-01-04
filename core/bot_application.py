@@ -26,8 +26,12 @@ from services.payment_service import PaymentService
 from services.discount_service import DiscountService
 from services.translation_service import TranslationService
 
-# Import payment provider
+# Import payment providers
 from payments.wechat_alipay_provider import WeChatAlipayProvider
+from payments.telegram_stars_provider import TelegramStarsProvider
+
+# Import pricing service
+from services.pricing_service import PricingService
 
 # Import core
 from core.state_manager import StateManager
@@ -92,18 +96,21 @@ class BotApplication:
             default_lang='zh_CN'
         )
 
+        # Initialize bot instance (needed for Stars provider and timeout service)
+        from telegram import Bot
+        self.bot = Bot(token=self.config.BOT_TOKEN)
+
         # Payment services
+        self.pricing_service = PricingService()
         self.payment_provider = WeChatAlipayProvider(self.config)
+        self.stars_provider = TelegramStarsProvider(self.config, self.bot)
         self.payment_service = PaymentService(
             self.config,
             self.database_service,
             self.credit_service,
-            self.payment_provider
+            self.payment_provider,
+            stars_provider=self.stars_provider
         )
-
-        # Initialize bot instance (needed for timeout service)
-        from telegram import Bot
-        self.bot = Bot(token=self.config.BOT_TOKEN)
 
         # Payment timeout service
         from services.payment_timeout_service import PaymentTimeoutService
@@ -166,6 +173,8 @@ class BotApplication:
         credit_handlers.timeout_service = self.timeout_service
         credit_handlers.discount_service = self.discount_service
         credit_handlers.translation_service = self.translation_service
+        credit_handlers.pricing_service = self.pricing_service
+        credit_handlers.database_service = self.database_service
 
         # Inject into language_handlers
         from handlers import language_handlers
@@ -337,19 +346,33 @@ class BotApplication:
         )
 
         # Credit system callback handlers
-        from handlers.credit_handlers import handle_topup_callback, handle_lucky_discount_callback
+        from handlers.credit_handlers import (
+            handle_topup_callback,
+            handle_lucky_discount_callback,
+            handle_successful_payment
+        )
+
+        # Payment method and topup handlers (includes method_ and topup_ patterns)
         self.app.add_handler(
             CallbackQueryHandler(
                 handle_topup_callback,
-                pattern="^topup_"
+                pattern="^(method_|topup_)"
             )
         )
 
-        # Lucky discount callback handler
+        # Lucky discount callback handler (unified reveal + old per-method buttons)
         self.app.add_handler(
             CallbackQueryHandler(
                 handle_lucky_discount_callback,
-                pattern="^lucky_discount$"
+                pattern="^(reveal_discount_unified|lucky_discount)"
+            )
+        )
+
+        # Telegram Stars successful payment handler
+        self.app.add_handler(
+            MessageHandler(
+                filters.SUCCESSFUL_PAYMENT,
+                handle_successful_payment
             )
         )
 
