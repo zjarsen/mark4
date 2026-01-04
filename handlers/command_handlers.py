@@ -57,19 +57,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 welcome_msg = WELCOME_MESSAGE
                 lucky_button = "🎁 立即抽取幸运折扣"
 
-            # Create inline keyboard with button to open topup menu
-            keyboard = [[InlineKeyboardButton(lucky_button, callback_data="open_topup_menu")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
+            # Send welcome message with inline lucky discount button ONLY
+            # Reply keyboard will be shown when user clicks the button
+            inline_keyboard = [[InlineKeyboardButton(lucky_button, callback_data="open_topup_menu")]]
+            inline_markup = InlineKeyboardMarkup(inline_keyboard)
 
             await update.message.reply_text(
                 welcome_msg,
                 parse_mode='Markdown',
-                reply_markup=reply_markup
+                reply_markup=inline_markup
             )
-            state_manager.set_state(user_id, {'first_contact': True})
 
-        # Show main menu
-        await show_main_menu(update)
+            state_manager.set_state(user_id, {'first_contact': True})
+        else:
+            # Already has state, just show main menu
+            await show_main_menu(update)
 
         logger.info(f"Start command processed for user {user_id}")
 
@@ -210,6 +212,46 @@ async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Error in language command: {str(e)}")
 
 
+def _get_main_menu_keyboard(user_id: int) -> ReplyKeyboardMarkup:
+    """
+    Get main menu keyboard with translated text.
+
+    Args:
+        user_id: User ID for translation
+
+    Returns:
+        ReplyKeyboardMarkup with menu options
+    """
+    # Get translated menu options
+    if translation_service:
+        option_image = translation_service.get(user_id, 'menu.option_image')
+        option_video = translation_service.get(user_id, 'menu.option_video')
+        option_topup = translation_service.get(user_id, 'menu.option_topup')
+        option_balance = translation_service.get(user_id, 'menu.option_balance')
+        option_queue = translation_service.get(user_id, 'menu.option_queue')
+        option_language = translation_service.get(user_id, 'menu.option_language')
+    else:
+        # Fallback to Chinese constants
+        option_image = MENU_OPTION_IMAGE
+        option_video = MENU_OPTION_VIDEO
+        option_topup = MENU_OPTION_TOPUP
+        option_balance = MENU_OPTION_BALANCE_HISTORY
+        option_queue = MENU_OPTION_CHECK_QUEUE
+        option_language = "6. 🌍 更换语言"
+
+    keyboard = [
+        [KeyboardButton(option_image), KeyboardButton(option_video)],
+        [KeyboardButton(option_topup)],
+        [KeyboardButton(option_balance)],
+        [KeyboardButton(option_queue), KeyboardButton(option_language)]
+    ]
+    return ReplyKeyboardMarkup(
+        keyboard,
+        resize_keyboard=True,
+        one_time_keyboard=False
+    )
+
+
 async def show_main_menu(update: Update):
     """
     Show main menu keyboard to user with translated text.
@@ -219,36 +261,15 @@ async def show_main_menu(update: Update):
     """
     user_id = update.effective_user.id
 
-    # Get translated menu options
+    # Get translated menu message (use pointing down emoji if empty)
     if translation_service:
-        option_image = translation_service.get(user_id, 'menu.option_image')
-        option_video = translation_service.get(user_id, 'menu.option_video')
-        option_topup = translation_service.get(user_id, 'menu.option_topup')
-        option_balance = translation_service.get(user_id, 'menu.option_balance')
-        option_queue = translation_service.get(user_id, 'menu.option_queue')
-        option_language = translation_service.get(user_id, 'menu.option_language')
-        message_text = translation_service.get(user_id, 'menu.select_function') or "·"
+        message_text = translation_service.get(user_id, 'menu.select_function')
+        if not message_text or message_text.strip() == '':
+            message_text = '👇'
     else:
-        # Fallback to Chinese constants
-        option_image = MENU_OPTION_IMAGE
-        option_video = MENU_OPTION_VIDEO
-        option_topup = MENU_OPTION_TOPUP
-        option_balance = MENU_OPTION_BALANCE_HISTORY
-        option_queue = MENU_OPTION_CHECK_QUEUE
-        option_language = "6. 🌍 更换语言"
-        message_text = SELECT_FUNCTION_MESSAGE if SELECT_FUNCTION_MESSAGE else "·"
+        message_text = SELECT_FUNCTION_MESSAGE if SELECT_FUNCTION_MESSAGE else '👇'
 
-    keyboard = [
-        [KeyboardButton(option_image), KeyboardButton(option_video)],
-        [KeyboardButton(option_topup)],
-        [KeyboardButton(option_balance)],
-        [KeyboardButton(option_queue), KeyboardButton(option_language)]
-    ]
-    reply_markup = ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True,
-        one_time_keyboard=False
-    )
+    reply_markup = _get_main_menu_keyboard(user_id)
 
     await update.message.reply_text(
         message_text,
