@@ -3,13 +3,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 import logging
-from core.constants import (
-    INVALID_STATE_MESSAGE,
-    ALREADY_PROCESSING_MESSAGE,
-    INVALID_FORMAT_MESSAGE,
-    MAX_RETRY_MESSAGE,
-    UPLOAD_FAILED_MESSAGE
-)
 
 logger = logging.getLogger('mark4_bot')
 
@@ -41,7 +34,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if translation_service:
                 msg = translation_service.get(user_id, 'errors.invalid_state')
             else:
-                msg = INVALID_STATE_MESSAGE
+                msg = "💡 操作提示\n\n请先从主菜单选择功能：\n→ 1. 图片脱衣\n\n然后按提示上传照片"
             await update.message.reply_text(msg)
             return
 
@@ -50,7 +43,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if translation_service:
                 msg = translation_service.get(user_id, 'processing.already_processing')
             else:
-                msg = ALREADY_PROCESSING_MESSAGE
+                msg = "⏳ 您的图片正在处理中\n\n请耐心等待当前任务完成\n多次提交不会加快处理速度哦～"
             await update.message.reply_text(msg)
             return
 
@@ -122,7 +115,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if translation_service:
             msg = translation_service.get(user_id, 'errors.upload_failed')
         else:
-            msg = UPLOAD_FAILED_MESSAGE
+            msg = "❌ 上传失败\n\n可能原因：\n• 网络连接不稳定\n• 图片文件过大\n\n💡 建议：\n1. 检查网络连接\n2. 尝试压缩图片后重试\n3. 如仍失败请联系客服"
         await update.message.reply_text(msg)
         state_manager.reset_state(user_id)
 
@@ -151,7 +144,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if translation_service:
                 msg = translation_service.get(user_id, 'processing.already_processing')
             else:
-                msg = ALREADY_PROCESSING_MESSAGE
+                msg = "⏳ 您的图片正在处理中\n\n请耐心等待当前任务完成\n多次提交不会加快处理速度哦～"
             await update.message.reply_text(msg)
             return
 
@@ -227,7 +220,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if translation_service:
             msg = translation_service.get(user_id, 'errors.upload_failed')
         else:
-            msg = UPLOAD_FAILED_MESSAGE
+            msg = "❌ 上传失败\n\n可能原因：\n• 网络连接不稳定\n• 图片文件过大\n\n💡 建议：\n1. 检查网络连接\n2. 尝试压缩图片后重试\n3. 如仍失败请联系客服"
         await update.message.reply_text(msg)
         state_manager.reset_state(user_id)
 
@@ -254,7 +247,7 @@ async def handle_invalid_format(
             if translation_service:
                 msg = translation_service.get(user_id, 'errors.max_retry')
             else:
-                msg = MAX_RETRY_MESSAGE
+                msg = "⚠️ 已达到尝试上限（3次）\n\n请返回主菜单重新开始\n如有疑问，欢迎联系客服"
             await update.message.reply_text(msg)
             state_manager.reset_state(user_id)
 
@@ -270,7 +263,7 @@ async def handle_invalid_format(
             if translation_service:
                 msg = translation_service.get(user_id, 'errors.invalid_format')
             else:
-                msg = INVALID_FORMAT_MESSAGE
+                msg = "❌ 图片格式不支持\n\n请发送以下格式的图片：\n✅ JPG / JPEG\n✅ PNG\n✅ WEBP\n\n💡 提示：直接从相册选择照片即可"
             await update.message.reply_text(msg)
 
             logger.debug(
