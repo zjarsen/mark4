@@ -81,10 +81,10 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
                     savings_percent=savings_percent
                 )
             else:
-                message_text = f"""🎰 **超级幸运日！** 🎰
+                message_text = f"""🎰 *超级幸运日！* 🎰
 
 🔥 您的专属折扣：{discount_info['display']} {discount_info['emoji']} - {discount_info['off']}折！
-💰 **全场可省{savings_percent}%** - 所有支付方式通用
+💰 *全场可省{savings_percent}%* - 所有支付方式通用
 ⏰ _今日24:00前有效，手慢无！_
 
 ━━━━━━━━━━━━━━━━━
@@ -96,7 +96,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             if translation_service:
                 message_text = translation_service.get(user_id, 'topup.method_selection_no_discount')
             else:
-                message_text = """💫 **选择您的支付方式**
+                message_text = """💫 *选择您的支付方式*
 
 支持以下支付方式：
 ⭐ Telegram Stars - 无手续费
@@ -150,14 +150,14 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             await query.edit_message_text(
                 message_text,
                 reply_markup=reply_markup,
-                parse_mode='MarkdownV2'
+                parse_mode='Markdown'
             )
         else:
             # Called from regular message - send new message
             await update.message.reply_text(
                 message_text,
                 reply_markup=reply_markup,
-                parse_mode='MarkdownV2'
+                parse_mode='Markdown'
             )
 
         logger.info(f"User {user_id} viewing payment method selection (discount: {'revealed - ' + discount_info['tier'] if discount_info else 'not revealed'})")
@@ -293,7 +293,7 @@ async def show_pricing_for_method(
             await query.edit_message_text(
                 message_text,
                 reply_markup=reply_markup,
-                parse_mode='MarkdownV2'
+                parse_mode='Markdown'
             )
         except Exception as edit_error:
             # Handle "Message is not modified" error (happens when clicking discount after already revealed)
@@ -493,10 +493,10 @@ async def create_payment_for_method(
 
             # Try to edit message, if fails, send new message
             try:
-                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
+                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
             except Exception as edit_error:
                 logger.debug(f"Could not edit message, sending new: {str(edit_error)}")
-                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
+                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
                 message_id = sent_msg.message_id
 
             logger.info(
@@ -808,10 +808,10 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
                     savings_percent=savings_percent
                 )
             else:
-                message_text = f"""🎰 **超级幸运日！** 🎰
+                message_text = f"""🎰 *超级幸运日！* 🎰
 
 🔥 您的专属折扣：{discount_info['display']} {discount_info['emoji']} - {discount_info['off']}折！
-💰 **全场可省{savings_percent}%** - 所有支付方式通用
+💰 *全场可省{savings_percent}%* - 所有支付方式通用
 ⏰ _今日24:00前有效，手慢无！_
 
 ━━━━━━━━━━━━━━━━━
@@ -855,7 +855,7 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
                 await query.edit_message_text(
                     message_text,
                     reply_markup=reply_markup,
-                    parse_mode='MarkdownV2'
+                    parse_mode='Markdown'
                 )
             except Exception as edit_error:
                 if "message is not modified" in str(edit_error).lower():
@@ -893,10 +893,10 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
                     savings_percent=savings_percent
                 )
             else:
-                message_text = f"""🎰 **超级幸运日！** 🎰
+                message_text = f"""🎰 *超级幸运日！* 🎰
 
 🔥 您的专属折扣：{discount_info['display']} {discount_info['emoji']} - {discount_info['off']}折！
-💰 **全场可省{savings_percent}%** - 所有支付方式通用
+💰 *全场可省{savings_percent}%* - 所有支付方式通用
 ⏰ _今日24:00前有效，手慢无！_
 
 ━━━━━━━━━━━━━━━━━
@@ -906,7 +906,7 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
             if translation_service:
                 message_text = translation_service.get(user_id, 'topup.method_selection_no_discount')
             else:
-                message_text = """💫 **选择您的支付方式**
+                message_text = """💫 *选择您的支付方式*
 
 支持以下支付方式：
 ⭐ Telegram Stars - 无手续费
@@ -935,7 +935,7 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
             await query.edit_message_text(
                 message_text,
                 reply_markup=reply_markup,
-                parse_mode='MarkdownV2'
+                parse_mode='Markdown'
             )
         except Exception as edit_error:
             if "message is not modified" in str(edit_error).lower():
@@ -1125,12 +1125,12 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             # Try to edit message, if fails (e.g., deleted by cleanup), send new message
             try:
-                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
+                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
             except Exception as edit_error:
                 # Message was deleted (likely by cleanup middleware), send new message
                 logger.debug(f"Could not edit message, sending new message: {str(edit_error)}")
                 # Update message_id to the new message for timeout tracking
-                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
+                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
                 message_id = sent_msg.message_id
 
             logger.info(
@@ -1191,7 +1191,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 else:
                     message = f"""💳 充值 ¥{displayed_amount} = {credits}积分{tier_name}
 
-🔥 **折扣已应用** - 为您节省 ¥{savings}！
+🔥 *折扣已应用* - 为您节省 ¥{savings}！
 ⏰ _今日24:00前有效，请尽快完成支付_
 
 请选择支付方式："""
@@ -1236,11 +1236,11 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             # Try to edit message, if fails (e.g., deleted by cleanup), send new message
             try:
-                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
+                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
             except Exception as edit_error:
                 # Message was deleted (likely by cleanup middleware), send new message
                 logger.debug(f"Could not edit message, sending new message: {str(edit_error)}")
-                await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
+                await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
 
             logger.info(f"User {user_id} selected amount ¥{amount_cny}, showing payment methods")
 

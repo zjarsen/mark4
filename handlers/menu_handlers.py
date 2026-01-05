@@ -146,8 +146,8 @@ async def handle_image_processing(
 1️⃣ 粉色蕾丝内衣示例✨✨
 [🔞点击观看🔞]({DEMO_LINK_BRA})
 
-🎁💝 **100%永久免费！** 💝🎁
-🆓 **无需积分！随时使用！** 🆓
+🎁💝 *100%永久免费！* 💝🎁
+🆓 *无需积分！随时使用！* 🆓
 ━━━━━━━━━━━━━━━━━━
 
 2️⃣ 脱到精光示例✨✨
@@ -166,7 +166,7 @@ async def handle_image_processing(
         await update.message.reply_text(
             message,
             reply_markup=reply_markup,
-            parse_mode='MarkdownV2'
+            parse_mode='Markdown'
         )
 
         logger.info(
@@ -243,7 +243,7 @@ async def handle_video_processing(
         await update.message.reply_text(
             message,
             reply_markup=reply_markup,
-            parse_mode='MarkdownV2'
+            parse_mode='Markdown'
         )
 
         logger.info(f"User {user_id} requested video processing - showing style selection")
@@ -294,9 +294,9 @@ async def handle_check_queue(
         # Format queue status message with improved UI
         message = "━━━━━━━━━━━━━━━━━\n"
         if translation_service:
-            message += translation_service.get(user_id, 'queue.status_header', default="📊 **Current Queue Status**")
+            message += translation_service.get(user_id, 'queue.status_header', default="📊 *Current Queue Status*")
         else:
-            message += "📊 **当前队列状态**"
+            message += "📊 *当前队列状态*"
         message += "\n━━━━━━━━━━━━━━━━━\n\n"
 
         # Per-manager detailed status (no overview section)
@@ -315,7 +315,7 @@ async def handle_check_queue(
                 else:
                     workflow_label = "视频处理"
 
-            message += f"{workflow_icon} **{workflow_label}**\n"
+            message += f"{workflow_icon} *{workflow_label}*\n"
 
             # Convert server keys to numbered servers (1号, 2号, etc.)
             server_number = 1
@@ -329,23 +329,23 @@ async def handle_check_queue(
 
                 # Show server details with numbered naming
                 if translation_service:
-                    server_line = translation_service.get(user_id, 'queue.server_status', server_number=server_number, total_count=total_count, default=f"  └─ Server **{server_number}**: **{total_count}** tasks")
+                    server_line = translation_service.get(user_id, 'queue.server_status', server_number=server_number, total_count=total_count, default=f"  └─ Server *{server_number}*: *{total_count}* tasks")
                 else:
-                    server_line = f"  └─ 服务器 **{server_number}号**：**{total_count}** 个任务"
+                    server_line = f"  └─ 服务器 *{server_number}号*：*{total_count}* 个任务"
                 message += server_line + "\n"
 
                 if vip_count > 0:
                     if translation_service:
-                        vip_line = translation_service.get(user_id, 'queue.vip_count', vip_count=vip_count, default=f"     • 👑 VIP: **{vip_count}**")
+                        vip_line = translation_service.get(user_id, 'queue.vip_count', vip_count=vip_count, default=f"     • 👑 VIP: *{vip_count}*")
                     else:
-                        vip_line = f"     • 👑 VIP：**{vip_count}** 个"
+                        vip_line = f"     • 👑 VIP：*{vip_count}* 个"
                     message += vip_line + "\n"
 
                 if regular_count > 0:
                     if translation_service:
-                        regular_line = translation_service.get(user_id, 'queue.regular_count', regular_count=regular_count, default=f"     • 👤 Regular: **{regular_count}**")
+                        regular_line = translation_service.get(user_id, 'queue.regular_count', regular_count=regular_count, default=f"     • 👤 Regular: *{regular_count}*")
                     else:
-                        regular_line = f"     • 👤 普通：**{regular_count}** 个"
+                        regular_line = f"     • 👤 普通：*{regular_count}* 个"
                     message += regular_line + "\n"
 
                 server_number += 1
@@ -355,9 +355,9 @@ async def handle_check_queue(
         # Footer with helpful info
         message += "━━━━━━━━━━━━━━━━━\n"
         if translation_service:
-            message += translation_service.get(user_id, 'queue.vip_priority_tip', default="💡 **Tip**: VIP users have priority processing")
+            message += translation_service.get(user_id, 'queue.vip_priority_tip', default="💡 *Tip*: VIP users have priority processing")
         else:
-            message += "💡 **提示**：VIP用户享有优先处理权"
+            message += "💡 *提示*：VIP用户享有优先处理权"
 
         logger.info(f"Sending queue status message to user {user_id}")
 
@@ -369,11 +369,11 @@ async def handle_check_queue(
             await context.bot.send_message(
                 chat_id=user_id,
                 text=message,
-                parse_mode='MarkdownV2'
+                parse_mode='Markdown'
             )
             logger.info(f"Queue status sent via callback query for user {user_id}")
         elif update.message:
-            await update.message.reply_text(message, parse_mode='MarkdownV2')
+            await update.message.reply_text(message, parse_mode='Markdown')
             logger.info(f"Queue status sent via message reply for user {user_id}")
 
         logger.info(f"User {user_id} checked queue: {status['total_jobs']} total jobs")

@@ -468,7 +468,7 @@ class WorkflowService:
                             balance=balance,
                             required=cost
                         ),
-                        parse_mode='MarkdownV2'
+                        parse_mode='Markdown'
                     )
 
                     # Show topup packages inline keyboard
@@ -484,7 +484,7 @@ class WorkflowService:
                         chat_id=user_id,
                         text=TOPUP_PACKAGES_MESSAGE,
                         reply_markup=reply_markup,
-                        parse_mode='MarkdownV2'
+                        parse_mode='Markdown'
                     )
 
                     logger.warning(
@@ -880,7 +880,7 @@ class WorkflowService:
                                 balance=int(balance),
                                 cost=int(cost)
                             ),
-                            parse_mode='MarkdownV2'
+                            parse_mode='Markdown'
                         )
 
                         # Show topup packages inline keyboard
@@ -896,7 +896,7 @@ class WorkflowService:
                             chat_id=user_id,
                             text=TOPUP_PACKAGES_MESSAGE,
                             reply_markup=reply_markup,
-                            parse_mode='MarkdownV2'
+                            parse_mode='Markdown'
                         )
 
                         self.state_manager.reset_state(user_id)
@@ -1064,7 +1064,7 @@ class WorkflowService:
                                 limit=daily_limit
                             )
 
-                        await bot.send_message(user_id, message, parse_mode='MarkdownV2')
+                        await bot.send_message(user_id, message, parse_mode='Markdown')
                         self.state_manager.reset_state(user_id)
                         return False
 
@@ -1088,7 +1088,7 @@ class WorkflowService:
                                 limit=daily_limit
                             )
 
-                            await bot.send_message(user_id, message, parse_mode='MarkdownV2')
+                            await bot.send_message(user_id, message, parse_mode='Markdown')
                             self.state_manager.reset_state(user_id)
                             return False
 
@@ -1293,7 +1293,7 @@ class WorkflowService:
                             balance=balance,
                             required=cost
                         ),
-                        parse_mode='MarkdownV2'
+                        parse_mode='Markdown'
                     )
 
                     # Show topup packages inline keyboard
@@ -1309,7 +1309,7 @@ class WorkflowService:
                         chat_id=user_id,
                         text=TOPUP_PACKAGES_MESSAGE,
                         reply_markup=reply_markup,
-                        parse_mode='MarkdownV2'
+                        parse_mode='Markdown'
                     )
 
                     logger.warning(
@@ -1468,7 +1468,7 @@ class WorkflowService:
                                 limit=daily_limit
                             )
 
-                        await bot.send_message(user_id, message, parse_mode='MarkdownV2')
+                        await bot.send_message(user_id, message, parse_mode='Markdown')
                         self.state_manager.reset_state(user_id)
                         return False
 
@@ -1502,7 +1502,7 @@ class WorkflowService:
                                 balance=int(balance),
                                 cost=int(cost)
                             ),
-                            parse_mode='MarkdownV2'
+                            parse_mode='Markdown'
                         )
 
                         # Show topup packages inline keyboard
@@ -1518,7 +1518,7 @@ class WorkflowService:
                             chat_id=user_id,
                             text=TOPUP_PACKAGES_MESSAGE,
                             reply_markup=reply_markup,
-                            parse_mode='MarkdownV2'
+                            parse_mode='Markdown'
                         )
 
                         self.state_manager.reset_state(user_id)
