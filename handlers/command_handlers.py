@@ -199,7 +199,6 @@ def _get_main_menu_keyboard(user_id: int) -> ReplyKeyboardMarkup:
         option_topup = translation_service.get(user_id, 'menu.option_topup')
         option_balance = translation_service.get(user_id, 'menu.option_balance')
         option_queue = translation_service.get(user_id, 'menu.option_queue')
-        option_language = translation_service.get(user_id, 'menu.option_language')
     else:
         # Fallback to Chinese constants
         option_image = MENU_OPTION_IMAGE
@@ -207,7 +206,9 @@ def _get_main_menu_keyboard(user_id: int) -> ReplyKeyboardMarkup:
         option_topup = MENU_OPTION_TOPUP
         option_balance = MENU_OPTION_BALANCE_HISTORY
         option_queue = MENU_OPTION_CHECK_QUEUE
-        option_language = "6. 🌍 更换语言"
+
+    # Language option always in English for universal recognition
+    option_language = "6. 🌍 Language"
 
     keyboard = [
         [KeyboardButton(option_image), KeyboardButton(option_video)],

@@ -207,6 +207,7 @@
     "cancel_failed": "작업 취소 실패",
     "status_idle": "현재 진행 중인 작업 없음",
     "status_text": "📊 현재 상태\n\n상태: {current_state}\n작업 ID: {prompt_id}",
-    "admin_topup_success": "관리자가 충전함"
+    "admin_topup_success": "관리자가 충전함",
+    "menu_description": "메인 메뉴 표시"
   }
 }

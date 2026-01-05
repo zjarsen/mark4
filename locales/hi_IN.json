@@ -207,6 +207,7 @@
     "cancel_failed": "Operation cancel fail हो गया",
     "status_idle": "अभी कोई operation progress में नहीं है",
     "status_text": "📊 Current status\n\nStatus: {current_state}\nTask ID: {prompt_id}",
-    "admin_topup_success": "Admin ने top-up कर दिया"
+    "admin_topup_success": "Admin ने top-up कर दिया",
+    "menu_description": "मुख्य मेनू दिखाएं"
   }
 }

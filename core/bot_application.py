@@ -524,6 +524,28 @@ class BotApplication:
             else:
                 logger.warning("workflow_service does not have start_queue_managers method")
 
+        # Set up bot commands and menu button
+        try:
+            from telegram import BotCommand, MenuButtonCommands
+
+            # Get translation service from bot_data
+            translation_service = application.bot_data.get('translation_service')
+            if not translation_service:
+                logger.warning("Translation service not available in bot_data")
+                return
+
+            # Set default command (English) - will be overridden per-user when they select language
+            default_description = translation_service.get_lang('en_US', 'commands.menu_description')
+            default_commands = [BotCommand("menu", default_description)]
+            await application.bot.set_my_commands(default_commands)
+            logger.info(f"Set default menu command: {default_description}")
+
+            # Set menu button to show commands
+            await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
+            logger.info("Menu button configured to show bot commands")
+        except Exception as e:
+            logger.warning(f"Failed to set menu button/commands: {e}")
+
     def run(self):
         """Start the bot with polling."""
         logger.info(f"Starting bot: {self.config.BOT_USERNAME}")

@@ -207,6 +207,7 @@
     "cancel_failed": "取消操作失敗",
     "status_idle": "當前沒有進行中的操作",
     "status_text": "📊 當前狀態\n\n狀態: {current_state}\n任務ID: {prompt_id}",
-    "admin_topup_success": "管理員已充值"
+    "admin_topup_success": "管理員已充值",
+    "menu_description": "顯示主菜單"
   }
 }

@@ -71,6 +71,23 @@ async def handle_language_selection_callback(update: Update, context: ContextTyp
             await query.edit_message_text("❌ Database service not available.")
             return
 
+        # Update menu button commands for this user's chat based on their language
+        try:
+            from telegram import BotCommand
+            if translation_service:
+                menu_description = translation_service.get_lang(lang_code, 'commands.menu_description')
+                commands = [BotCommand("menu", menu_description)]
+
+                # Set commands for this specific chat
+                await context.bot.set_my_commands(
+                    commands,
+                    scope={"type": "chat", "chat_id": user_id}
+                )
+                logger.info(f"Updated menu commands for user {user_id} to language {lang_code}")
+        except Exception as cmd_error:
+            logger.warning(f"Failed to update menu commands for user {user_id}: {cmd_error}")
+            # Don't fail the language selection if command update fails
+
         # Get language name in selected language
         if translation_service:
             lang_name = translation_service.get_lang(lang_code, 'language.name')

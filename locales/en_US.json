@@ -207,6 +207,7 @@
     "cancel_failed": "Cancel operation failed",
     "status_idle": "Currently no operation in progress",
     "status_text": "📊 Current Status\n\nStatus: {current_state}\nTask ID: {prompt_id}",
-    "admin_topup_success": "Admin has topped up"
+    "admin_topup_success": "Admin has topped up",
+    "menu_description": "Show main menu"
   }
 }
