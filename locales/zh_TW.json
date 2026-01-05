@@ -60,9 +60,7 @@
     "insufficient_on_confirm": "❌ 積分不足\n\n當前餘額：{balance} 積分\n所需積分：{cost} 積分\n\n請選擇充值套餐："
   },
   "trial": {
-    "available": "🎁 免費體驗可用！\n\n這是您的免費體驗次數\n• 使用後2天內自動重置\n• 無需消耗積分\n\n請上傳照片，開始體驗AI魔法～",
-    "cooldown": "⏰ 免費次數冷卻中\n\n下次可用：{next_available}\n\n💳 當前方案：\n• 您的餘額：{balance} 積分\n• 本次需要：10 積分\n\n💡 充值可立即使用，或等待免費次數重置",
-    "bra_daily_limit": "哎呀！你今天的粉色蕾絲內衣免費使用次數已經用完啦！😅\n\n📊 今日使用情況:\n   • 已使用: {current_usage}/{limit} 次\n   • 重置時間: 明天凌晨 00:00 (GMT+8)\n\n💡 小貼士：\n   • 其他付費功能（脫到精光、視頻處理等）沒有每日限制\n   • 有積分就能隨時使用哦！\n\n💎 或者升級VIP享受無限使用！\n\n明天見！💕"
+    "cooldown_info": "使用後 {days}天{hours}小時 後可再次免費使用"
   },
   "payment": {
     "pending": "⏰ 等待支付確認\n\n請在3分鐘內完成支付\n💡 *若支付寶顯示「限制收款」，重新發起即可切換可用的二維碼*\n⚠️ *支付完成後確認界面可能無響應，請返回機器人查看充值成功消息*\n訂單將在超時後自動取消\n\n📝 訂單信息：\n• 訂單號：{payment_id}\n• 金額：¥{amount}\n• 將獲得：{credits} 積分\n\n💡 支付完成後積分自動到賬",
@@ -185,7 +183,11 @@
     "style_selection_error": "風格選擇錯誤，請重新開始",
     "processing_failed": "❌ 處理失敗: {error_msg}",
     "processing_failed_with_refund": "❌ 處理失敗: {error_msg}\n💰 {cost} 積分已退還。",
-    "deprecated_button": "請從主選單重新進入充值頁面"
+    "deprecated_button": "請從主選單重新進入充值頁面",
+    "invalid_style": "選擇的風格無效",
+    "credit_deduction_failed": "❌ 積分扣除失敗，請稍後重試",
+    "display_payment_methods_failed": "顯示支付方式失敗，請稍後重試",
+    "display_pricing_failed": "顯示價格失敗，請稍後重試"
   },
   "callbacks": {
     "deprecated_function": "此功能已更新，請重新提交任務",
@@ -222,5 +224,11 @@
     "status_text": "📊 當前狀態\n\n狀態: {current_state}\n任務ID: {prompt_id}",
     "admin_topup_success": "管理員已充值",
     "menu_description": "顯示主菜單"
+  },
+  "transaction": {
+    "free_bra_usage": "免費使用：粉色蕾絲內衣"
+  },
+  "admin": {
+    "topup_description": "管理員測試充值"
   }
 }

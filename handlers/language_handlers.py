@@ -137,7 +137,7 @@ async def handle_language_selection_callback(update: Update, context: ContextTyp
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=welcome_msg,
-            parse_mode='Markdown',
+            parse_mode='MarkdownV2',
             reply_markup=reply_markup
         )
 

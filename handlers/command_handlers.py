@@ -273,10 +273,11 @@ async def admin_topup_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
             # Add credits using credit service
             if credit_service:
+                description_text = translation_service.get(user_id, 'admin.topup_description') if translation_service else "管理员测试充值"
                 success, new_balance = await credit_service.add_credits(
                     user_id,
                     config.ADMIN_TOPUP_AMOUNT,
-                    description="管理员测试充值",
+                    description=description_text,
                     reference_id=f"admin_topup_{user_id}"
                 )
 

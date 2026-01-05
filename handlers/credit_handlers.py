@@ -150,14 +150,14 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             await query.edit_message_text(
                 message_text,
                 reply_markup=reply_markup,
-                parse_mode='Markdown'
+                parse_mode='MarkdownV2'
             )
         else:
             # Called from regular message - send new message
             await update.message.reply_text(
                 message_text,
                 reply_markup=reply_markup,
-                parse_mode='Markdown'
+                parse_mode='MarkdownV2'
             )
 
         logger.info(f"User {user_id} viewing payment method selection (discount: {'revealed - ' + discount_info['tier'] if discount_info else 'not revealed'})")
@@ -166,7 +166,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
         logger.error(f"Error showing payment methods: {str(e)}", exc_info=True)
         user_id = update.effective_user.id if update.effective_user else None
         if translation_service and user_id:
-            msg = translation_service.get(user_id, 'errors.system')
+            msg = translation_service.get(user_id, 'errors.display_payment_methods_failed')
         else:
             msg = "显示支付方式失败，请稍后重试"
 
@@ -293,7 +293,7 @@ async def show_pricing_for_method(
             await query.edit_message_text(
                 message_text,
                 reply_markup=reply_markup,
-                parse_mode='Markdown'
+                parse_mode='MarkdownV2'
             )
         except Exception as edit_error:
             # Handle "Message is not modified" error (happens when clicking discount after already revealed)
@@ -311,7 +311,7 @@ async def show_pricing_for_method(
         logger.error(f"Error showing pricing for {payment_method}: {str(e)}", exc_info=True)
         user_id = update.effective_user.id if update.effective_user else None
         if translation_service and user_id:
-            msg = translation_service.get(user_id, 'errors.system')
+            msg = translation_service.get(user_id, 'errors.display_pricing_failed')
         else:
             msg = "显示价格失败，请稍后重试"
         try:
@@ -493,10 +493,10 @@ async def create_payment_for_method(
 
             # Try to edit message, if fails, send new message
             try:
-                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
             except Exception as edit_error:
                 logger.debug(f"Could not edit message, sending new: {str(edit_error)}")
-                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
                 message_id = sent_msg.message_id
 
             logger.info(
@@ -855,7 +855,7 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
                 await query.edit_message_text(
                     message_text,
                     reply_markup=reply_markup,
-                    parse_mode='Markdown'
+                    parse_mode='MarkdownV2'
                 )
             except Exception as edit_error:
                 if "message is not modified" in str(edit_error).lower():
@@ -935,7 +935,7 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
             await query.edit_message_text(
                 message_text,
                 reply_markup=reply_markup,
-                parse_mode='Markdown'
+                parse_mode='MarkdownV2'
             )
         except Exception as edit_error:
             if "message is not modified" in str(edit_error).lower():
@@ -1125,12 +1125,12 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             # Try to edit message, if fails (e.g., deleted by cleanup), send new message
             try:
-                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
             except Exception as edit_error:
                 # Message was deleted (likely by cleanup middleware), send new message
                 logger.debug(f"Could not edit message, sending new message: {str(edit_error)}")
                 # Update message_id to the new message for timeout tracking
-                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+                sent_msg = await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
                 message_id = sent_msg.message_id
 
             logger.info(
@@ -1236,11 +1236,11 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             # Try to edit message, if fails (e.g., deleted by cleanup), send new message
             try:
-                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+                await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
             except Exception as edit_error:
                 # Message was deleted (likely by cleanup middleware), send new message
                 logger.debug(f"Could not edit message, sending new message: {str(edit_error)}")
-                await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+                await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='MarkdownV2')
 
             logger.info(f"User {user_id} selected amount ¥{amount_cny}, showing payment methods")
 

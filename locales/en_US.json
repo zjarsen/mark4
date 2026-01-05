@@ -185,7 +185,11 @@
     "style_selection_error": "Style selection error, please restart",
     "processing_failed": "❌ Processing failed: {error_msg}",
     "processing_failed_with_refund": "❌ Processing failed: {error_msg}\n💰 {cost} credits refunded.",
-    "deprecated_button": "Please re-enter the top-up page from the main menu"
+    "deprecated_button": "Please re-enter the top-up page from the main menu",
+    "invalid_style": "Invalid style selected",
+    "credit_deduction_failed": "❌ Credit deduction failed, please try again later",
+    "display_payment_methods_failed": "Failed to display payment methods, please try again later",
+    "display_pricing_failed": "Failed to display pricing, please try again later"
   },
   "callbacks": {
     "deprecated_function": "This feature was updated - please try again",
@@ -222,5 +226,14 @@
     "status_text": "📊 Current Status\n\nStatus: {current_state}\nTask ID: {prompt_id}",
     "admin_topup_success": "Admin has topped up",
     "menu_description": "Show main menu"
+  },
+  "trial": {
+    "cooldown_info": "Can use free trial again in {days} days {hours} hours"
+  },
+  "transaction": {
+    "free_bra_usage": "Free trial: Pink lingerie"
+  },
+  "admin": {
+    "topup_description": "Admin test top-up"
   }
 }

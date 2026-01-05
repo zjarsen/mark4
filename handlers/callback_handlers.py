@@ -289,7 +289,7 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         else:
             from core.constants import SEND_IMAGE_PROMPT
             msg = f"已选择 {style_name}\n\n{SEND_IMAGE_PROMPT}"
-        await query.edit_message_text(msg, parse_mode='Markdown')
+        await query.edit_message_text(msg, parse_mode='MarkdownV2')
 
         logger.info(f"User {user_id} selected image style: {internal_style}")
 

@@ -185,7 +185,11 @@
     "style_selection_error": "风格选择错误，请重新开始",
     "processing_failed": "❌ 处理失败: {error_msg}",
     "processing_failed_with_refund": "❌ 处理失败: {error_msg}\n💰 {cost} 积分已退还。",
-    "deprecated_button": "请从主菜单重新进入充值页面"
+    "deprecated_button": "请从主菜单重新进入充值页面",
+    "invalid_style": "选择的风格无效",
+    "credit_deduction_failed": "❌ 积分扣除失败，请稍后重试",
+    "display_payment_methods_failed": "显示支付方式失败，请稍后重试",
+    "display_pricing_failed": "显示价格失败，请稍后重试"
   },
   "callbacks": {
     "deprecated_function": "此功能已更新，请重新提交任务",
@@ -222,5 +226,14 @@
     "status_text": "📊 当前状态\n\n状态: {current_state}\n任务ID: {prompt_id}",
     "admin_topup_success": "管理员已充值",
     "menu_description": "显示主菜单"
+  },
+  "trial": {
+    "cooldown_info": "使用后 {days}天{hours}小时 后可再次免费使用"
+  },
+  "transaction": {
+    "free_bra_usage": "免费使用: 粉色蕾丝内衣"
+  },
+  "admin": {
+    "topup_description": "管理员测试充值"
   }
 }

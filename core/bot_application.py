@@ -90,7 +90,6 @@ class BotApplication:
         # This default instance is used by QueueService for backwards compatibility
         self.comfyui_service = ComfyUIService(self.config, 'image_undress')
         self.file_service = FileService(self.config)
-        self.notification_service = NotificationService(self.config)
 
         # Database and credit services
         self.database_service = DatabaseService(self.config)
@@ -103,6 +102,9 @@ class BotApplication:
             locales_dir=getattr(self.config, 'LOCALES_DIR', './locales'),
             default_lang='zh_CN'
         )
+
+        # Notification service (needs translation_service)
+        self.notification_service = NotificationService(self.config, self.translation_service)
 
         # Initialize bot instance (needed for Stars provider and timeout service)
         from telegram import Bot

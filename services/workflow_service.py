@@ -468,7 +468,7 @@ class WorkflowService:
                             balance=balance,
                             required=cost
                         ),
-                        parse_mode='Markdown'
+                        parse_mode='MarkdownV2'
                     )
 
                     # Show topup packages inline keyboard
@@ -484,7 +484,7 @@ class WorkflowService:
                         chat_id=user_id,
                         text=TOPUP_PACKAGES_MESSAGE,
                         reply_markup=reply_markup,
-                        parse_mode='Markdown'
+                        parse_mode='MarkdownV2'
                     )
 
                     logger.warning(
@@ -516,7 +516,10 @@ class WorkflowService:
                         delta = next_available - now
                         days = delta.days
                         hours = delta.seconds // 3600
-                        cooldown_info = f"使用后 {days}天{hours}小时 后可再次免费使用"
+                        if self.translation_service and self.database_service:
+                            cooldown_info = self.translation_service.get(user_id, 'trial.cooldown_info', days=days, hours=hours)
+                        else:
+                            cooldown_info = f"使用后 {days}天{hours}小时 后可再次免费使用"
 
             # Upload image to ComfyUI
             await self.image_workflow.upload_image(local_path, filename)
@@ -584,7 +587,11 @@ class WorkflowService:
 
             # Validate style
             if style not in self.image_workflows:
-                await update.message.reply_text("选择的风格无效")
+                if self.translation_service and self.database_service:
+                    msg = self.translation_service.get(user_id, 'errors.invalid_style')
+                else:
+                    msg = "选择的风格无效"
+                await update.message.reply_text(msg)
                 self.state_manager.reset_state(user_id)
                 return
 
@@ -687,7 +694,10 @@ class WorkflowService:
                             delta = next_available - now
                             days = delta.days
                             hours = delta.seconds // 3600
-                            cooldown_info = f"使用后 {days}天{hours}小时 后可再次免费使用"
+                            if self.translation_service and self.database_service:
+                                cooldown_info = self.translation_service.get(user_id, 'trial.cooldown_info', days=days, hours=hours)
+                            else:
+                                cooldown_info = f"使用后 {days}天{hours}小时 后可再次免费使用"
 
                 else:  # style == 'bra' - permanently free (0 credits, no payment ever)
                     # Get user's balance for display only (not used for checking)
@@ -870,7 +880,7 @@ class WorkflowService:
                                 balance=int(balance),
                                 cost=int(cost)
                             ),
-                            parse_mode='Markdown'
+                            parse_mode='MarkdownV2'
                         )
 
                         # Show topup packages inline keyboard
@@ -886,7 +896,7 @@ class WorkflowService:
                             chat_id=user_id,
                             text=TOPUP_PACKAGES_MESSAGE,
                             reply_markup=reply_markup,
-                            parse_mode='Markdown'
+                            parse_mode='MarkdownV2'
                         )
 
                         self.state_manager.reset_state(user_id)
@@ -914,7 +924,11 @@ class WorkflowService:
                     )
                 else:
                     logger.error(f"Failed to deduct credits for user {user_id}")
-                    await bot.send_message(user_id, "❌ 积分扣除失败，请稍后重试")
+                    if self.translation_service and self.database_service:
+                        msg = self.translation_service.get(user_id, 'errors.credit_deduction_failed')
+                    else:
+                        msg = "❌ 积分扣除失败，请稍后重试"
+                    await bot.send_message(user_id, msg)
                     self.state_manager.reset_state(user_id)
                     return False
 
@@ -1050,7 +1064,7 @@ class WorkflowService:
                                 limit=daily_limit
                             )
 
-                        await bot.send_message(user_id, message, parse_mode='Markdown')
+                        await bot.send_message(user_id, message, parse_mode='MarkdownV2')
                         self.state_manager.reset_state(user_id)
                         return False
 
@@ -1074,7 +1088,7 @@ class WorkflowService:
                                 limit=daily_limit
                             )
 
-                            await bot.send_message(user_id, message, parse_mode='Markdown')
+                            await bot.send_message(user_id, message, parse_mode='MarkdownV2')
                             self.state_manager.reset_state(user_id)
                             return False
 
@@ -1159,19 +1173,24 @@ class WorkflowService:
                     )
                 else:
                     logger.error(f"Failed to deduct credits for user {user_id}")
-                    await bot.send_message(user_id, "❌ 积分扣除失败，请稍后重试")
+                    if self.translation_service and self.database_service:
+                        msg = self.translation_service.get(user_id, 'errors.credit_deduction_failed')
+                    else:
+                        msg = "❌ 积分扣除失败，请稍后重试"
+                    await bot.send_message(user_id, msg)
                     self.state_manager.reset_state(user_id)
                     return False
             elif style == 'bra' and self.credit_service:
                 # Create transaction record for free bra usage (amount = 0)
                 balance = await self.credit_service.get_balance(user_id)
+                description_text = self.translation_service.get(user_id, 'transaction.free_bra_usage') if (self.translation_service and self.database_service) else "免费使用: 粉色蕾丝内衣"
                 self.credit_service.db.create_transaction(
                     user_id=user_id,
                     transaction_type='deduction',
                     amount=0.0,
                     balance_before=balance,
                     balance_after=balance,
-                    description="免费使用: 粉色蕾丝内衣",
+                    description=description_text,
                     reference_id=f"image_{style}_{user_id}_{filename}",
                     feature_type='image_bra'
                 )
@@ -1240,7 +1259,11 @@ class WorkflowService:
 
             # Validate style
             if style not in self.video_workflows:
-                await update.message.reply_text("选择的风格无效")
+                if self.translation_service and self.database_service:
+                    msg = self.translation_service.get(user_id, 'errors.invalid_style')
+                else:
+                    msg = "选择的风格无效"
+                await update.message.reply_text(msg)
                 self.state_manager.reset_state(user_id)
                 return
 
@@ -1270,7 +1293,7 @@ class WorkflowService:
                             balance=balance,
                             required=cost
                         ),
-                        parse_mode='Markdown'
+                        parse_mode='MarkdownV2'
                     )
 
                     # Show topup packages inline keyboard
@@ -1286,7 +1309,7 @@ class WorkflowService:
                         chat_id=user_id,
                         text=TOPUP_PACKAGES_MESSAGE,
                         reply_markup=reply_markup,
-                        parse_mode='Markdown'
+                        parse_mode='MarkdownV2'
                     )
 
                     logger.warning(
@@ -1445,7 +1468,7 @@ class WorkflowService:
                                 limit=daily_limit
                             )
 
-                        await bot.send_message(user_id, message, parse_mode='Markdown')
+                        await bot.send_message(user_id, message, parse_mode='MarkdownV2')
                         self.state_manager.reset_state(user_id)
                         return False
 
@@ -1479,7 +1502,7 @@ class WorkflowService:
                                 balance=int(balance),
                                 cost=int(cost)
                             ),
-                            parse_mode='Markdown'
+                            parse_mode='MarkdownV2'
                         )
 
                         # Show topup packages inline keyboard
@@ -1495,7 +1518,7 @@ class WorkflowService:
                             chat_id=user_id,
                             text=TOPUP_PACKAGES_MESSAGE,
                             reply_markup=reply_markup,
-                            parse_mode='Markdown'
+                            parse_mode='MarkdownV2'
                         )
 
                         self.state_manager.reset_state(user_id)

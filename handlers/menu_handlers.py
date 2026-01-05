@@ -166,7 +166,7 @@ async def handle_image_processing(
         await update.message.reply_text(
             message,
             reply_markup=reply_markup,
-            parse_mode='Markdown'
+            parse_mode='MarkdownV2'
         )
 
         logger.info(
@@ -243,7 +243,7 @@ async def handle_video_processing(
         await update.message.reply_text(
             message,
             reply_markup=reply_markup,
-            parse_mode='Markdown'
+            parse_mode='MarkdownV2'
         )
 
         logger.info(f"User {user_id} requested video processing - showing style selection")
@@ -369,11 +369,11 @@ async def handle_check_queue(
             await context.bot.send_message(
                 chat_id=user_id,
                 text=message,
-                parse_mode='Markdown'
+                parse_mode='MarkdownV2'
             )
             logger.info(f"Queue status sent via callback query for user {user_id}")
         elif update.message:
-            await update.message.reply_text(message, parse_mode='Markdown')
+            await update.message.reply_text(message, parse_mode='MarkdownV2')
             logger.info(f"Queue status sent via message reply for user {user_id}")
 
         logger.info(f"User {user_id} checked queue: {status['total_jobs']} total jobs")

@@ -9,14 +9,16 @@ logger = logging.getLogger('mark4_bot')
 class NotificationService:
     """Service for sending notifications and messages to users."""
 
-    def __init__(self, config):
+    def __init__(self, config, translation_service=None):
         """
         Initialize notification service.
 
         Args:
             config: Configuration object
+            translation_service: Translation service for i18n
         """
         self.config = config
+        self.translation_service = translation_service
 
     async def send_queue_position(
         self,
@@ -127,9 +129,13 @@ class NotificationService:
             chat_id: Chat ID to send to
         """
         try:
-            from core.constants import PROCESSING_COMPLETE_MESSAGE
+            if self.translation_service:
+                message = self.translation_service.get(chat_id, 'processing.complete')
+            else:
+                from core.constants import PROCESSING_COMPLETE_MESSAGE
+                message = PROCESSING_COMPLETE_MESSAGE
 
-            await bot.send_message(chat_id=chat_id, text=PROCESSING_COMPLETE_MESSAGE)
+            await bot.send_message(chat_id=chat_id, text=message)
             logger.info(f"Sent completion notification to user {chat_id}")
 
         except Exception as e:
