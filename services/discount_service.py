@@ -143,7 +143,6 @@ class DiscountService:
                 return {
                     'tier': tier,
                     'rate': rate,
-                    'display': tier_info['display'],
                     'emoji': tier_info['emoji'],
                     'off': tier_info['off'],
                     'is_new': False
@@ -160,7 +159,6 @@ class DiscountService:
             return {
                 'tier': tier,
                 'rate': rate,
-                'display': tier_info['display'],
                 'emoji': tier_info['emoji'],
                 'off': tier_info['off'],
                 'is_new': True
@@ -197,7 +195,6 @@ class DiscountService:
                     return {
                         'tier': tier,
                         'rate': rate,
-                        'display': tier_info['display'],
                         'emoji': tier_info['emoji'],
                         'off': tier_info['off']
                     }
