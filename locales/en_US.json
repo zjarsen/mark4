@@ -86,7 +86,11 @@
     "vip_already_owned": "You're already {tier}! No need to buy again!",
     "invoice_title_stars": "Top up {credits} credits",
     "invoice_description_stars": "Get {credits} credits, valid forever",
-    "price_label_stars": "{credits} credits"
+    "price_label_stars": "{credits} credits",
+    "processing_error": "Payment failed, please contact support",
+    "credit_failed": "Top-up failed, please contact support",
+    "stars_invoice_sent": "✨ Telegram Stars payment request sent\n\nYou'll get {credits} credits\nAmount: {stars} ⭐\n\nPlease complete payment in the popup",
+    "stars_success": "✅ Payment successful!\n\nCredits received: {credits}\nAmount paid: {stars} ⭐\nCurrent balance: {balance} credits\n\nThank you for your top-up!"
   },
   "topup": {
     "packages_with_discount": "💳 Top-up Packages\n\n🔥🔥🔥 **You're Super Lucky Today!** 🔥🔥🔥\n⚡ _Your exclusive discount unlocked - tap below to see!_\n💰 **Up to 50% OFF** - Valid till 24:00 today only\n\n━━━━━━━━━━━━━━━━━\n\n🔥 Hot Picks:\n1️⃣ ¥11 = 30 credits ⭐\n2️⃣ ¥32 = 120 credits 🔥\n3️⃣ ¥54 = 250 credits 💎\n4️⃣ ¥108 = 600 credits 👑\n5️⃣ ¥173 = Lifetime VIP ⭐⭐⭐ 【Owner's Pick · Unlimited】\n6️⃣ ¥281 = Black Gold VIP 👑👑👑 【Unlimited + No Queue】\n\n✨ Top-up Perks:\n• Credits valid forever\n• Instant arrival\n\n⚠️ **Important: Payment gateway under maintenance - temporarily unavailable** ⚠️\n📞 Contact support if you need to top up\n\n⏰ **Don't forget to claim today's discount! Click [Lucky Discount] below** ⏰",
@@ -103,7 +107,14 @@
     "button_vip_with_discount": "💎 Lifetime VIP {discounted_price} 🎁 (Was {original_price})",
     "button_black_gold_vip_with_discount": "👑 Black Gold VIP {discounted_price} 🎁 (Was {original_price})",
     "button_credits_with_discount": "💰 {credits} credits {discounted_price} 🎁 (Was {original_price})",
-    "button_back": "« Back to Payment Methods"
+    "button_back": "« Back to Payment Methods",
+    "method_selection_intro": "💫 Choose Your Payment Method\n\nPlease select your preferred method:",
+    "method_selection_with_discount": "🎰 **Super Lucky Day!** 🎰\n\n🔥 Your exclusive discount: {tier} {emoji} - {off}% OFF!\n💰 **Save {savings_percent}% on everything** - All payment methods\n⏰ _Valid till 24:00 today, don't miss out!_\n\n━━━━━━━━━━━━━━━━━\n\n💫 Pick a method and enjoy your discount:",
+    "method_selection_no_discount": "💫 **Choose Your Payment Method**\n\nAvailable methods:\n⭐ Telegram Stars - No fees\n💚 WeChat Pay - Fast arrival\n💰 Alipay - Safe & secure\n\nPlease select your preferred method:",
+    "method_button_stars": "⭐ Telegram Stars",
+    "packages_stars_intro": "⭐ Telegram Stars Top-up\n\nChoose a package:",
+    "packages_alipay_intro": "💰 Alipay Top-up\n\nChoose a package:",
+    "packages_wechat_intro": "💚 WeChat Pay Top-up\n\nChoose a package:"
   },
   "transactions": {
     "header": "📊 Transaction History\n\n",
@@ -136,7 +147,8 @@
     "tier_ssr": "SSR God-tier Luck",
     "tier_sr": "SR Super Luck",
     "tier_r": "R Pretty Lucky",
-    "tier_c": "C Regular Luck"
+    "tier_c": "C Regular Luck",
+    "celebration_inline": "🎉 Congrats! Got {tier} discount {emoji}"
   },
   "queue": {
     "status": "⏳ Entered processing queue\n\nYour position: #{position}\nQueue total: {total} people\n\n💡 Tip: Tap below anytime to check latest position",

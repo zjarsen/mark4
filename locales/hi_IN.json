@@ -86,7 +86,11 @@
     "vip_already_owned": "आप पहले से ही {tier} हो, फिर से खरीदने की जरूरत नहीं!",
     "invoice_title_stars": "{credits} क्रेडिट टॉप-अप",
     "invoice_description_stars": "{credits} क्रेडिट मिलेंगे, हमेशा के लिए valid",
-    "price_label_stars": "{credits} क्रेडिट"
+    "price_label_stars": "{credits} क्रेडिट",
+    "processing_error": "Payment fail हो गया, support से contact करें",
+    "credit_failed": "Top-up fail हो गया, support से contact करें",
+    "stars_invoice_sent": "✨ Telegram Stars payment request भेजा गया\n\nआपको मिलेगा {credits} credits\nAmount: {stars} ⭐\n\nPopup में payment complete करें",
+    "stars_success": "✅ Payment successful!\n\nCredits received: {credits}\nAmount paid: {stars} ⭐\nCurrent balance: {balance} credits\n\nTop-up के liye dhanyavaad!"
   },
   "topup": {
     "packages_with_discount": "💳 टॉप-अप पैकेजेस\n\n🔥🔥🔥 **आज super lucky हो!** 🔥🔥🔥\n⚡ _आपका exclusive discount unlock हो गया, नीचे button पर click करके देखो!_\n💰 **50% तक की छूट** - आज 24:00 तक valid\n\n━━━━━━━━━━━━━━━━━\n\n🔥 बेस्ट डील्स:\n1️⃣ ¥11 = 30 क्रेडिट ⭐\n2️⃣ ¥32 = 120 क्रेडिट 🔥\n3️⃣ ¥54 = 250 क्रेडिट 💎\n4️⃣ ¥108 = 600 क्रेडिट 👑\n5️⃣ ¥173 = लाइफटाइम VIP ⭐⭐⭐ 【Owner की choice·अनलिमिटेड use】\n6️⃣ ¥281 = लाइफटाइम ब्लैक गोल्ड VIP 👑👑👑 【अनलिमिटेड use + no queue】\n\n✨ टॉप-अप benefits:\n• क्रेडिट हमेशा के लिए valid\n• तुरंत add हो जाते हैं\n\n⚠️ **Important: पेमेंट gateway maintenance में है - temporarily unavailable** ⚠️\n📞 टॉप-अप चाहिए तो support से contact करो\n\n⏰ **आज का discount लेना मत भूलो! नीचे【Lucky Discount】button पर click करो** ⏰",
@@ -103,7 +107,14 @@
     "button_vip_with_discount": "💎 लाइफटाइम VIP {discounted_price} 🎁(original {original_price})",
     "button_black_gold_vip_with_discount": "👑 लाइफटाइम ब्लैक गोल्ड VIP {discounted_price} 🎁(original {original_price})",
     "button_credits_with_discount": "💰 {credits}क्रेडिट {discounted_price} 🎁(original {original_price})",
-    "button_back": "« भुगतान विधियों पर वापस जाएं"
+    "button_back": "« भुगतान विधियों पर वापस जाएं",
+    "method_selection_intro": "💫 Payment Method Choose करो\n\nApna preferred method select karo:",
+    "method_selection_with_discount": "🎰 **Super Lucky Day!** 🎰\n\n🔥 Aapka exclusive discount: {tier} {emoji} - {off}% OFF!\n💰 **Sab par {savings_percent}% bachao** - Sabhi payment methods\n⏰ _Aaj 24:00 tak valid, miss mat karo!_\n\n━━━━━━━━━━━━━━━━━\n\n💫 Method choose karo aur discount enjoy karo:",
+    "method_selection_no_discount": "💫 **Payment Method Choose करो**\n\nAvailable methods:\n⭐ Telegram Stars - No fees\n💚 WeChat Pay - Fast arrival\n💰 Alipay - Safe & secure\n\nApna preferred method select karo:",
+    "method_button_stars": "⭐ Telegram Stars",
+    "packages_stars_intro": "⭐ Telegram Stars Top-up\n\nPackage choose karo:",
+    "packages_alipay_intro": "💰 Alipay Top-up\n\nPackage choose karo:",
+    "packages_wechat_intro": "💚 WeChat Pay Top-up\n\nPackage choose karo:"
   },
   "transactions": {
     "header": "📊 हाल की खर्च history\n\n",
@@ -136,7 +147,8 @@
     "tier_ssr": "SSR divine luck",
     "tier_sr": "SR super luck",
     "tier_r": "R good luck",
-    "tier_c": "C normal luck"
+    "tier_c": "C normal luck",
+    "celebration_inline": "🎉 बधाई हो! {tier} discount मिला {emoji}"
   },
   "queue": {
     "status": "⏳ Processing queue में enter हो गए\n\nआपकी position: #{position}\nTotal queue: {total} लोग\n\n💡 Tip: नीचे button पर click करके latest position check कर सकते हो",

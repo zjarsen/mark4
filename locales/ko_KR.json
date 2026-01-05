@@ -86,7 +86,11 @@
     "vip_already_owned": "이미 {tier} 유저입니다, 다시 구매할 필요 없어요!",
     "invoice_title_stars": "{credits}포인트 충전",
     "invoice_description_stars": "{credits}포인트 획득, 영구 유효",
-    "price_label_stars": "{credits}포인트"
+    "price_label_stars": "{credits}포인트",
+    "processing_error": "결제 처리 실패, 고객센터에 문의하세요",
+    "credit_failed": "충전 처리 실패, 고객센터에 문의하세요",
+    "stars_invoice_sent": "✨ Telegram Stars 결제 요청 발송됨\n\n{credits} 크레딧 획득\n결제 금액: {stars} ⭐\n\n팝업창에서 결제를 완료하세요",
+    "stars_success": "✅ 결제 성공!\n\n획득 크레딧: {credits}\n결제 금액: {stars} ⭐\n현재 잔액: {balance} 크레딧\n\n충전해주셔서 감사합니다!"
   },
   "topup": {
     "packages_with_discount": "💳 충전 패키지\n\n🔥🔥🔥 **오늘 대박 럭키!** 🔥🔥🔥\n⚡ _전용 할인 잠금 해제됨 - 아래 탭해서 확인!_\n💰 **최대 50% OFF** - 오늘 24:00까지 유효\n\n━━━━━━━━━━━━━━━━━\n\n🔥 추천 패키지:\n1️⃣ ¥11 = 30포인트 ⭐\n2️⃣ ¥32 = 120포인트 🔥\n3️⃣ ¥54 = 250포인트 💎\n4️⃣ ¥108 = 600포인트 👑\n5️⃣ ¥173 = 평생 VIP ⭐⭐⭐ 【사장님 추천·무제한】\n6️⃣ ¥281 = 평생 블랙골드 VIP 👑👑👑 【무제한+대기열 스킵】\n\n✨ 충전 장점:\n• 포인트 영구 유효\n• 충전 후 즉시 지급\n\n⚠️ **중요: 결제 게이트웨이 점검 중 - 일시적으로 사용 불가** ⚠️\n📞 충전 필요하면 고객센터 문의\n\n⏰ **오늘 할인 잊지 마세요! 아래【럭키 할인】버튼 클릭** ⏰",
@@ -103,7 +107,14 @@
     "button_vip_with_discount": "💎 평생 VIP {discounted_price} 🎁 (원가 {original_price})",
     "button_black_gold_vip_with_discount": "👑 평생 블랙골드 VIP {discounted_price} 🎁 (원가 {original_price})",
     "button_credits_with_discount": "💰 {credits}포인트 {discounted_price} 🎁 (원가 {original_price})",
-    "button_back": "« 결제 방법으로 돌아가기"
+    "button_back": "« 결제 방법으로 돌아가기",
+    "method_selection_intro": "💫 결제 방법 선택\n\n원하시는 결제 방법을 선택하세요:",
+    "method_selection_with_discount": "🎰 **슈퍼 럭키 데이!** 🎰\n\n🔥 회원님 전용 할인: {tier} {emoji} - {off}% OFF!\n💰 **전체 {savings_percent}% 할인** - 모든 결제 방법 적용\n⏰ _오늘 24:00까지만, 서두르세요!_\n\n━━━━━━━━━━━━━━━━━\n\n💫 결제 방법 선택하고 할인 받으세요:",
+    "method_selection_no_discount": "💫 **결제 방법 선택**\n\n지원 결제 수단:\n⭐ Telegram Stars - 수수료 없음\n💚 WeChat Pay - 빠른 도착\n💰 Alipay - 안전하고 편리\n\n원하시는 결제 방법을 선택하세요:",
+    "method_button_stars": "⭐ Telegram Stars",
+    "packages_stars_intro": "⭐ Telegram Stars 충전\n\n충전 패키지 선택:",
+    "packages_alipay_intro": "💰 Alipay 충전\n\n충전 패키지 선택:",
+    "packages_wechat_intro": "💚 WeChat Pay 충전\n\n충전 패키지 선택:"
   },
   "transactions": {
     "header": "📊 최근 소비 기록\n\n",
@@ -136,7 +147,8 @@
     "tier_ssr": "SSR 신급 운발",
     "tier_sr": "SR 슈퍼 럭키",
     "tier_r": "R 괜찮은 운",
-    "tier_c": "C 평범한 운"
+    "tier_c": "C 평범한 운",
+    "celebration_inline": "🎉 축하합니다! {tier} 할인 획득 {emoji}"
   },
   "queue": {
     "status": "⏳ 처리 대기열 진입\n\n당신의 위치: #{position}\n대기열 총인원: {total}명\n\n💡 팁: 언제든 아래 탭해서 최신 위치 확인",
