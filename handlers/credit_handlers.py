@@ -252,6 +252,14 @@ async def show_pricing_for_method(
                 callback_data=f"topup_{payment_method}_{base_amount}"
             )])
 
+        # Add back button to return to payment method selection
+        if translation_service:
+            back_button_text = translation_service.get(user_id, 'topup.button_back')
+        else:
+            back_button_text = "« 返回支付方式选择"
+
+        keyboard.append([InlineKeyboardButton(back_button_text, callback_data="back_to_method_selection")])
+
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         try:
@@ -937,7 +945,20 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
         callback_data = query.data
 
         # Check routing pattern
-        if callback_data.startswith('method_'):
+        if callback_data == 'back_to_method_selection':
+            # ===== Back button: Return to payment method selection =====
+            # Create fake update with message for show_topup_packages
+            class FakeUpdate:
+                def __init__(self, message, effective_user):
+                    self.message = message
+                    self.effective_user = effective_user
+
+            fake_update = FakeUpdate(query.message, update.effective_user)
+            await show_topup_packages(fake_update, context)
+            logger.info(f"User {user_id} returned to payment method selection")
+            return
+
+        elif callback_data.startswith('method_'):
             # ===== NEW FLOW - Step 1: Payment method selected, show pricing =====
             payment_method = callback_data.replace('method_', '')
             await show_pricing_for_method(update, context, payment_method)

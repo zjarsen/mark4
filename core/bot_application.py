@@ -103,7 +103,7 @@ class BotApplication:
         # Payment services
         self.pricing_service = PricingService()
         self.payment_provider = WeChatAlipayProvider(self.config)
-        self.stars_provider = TelegramStarsProvider(self.config, self.bot)
+        self.stars_provider = TelegramStarsProvider(self.config, self.bot, self.translation_service)
         self.payment_service = PaymentService(
             self.config,
             self.database_service,
@@ -352,11 +352,11 @@ class BotApplication:
             handle_successful_payment
         )
 
-        # Payment method and topup handlers (includes method_ and topup_ patterns)
+        # Payment method and topup handlers (includes method_, topup_, and back_to_payment_methods patterns)
         self.app.add_handler(
             CallbackQueryHandler(
                 handle_topup_callback,
-                pattern="^(method_|topup_)"
+                pattern="^(method_|topup_|back_to_payment_methods)"
             )
         )
 

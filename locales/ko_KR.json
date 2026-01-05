@@ -96,10 +96,10 @@
     "button_100": "¥108 = 600포인트",
     "button_vip": "¥173 = 평생 VIP",
     "button_black_gold_vip": "¥281 = 평생 블랙골드 VIP",
-    "button_10_no_discount": "💰 {credits}포인트 ¥{price} (할인 없음)",
-    "button_vip_with_discount": "💎 평생 VIP ¥{discounted_price} 🎁 (원가 ¥{original_price})",
-    "button_black_gold_vip_with_discount": "👑 평생 블랙골드 VIP ¥{discounted_price} 🎁 (원가 ¥{original_price})",
-    "button_credits_with_discount": "💰 {credits}포인트 ¥{discounted_price} 🎁 (원가 ¥{original_price})"
+    "button_10_no_discount": "💰 {credits}포인트 {price} (할인 없음)",
+    "button_vip_with_discount": "💎 평생 VIP {discounted_price} 🎁 (원가 {original_price})",
+    "button_black_gold_vip_with_discount": "👑 평생 블랙골드 VIP {discounted_price} 🎁 (원가 {original_price})",
+    "button_credits_with_discount": "💰 {credits}포인트 {discounted_price} 🎁 (원가 {original_price})"
   },
   "transactions": {
     "header": "📊 최근 소비 기록\n\n",
@@ -123,7 +123,7 @@
   "discount": {
     "button_hot": "🔥💰 오늘 메가 할인 받기! 💰🔥",
     "button_normal": "🎰 매일 럭키 할인 - 탭해서 확인",
-    "button_revealed": "{emoji} **{tier}** - {off}% 할인 활성화",
+    "button_revealed": "{emoji} {tier} - {off}% 할인 활성화",
     "celebration_ssr": "🎊🎊🎊 **축하합니다! 신급 운발!** 🎊🎊🎊\n\n**SSR 신급 할인 당첨!**\n🔥🔥 **전체 50% OFF** 🔥🔥\n\n💰 **평생 VIP 단돈 ¥87** (원가 ¥173)\n💎 **모든 패키지 50% OFF** - 반값!\n\n⏰ 오늘 24:00까지 유효 - 서둘러 겟!\n\n_지금 패키지 선택해서 신급 할인 누리세요!_",
     "celebration_sr": "🎉🎉🎉 **축하합니다! 슈퍼 럭키!** 🎉🎉🎉\n\n**SR 슈퍼 할인 당첨!**\n⭐⭐ **전체 30% OFF** ⭐⭐\n\n💰 **평생 VIP 단돈 ¥121** (원가 ¥173)\n💎 **모든 패키지 30% OFF** - 초특가!\n\n⏰ 오늘 24:00까지 유효 - 놓치지 마세요!\n\n_지금 패키지 선택해서 슈퍼 할인 누리세요!_",
     "revealed_r": "✨ **오늘 운 괜찮네! R급 할인**\n\n전체 15% OFF!\n💡 _팁: 계속 쓰면 할인 등급 올라요_\n\n💰 **평생 VIP 단돈 ¥147** (원가 ¥173)\n\n⏰ 오늘만 유효 - 지금 사용!",

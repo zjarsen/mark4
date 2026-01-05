@@ -16,7 +16,7 @@
   "menu": {
     "select_function": "",
     "option_image": "1. 📸 इमेज अनड्रेस! ✨",
-    "option_video": "2. 🎬 वीडियो अनड्रेस! ✨",
+    "option_video": "2. 🎬 वीडियो अनड्रेस!",
     "option_topup": "3. 💳 क्रेडिट खरीदें 🎁 रोज़ाना 50% तक छूट!",
     "option_balance": "4. 📊 बैलेंस और हिस्ट्री",
     "option_queue": "5. कतार चेक करें",
@@ -96,10 +96,10 @@
     "button_100": "¥108 = 600 क्रेडिट",
     "button_vip": "¥173 = लाइफटाइम VIP",
     "button_black_gold_vip": "¥281 = लाइफटाइम ब्लैक गोल्ड VIP",
-    "button_10_no_discount": "💰 {credits}क्रेडिट ¥{price} (no discount)",
-    "button_vip_with_discount": "💎 लाइफटाइम VIP ¥{discounted_price} 🎁(original ¥{original_price})",
-    "button_black_gold_vip_with_discount": "👑 लाइफटाइम ब्लैक गोल्ड VIP ¥{discounted_price} 🎁(original ¥{original_price})",
-    "button_credits_with_discount": "💰 {credits}क्रेडिट ¥{discounted_price} 🎁(original ¥{original_price})"
+    "button_10_no_discount": "💰 {credits}क्रेडिट {price} (no discount)",
+    "button_vip_with_discount": "💎 लाइफटाइम VIP {discounted_price} 🎁(original {original_price})",
+    "button_black_gold_vip_with_discount": "👑 लाइफटाइम ब्लैक गोल्ड VIP {discounted_price} 🎁(original {original_price})",
+    "button_credits_with_discount": "💰 {credits}क्रेडिट {discounted_price} 🎁(original {original_price})"
   },
   "transactions": {
     "header": "📊 हाल की खर्च history\n\n",
@@ -123,7 +123,7 @@
   "discount": {
     "button_hot": "🔥💰 आज का mega discount लो! 💰🔥",
     "button_normal": "🎰 डेली लकी डिस्काउंट - click करके देखो",
-    "button_revealed": "{emoji} **{tier}** - {off} discount activated",
+    "button_revealed": "{emoji} {tier} - {off} discount activated",
     "celebration_ssr": "🎊🎊🎊 **Congratulations! God-level luck!** 🎊🎊🎊\n\n**आपने SSR divine discount निकाला!**\n🔥🔥 **सब कुछ 50% OFF** 🔥🔥\n\n💰 **लाइफटाइम VIP सिर्फ ¥87**(original ¥173)\n💎 **सभी packages 50% OFF** - आधी price!\n\n⏰ आज 24:00 तक valid - जल्दी करो!\n\n_अभी package choose करो, divine discount enjoy करो!_",
     "celebration_sr": "🎉🎉🎉 **Congratulations! Super lucky!** 🎉🎉🎉\n\n**आपने SR super discount निकाला!**\n⭐⭐ **सब कुछ 30% OFF** ⭐⭐\n\n💰 **लाइफटाइम VIP सिर्फ ¥121**(original ¥173)\n💎 **सभी packages 30% OFF** - killer deal!\n\n⏰ आज 24:00 तक valid - miss मत करो!\n\n_अभी package choose करो, super discount enjoy करो!_",
     "revealed_r": "✨ **आज अच्छी luck! R-level discount**\n\nसब कुछ 15% OFF, save करो!\n💡 _Tip: लगातार use करोगे तो discount level बढ़ेगा_\n\n💰 **लाइफटाइम VIP सिर्फ ¥147**(original ¥173)\n\n⏰ आज ही valid - अभी use करो!",

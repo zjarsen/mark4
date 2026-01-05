@@ -466,10 +466,10 @@ BALANCE_MESSAGE_VIP = """💰 我的账户
 
 # Daily Lucky Discount System
 DISCOUNT_TIERS = {
-    'SSR': {'rate': 0.5, 'display': 'SSR神级运气', 'emoji': '🎊', 'off': '50%'},
-    'SR': {'rate': 0.7, 'display': 'SR超级运气', 'emoji': '🎉', 'off': '30%'},
-    'R': {'rate': 0.85, 'display': 'R运气不错', 'emoji': '✨', 'off': '15%'},
-    'C': {'rate': 0.95, 'display': 'C普通运气', 'emoji': '🍀', 'off': '5%'}
+    'SSR': {'rate': 0.5, 'display': 'SSR神级运气', 'emoji': '🎊', 'off': '50'},
+    'SR': {'rate': 0.7, 'display': 'SR超级运气', 'emoji': '🎉', 'off': '30'},
+    'R': {'rate': 0.85, 'display': 'R运气不错', 'emoji': '✨', 'off': '15'},
+    'C': {'rate': 0.95, 'display': 'C普通运气', 'emoji': '🍀', 'off': '5'}
 }
 
 # Lucky discount button labels

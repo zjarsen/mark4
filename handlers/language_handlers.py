@@ -20,24 +20,21 @@ async def show_language_selection(update: Update, context: ContextTypes.DEFAULT_
     """
     try:
         keyboard = [
-            [InlineKeyboardButton("🇨🇳 简体中文", callback_data="lang_zh_CN"),
-             InlineKeyboardButton("🇺🇸 English", callback_data="lang_en_US")],
-            [InlineKeyboardButton("🇹🇼 繁體中文", callback_data="lang_zh_TW"),
-             InlineKeyboardButton("🇯🇵 日本語", callback_data="lang_ja_JP")],
+            [InlineKeyboardButton("🇺🇸 English", callback_data="lang_en_US"),
+             InlineKeyboardButton("🇹🇼 繁體中文", callback_data="lang_zh_TW")],
             [InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar_SA"),
              InlineKeyboardButton("🇮🇳 हिन्दी", callback_data="lang_hi_IN")],
-            [InlineKeyboardButton("🇮🇩 Bahasa Indonesia", callback_data="lang_id_ID"),
+            [InlineKeyboardButton("🇨🇳 简体中文", callback_data="lang_zh_CN"),
              InlineKeyboardButton("🇰🇷 한국어", callback_data="lang_ko_KR")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        title = "🌍 选择您的语言 / Choose Your Language"
-        subtitle = "\n请选择您偏好的语言，设置后可随时更改" if is_first_time else ""
+        title = "🌍 Choose Your Language / 選擇您的語言 / اختر لغتك / अपनी भाषा चुनें / 选择您的语言 / 언어를 선택하세요"
 
         if update.message:
-            await update.message.reply_text(f"{title}{subtitle}", reply_markup=reply_markup)
+            await update.message.reply_text(title, reply_markup=reply_markup)
         elif update.callback_query:
-            await update.callback_query.edit_message_text(f"{title}{subtitle}", reply_markup=reply_markup)
+            await update.callback_query.edit_message_text(title, reply_markup=reply_markup)
 
         logger.info(f"Language selection shown to user {update.effective_user.id if update.effective_user else 'unknown'}")
 

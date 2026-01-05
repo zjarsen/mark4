@@ -18,16 +18,18 @@ class TelegramStarsProvider(PaymentProvider):
     No external gateway required - payments are processed directly by Telegram.
     """
 
-    def __init__(self, config, bot):
+    def __init__(self, config, bot, translation_service=None):
         """
         Initialize Telegram Stars payment provider.
 
         Args:
             config: Configuration object
             bot: Telegram Bot instance for sending invoices
+            translation_service: Translation service for multi-language support
         """
         super().__init__(config)
         self.bot = bot
+        self.translation_service = translation_service
         logger.info("Initialized TelegramStarsProvider")
 
     async def create_payment(
@@ -74,9 +76,15 @@ class TelegramStarsProvider(PaymentProvider):
             # Telegram Stars API requires integer amount
             stars_amount = int(amount)
 
-            # Create invoice details
-            title = f"充值 {credits} 积分"
-            description = f"获得 {credits} 积分，永久有效"
+            # Create invoice details with translation
+            if self.translation_service:
+                title = self.translation_service.get(user_id, 'payment.invoice_title_stars', credits=credits)
+                description = self.translation_service.get(user_id, 'payment.invoice_description_stars', credits=credits)
+                price_label = self.translation_service.get(user_id, 'payment.price_label_stars', credits=credits)
+            else:
+                title = f"充值 {credits} 积分"
+                description = f"获得 {credits} 积分，永久有效"
+                price_label = f"{credits}积分"
 
             # Payload is used to identify this payment when we receive successful_payment
             payload = payment_id
@@ -94,7 +102,7 @@ class TelegramStarsProvider(PaymentProvider):
                 payload=payload,
                 provider_token="",  # Empty for Telegram Stars
                 currency="XTR",  # Telegram Stars currency code
-                prices=[LabeledPrice(label=f"{credits}积分", amount=stars_amount)]
+                prices=[LabeledPrice(label=price_label, amount=stars_amount)]
             )
 
             logger.info(f"Sent Stars invoice {payment_id} to user {user_id}")

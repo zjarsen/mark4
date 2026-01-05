@@ -24,7 +24,7 @@ translation_service = None
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Handle /start command with language selection for new users.
+    Handle /start command - always show language selection.
 
     Args:
         update: Telegram Update
@@ -33,45 +33,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_id = update.effective_user.id
 
-        # Check if user has language preference set
+        # Always show language selection for /start
+        from handlers.language_handlers import show_language_selection
+
+        # Check if user is new or existing
         db = context.bot_data.get('database_service')
-        user_lang = db.get_user_language(user_id) if db else 'zh_CN'
+        user_data = db.get_user(user_id) if db else None
+        is_first_time = user_data and not user_data.get('telegram_username')
 
-        # First-time user with no language set: Show language selection
-        if user_lang is None or user_lang == '' or (user_lang == 'zh_CN' and db and not db.get_user(user_id).get('telegram_username')):
-            # Check if this is truly a new user (no telegram_username means get_user just created them)
-            user_data = db.get_user(user_id) if db else None
-            if user_data and not user_data.get('telegram_username'):
-                from handlers.language_handlers import show_language_selection
-                await show_language_selection(update, context, is_first_time=True)
-                return
-
-        # Existing user: Show welcome message in their language
-        if not state_manager.has_state(user_id):
-            # Get translated welcome message and button text
-            if translation_service:
-                welcome_msg = translation_service.get(user_id, 'welcome.message')
-                lucky_button = translation_service.get(user_id, 'welcome.lucky_discount_button')
-            else:
-                # Fallback to Chinese if translation service not available
-                welcome_msg = WELCOME_MESSAGE
-                lucky_button = "🎁 立即抽取幸运折扣"
-
-            # Send welcome message with inline lucky discount button ONLY
-            # Reply keyboard will be shown when user clicks the button
-            inline_keyboard = [[InlineKeyboardButton(lucky_button, callback_data="open_topup_menu")]]
-            inline_markup = InlineKeyboardMarkup(inline_keyboard)
-
-            await update.message.reply_text(
-                welcome_msg,
-                parse_mode='Markdown',
-                reply_markup=inline_markup
-            )
-
-            state_manager.set_state(user_id, {'first_contact': True})
-        else:
-            # Already has state, just show main menu
-            await show_main_menu(update)
+        await show_language_selection(update, context, is_first_time=is_first_time)
 
         logger.info(f"Start command processed for user {user_id}")
 
@@ -261,13 +231,13 @@ async def show_main_menu(update: Update):
     """
     user_id = update.effective_user.id
 
-    # Get translated menu message (use pointing down emoji if empty)
+    # Get translated menu message (use pointing up emoji if empty)
     if translation_service:
         message_text = translation_service.get(user_id, 'menu.select_function')
         if not message_text or message_text.strip() == '':
-            message_text = '👇'
+            message_text = '👆'
     else:
-        message_text = SELECT_FUNCTION_MESSAGE if SELECT_FUNCTION_MESSAGE else '👇'
+        message_text = SELECT_FUNCTION_MESSAGE if SELECT_FUNCTION_MESSAGE else '👆'
 
     reply_markup = _get_main_menu_keyboard(user_id)
 

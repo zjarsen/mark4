@@ -481,23 +481,8 @@ async def open_topup_menu_callback(update: Update, context: ContextTypes.DEFAULT
         fake_update = FakeUpdate(query.message, update.effective_user)
         await show_topup_packages(fake_update, context)
 
-        # Set up reply keyboard (main menu) at the bottom
-        from handlers.command_handlers import _get_main_menu_keyboard
-        main_menu_keyboard = _get_main_menu_keyboard(user_id)
-
-        # Send a minimal message to activate the reply keyboard
-        if translation_service:
-            menu_msg = translation_service.get(user_id, 'menu.select_function')
-            if not menu_msg or menu_msg.strip() == '':
-                menu_msg = '👇'
-        else:
-            menu_msg = '👇'
-
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=menu_msg,
-            reply_markup=main_menu_keyboard
-        )
+        # Note: Reply keyboard is already active from language selection
+        # No need to send another 👇 message here
 
         logger.info(f"User {update.effective_user.id} opened top-up menu from welcome button")
 

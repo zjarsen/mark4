@@ -17,8 +17,10 @@ class PricingService:
     # Payment method configurations
     PRICING_CONFIGS = {
         'stars': {
-            'commission': 0.35,  # Telegram takes 35% commission
-            'formula': lambda base: int(base / 0.65),  # Compensate for commission
+            'commission': 0.35,  # Telegram takes 35% commission (30% Apple/Google + 5% Telegram)
+            'stars_rate_cny': 0.14,  # User pays ¥0.14 per Star ($0.02 × 7.0 CNY/USD)
+            'merchant_rate_cny': 0.091,  # Merchant receives ¥0.091 per Star (0.14 × 0.65)
+            'formula': lambda base: int(base / 0.091),  # Stars needed for merchant to receive 'base' CNY
             'currency': 'XTR',
             'display_format': '{price} ⭐',
             'discount_eligible_packages': [10, 30, 50, 100, 160, 260],  # All packages eligible
@@ -75,12 +77,12 @@ class PricingService:
             >>> pricing.calculate_price(30, 'stars', 0.5)
             {
                 'base_amount': 30,
-                'base_price': 46,
+                'base_price': 330,
                 'discount_rate': 0.5,
-                'final_price': 23,
+                'final_price': 165,
                 'currency': 'XTR',
-                'display': '23 ⭐',
-                'savings': 23,
+                'display': '165 ⭐',
+                'savings': 165,
                 'is_discount_eligible': True
             }
         """

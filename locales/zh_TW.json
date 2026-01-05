@@ -96,10 +96,10 @@
     "button_100": "¥108 = 600積分",
     "button_vip": "¥173 = 永久VIP",
     "button_black_gold_vip": "¥281 = 永久黑金VIP",
-    "button_10_no_discount": "💰 {credits}積分 ¥{price} (無折扣)",
-    "button_vip_with_discount": "💎 永久VIP ¥{discounted_price} 🎁（原價¥{original_price}）",
-    "button_black_gold_vip_with_discount": "👑 永久黑金VIP ¥{discounted_price} 🎁（原價¥{original_price}）",
-    "button_credits_with_discount": "💰 {credits}積分 ¥{discounted_price} 🎁（原價¥{original_price}）"
+    "button_10_no_discount": "💰 {credits}積分 {price} (無折扣)",
+    "button_vip_with_discount": "💎 永久VIP {discounted_price} 🎁（原價{original_price}）",
+    "button_black_gold_vip_with_discount": "👑 永久黑金VIP {discounted_price} 🎁（原價{original_price}）",
+    "button_credits_with_discount": "💰 {credits}積分 {discounted_price} 🎁（原價{original_price}）"
   },
   "transactions": {
     "header": "📊 最近消費記錄\n\n",
@@ -123,7 +123,7 @@
   "discount": {
     "button_hot": "🔥💰 點我領取今日超級折扣！ 💰🔥",
     "button_normal": "🎰 每日幸運折扣 - 點擊查看",
-    "button_revealed": "{emoji} **{tier}** - {off}折扣已激活",
+    "button_revealed": "{emoji} {tier} - {off}折扣已激活",
     "celebration_ssr": "🎊🎊🎊 **恭喜恭喜！神級運氣！** 🎊🎊🎊\n\n**您抽到了 SSR 神級折扣！**\n🔥🔥 **全場5折優惠** 🔥🔥\n\n💰 **永久VIP 僅需 ¥87**（原價¥173）\n💎 **所有套餐5折** - 省錢一半！\n\n⏰ 限今日24:00前有效 - 抓緊時間搶購！\n\n_立即選擇套餐，享受神級折扣！_",
     "celebration_sr": "🎉🎉🎉 **恭喜您！超級幸運！** 🎉🎉🎉\n\n**您抽到了 SR 超級折扣！**\n⭐⭐ **全場7折優惠** ⭐⭐\n\n💰 **永久VIP 僅需 ¥121**（原價¥173）\n💎 **所有套餐7折** - 超值划算！\n\n⏰ 限今日24:00前有效 - 機不可失！\n\n_立即選擇套餐，享受超級折扣！_",
     "revealed_r": "✨ **今日運氣不錯！R級折扣**\n\n全場85折，省15%！\n💡 _提示：連續使用可提升折扣等級哦_\n\n💰 **永久VIP 僅需 ¥147**（原價¥173）\n\n⏰ 限今日有效 - 立即使用！",

@@ -16,7 +16,7 @@
   "menu": {
     "select_function": "",
     "option_image": "1. 📸 Image Undress! ✨",
-    "option_video": "2. 🎬 Video Undress! ✨",
+    "option_video": "2. 🎬 Video Undress!",
     "option_topup": "3. 💳 Buy Credits 🎁 Up to 50% OFF Daily!",
     "option_balance": "4. 📊 Balance & History",
     "option_queue": "5. Check Queue",
@@ -96,10 +96,10 @@
     "button_100": "¥108 = 600 credits",
     "button_vip": "¥173 = Lifetime VIP",
     "button_black_gold_vip": "¥281 = Black Gold VIP",
-    "button_10_no_discount": "💰 {credits} credits ¥{price} (No discount)",
-    "button_vip_with_discount": "💎 Lifetime VIP ¥{discounted_price} 🎁 (Was ¥{original_price})",
-    "button_black_gold_vip_with_discount": "👑 Black Gold VIP ¥{discounted_price} 🎁 (Was ¥{original_price})",
-    "button_credits_with_discount": "💰 {credits} credits ¥{discounted_price} 🎁 (Was ¥{original_price})"
+    "button_10_no_discount": "💰 {credits} credits {price} (No discount)",
+    "button_vip_with_discount": "💎 Lifetime VIP {discounted_price} 🎁 (Was {original_price})",
+    "button_black_gold_vip_with_discount": "👑 Black Gold VIP {discounted_price} 🎁 (Was {original_price})",
+    "button_credits_with_discount": "💰 {credits} credits {discounted_price} 🎁 (Was {original_price})"
   },
   "transactions": {
     "header": "📊 Transaction History\n\n",
@@ -123,7 +123,7 @@
   "discount": {
     "button_hot": "🔥💰 Claim Today's MEGA Discount! 💰🔥",
     "button_normal": "🎰 Daily Lucky Discount - Tap to check",
-    "button_revealed": "{emoji} **{tier}** - {off}% discount activated",
+    "button_revealed": "{emoji} {tier} - {off}% discount activated",
     "celebration_ssr": "🎊🎊🎊 **Congrats! God-tier luck!** 🎊🎊🎊\n\n**You pulled SSR Divine Discount!**\n🔥🔥 **50% OFF EVERYTHING** 🔥🔥\n\n💰 **Lifetime VIP only ¥87** (was ¥173)\n💎 **All packages 50% OFF** - save half!\n\n⏰ Valid till 24:00 today - grab it fast!\n\n_Pick your package now and enjoy god-tier discount!_",
     "celebration_sr": "🎉🎉🎉 **Congrats! Super lucky!** 🎉🎉🎉\n\n**You pulled SR Super Discount!**\n⭐⭐ **30% OFF EVERYTHING** ⭐⭐\n\n💰 **Lifetime VIP only ¥121** (was ¥173)\n💎 **All packages 30% OFF** - awesome deal!\n\n⏰ Valid till 24:00 today - don't miss it!\n\n_Pick your package now and enjoy super discount!_",
     "revealed_r": "✨ **Not bad! R-tier Discount**\n\n15% OFF everything!\n💡 _Tip: Keep using to level up your discount_\n\n💰 **Lifetime VIP only ¥147** (was ¥173)\n\n⏰ Valid today only - use it now!",

@@ -1,0 +1,163 @@
+# Project Guidelines for Mark4 Telegram Bot
+
+## Project Overview
+This is a Telegram bot built with python-telegram-bot library that provides AI-powered image processing services with a credit-based payment system.
+
+## Critical Rules - ALWAYS FOLLOW THESE
+
+### 1. Currency & Pricing System
+- **NEVER hardcode currency symbols in translation files**
+- All price formatting MUST go through `services/pricing_service.py`
+- The pricing service handles three payment methods:
+  - **Telegram Stars (XTR)**: Format as `{price} ⭐` (e.g., "165 ⭐")
+  - **Alipay (CNY)**: Format as `¥{price}` (e.g., "¥32")
+  - WeChat Pay (CNY)**: Format as `¥{price}` (e.g., "¥32")
+- `pricing_service.calculate_price()` returns `price_info['display']` which already includes the formatted price with currency symbol
+- Translation strings should NEVER add extra ¥ or other currency symbols - use placeholders like `{discounted_price}` and `{original_price}` without any prefix
+
+### 2. Multi-language Support
+- **ALL user-facing text MUST be in translation files**
+- Support 6 languages: zh_CN (Simplified Chinese), zh_TW (Traditional Chinese), en_US (English), ko_KR (Korean), ar_SA (Arabic), hi_IN (Hindi)
+- Never hardcode user-facing strings in Python code
+- Translation keys use dot notation: `section.key` (e.g., `topup.button_vip_with_discount`)
+
+**Translation Workflow - CRITICAL:**
+- **Development Phase**: When adding new features, ONLY update `zh_CN` first
+  - Always use the translation service in Python code (never hardcode strings)
+  - Add new translation keys to `locales/zh_CN.json` only
+  - The user will build and test the feature in Chinese first
+- **Translation Phase**: After the feature is complete and tested:
+  - The user will manually request translation to other 5 languages
+  - **ALWAYS use zh_CN (Simplified Chinese) as the source for translation**
+  - When translating to other languages:
+    - Accurately copy the **tone and vibe** from the Chinese original
+    - Adapt the style to look natural and native for target language speakers
+    - Preserve the emotional intent and casual/formal level
+    - Match the energy and personality (e.g., if Chinese is playful, keep it playful in the target language)
+  - Example: If Chinese uses casual gaming terms like "神级运气" (god-tier luck), translate to equivalent natural expressions in the target language, not literal word-for-word
+- **DO NOT** translate to all 6 languages during feature development unless explicitly requested
+- **IMPORTANT - Editing Existing Translations**: When modifying existing user-facing text in ANY translation JSON:
+  - ALWAYS THINK: Does this change need to be applied to other language files?
+  - If you change wording, fix a bug, or update text in one language, you likely need to update all 6 languages
+  - Ask the user if unsure: "I see you changed X in zh_CN. Should I update the other 5 languages too?"
+  - Exception: Bug fixes specific to one language (e.g., grammar error) don't need propagation
+
+### 3. VIP System
+- Two VIP tiers: `regular` (永久VIP) and `black_gold` (黑金VIP)
+- VIP users get unlimited usage without credit deduction
+- Black Gold VIP gets priority queue processing
+- Base amounts: 160 = VIP, 260 = Black Gold VIP
+- VIP status is permanent (lifetime)
+
+### 4. Credit & Payment System
+- Credits are called "积分" (points) in Chinese, "credits" in English
+- Image processing costs: 10 credits per use
+- Video processing costs: 30 credits per use
+- Free tier: "粉色蕾丝内衣" (Pink Lace) style is free with daily limits
+- "脱到精光" (Full Undress) style: Free once every 2 days OR 10 credits
+
+### 5. Discount System
+- Daily lucky discount system with 4 tiers:
+  - SSR (神级运气): 50% off
+  - SR (超级运气): 30% off
+  - R (运气不错): 15% off
+  - C (普通运气): 5% off
+- Discounts reset daily at 24:00 (GMT+8)
+- Discount applies to ALL payment methods equally
+- Eligible packages: 30, 50, 100 credits + VIP tiers (160, 260)
+
+## Code Architecture
+
+### Key Files
+- `core/bot_application.py` - Main bot application entry point
+- `handlers/credit_handlers.py` - Top-up and payment flow handlers (lines 222-249: button generation)
+- `services/pricing_service.py` - Price calculation and formatting (lines 19-44: PRICING_CONFIGS)
+- `payments/telegram_stars_provider.py` - Telegram Stars payment integration
+- `locales/*.json` - All translation files
+
+### Payment Flow
+1. User selects package → `credit_handlers.py`
+2. System calculates price → `pricing_service.calculate_price()`
+3. Price formatted with currency → `price_info['display']`
+4. Button text generated → Uses translation keys with formatted price
+5. User completes payment → Credits added to account
+
+### Discount Application
+- Discount info passed to pricing service
+- `pricing_service.py` applies discount percentage
+- Returns both `display` (discounted) and `base_price` (original)
+- Button shows: `{discounted_price} 🎁(原价{original_price})`
+
+## Common Patterns
+
+### Translation String Format
+```json
+{
+  "button_vip_with_discount": "💎 永久VIP {discounted_price} 🎁（原价{original_price}）"
+}
+```
+Note: NO ¥ symbol hardcoded - pricing_service handles it!
+
+### Price Calculation Pattern
+```python
+price_info = pricing_service.calculate_price(
+    base_amount=base_amount,
+    payment_method='stars',  # or 'alipay', 'wechat'
+    discount_info=discount_info
+)
+# price_info['display'] = "165 ⭐" or "¥32" (already formatted!)
+# price_info['base_price'] = original price before discount
+```
+
+### Button Text Generation Pattern
+```python
+button_text = translation_service.get(
+    user_id,
+    'topup.button_vip_with_discount',
+    discounted_price=price_info['display'],  # Already has currency!
+    original_price=pricing_service.format_price_display(price_info['base_price'], payment_method)
+)
+```
+
+## Development Workflow
+
+### Adding New Features
+1. Update Python handlers/services as needed
+2. Add translation keys to `locales/zh_CN.json` ONLY (Chinese first, test feature)
+3. After feature is tested and complete, user will request translation to other 5 languages
+4. Test with different payment methods to ensure currency symbols are correct
+5. Verify VIP users get proper unlimited access
+
+### Testing Payment Changes
+- Test all 3 payment methods: Telegram Stars, Alipay, WeChat
+- Verify currency symbols: ⭐ for Stars, ¥ for Alipay/WeChat
+- Check discount application across all tiers
+- Confirm VIP purchases work correctly
+
+### Common Mistakes to Avoid
+- ❌ Adding ¥ in translation strings (e.g., `"¥{discounted_price}"`)
+- ❌ Hardcoding user-facing text in Python code
+- ❌ Forgetting to update all 6 language files
+- ❌ Mixing up VIP base amounts (160 vs 260)
+- ❌ Not preserving discount eligibility for certain packages
+
+## Package Structure
+```
+Base Packages (credits):
+- 2 = 5 credits (test package)
+- 10 = 30 credits
+- 30 = 120 credits
+- 50 = 250 credits
+- 100 = 600 credits
+
+VIP Packages:
+- 160 = Lifetime VIP (¥173 base price)
+- 260 = Black Gold VIP (¥281 base price)
+```
+
+## Important Notes
+- Telegram Stars has higher commission (35%) vs Alipay/WeChat (8%)
+- All credits are permanent (never expire)
+- Daily limits only apply to free tier "Pink Lace" style
+- Payment gateway may be in maintenance - show appropriate warnings
+- Queue system gives priority to VIP users
