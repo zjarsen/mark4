@@ -42,7 +42,7 @@ async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(msg)
 
 
-async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE, is_callback: bool = False):
     """
     Show payment method selection with Lucky Discount button (NEW UX - Step 1).
 
@@ -53,6 +53,9 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
        - Shows 3 payment method buttons
     2. Click Lucky Discount → Reveals discount and updates this page
     3. Click payment method → show_pricing_for_method() (shows pricing menu)
+
+    Args:
+        is_callback: If True, edit existing message; if False, send new message
     """
     try:
         user_id = update.effective_user.id
@@ -84,7 +87,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 💰 **全场可省{savings_percent}%** - 所有支付方式通用
 ⏰ _今日24:00前有效，手慢无！_
 
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━
 
 💫 选择支付方式，立即享受折扣："""
 
@@ -140,11 +143,22 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        await update.message.reply_text(
-            message_text,
-            reply_markup=reply_markup,
-            parse_mode='Markdown'
-        )
+        # Send or edit message based on context
+        if is_callback:
+            # Called from callback (e.g., back button) - edit existing message
+            query = update.callback_query
+            await query.edit_message_text(
+                message_text,
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )
+        else:
+            # Called from regular message - send new message
+            await update.message.reply_text(
+                message_text,
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )
 
         logger.info(f"User {user_id} viewing payment method selection (discount: {'revealed - ' + discount_info['tier'] if discount_info else 'not revealed'})")
 
@@ -155,7 +169,12 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             msg = translation_service.get(user_id, 'errors.system')
         else:
             msg = "显示支付方式失败，请稍后重试"
-        await update.message.reply_text(msg)
+
+        if is_callback:
+            query = update.callback_query
+            await query.edit_message_text(msg)
+        else:
+            await update.message.reply_text(msg)
 
 
 async def show_pricing_for_method(
@@ -618,9 +637,9 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
 
         # Add transaction history section
         if translation_service:
-            history_header = translation_service.get(user_id, 'transactions.recent_header', default="\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 Recent 10 Transactions:\n\n")
+            history_header = translation_service.get(user_id, 'transactions.recent_header', default="\n\n━━━━━━━━━━━━━━━━━━━\n\n📝 Recent 10 Transactions:\n\n")
         else:
-            history_header = "\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 最近10笔记录：\n\n"
+            history_header = "\n\n━━━━━━━━━━━━━━━━━━━\n\n📝 最近10笔记录：\n\n"
         message += history_header
 
         if not transactions:
@@ -783,7 +802,7 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 💰 **全场可省{savings_percent}%** - 所有支付方式通用
 ⏰ _今日24:00前有效，手慢无！_
 
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━
 
 💫 选择支付方式，立即享受折扣："""
 
@@ -844,10 +863,6 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
         await query.answer("请从主菜单重新进入充值页面", show_alert=False)
 
         # Redirect to payment method selection (which will show discount)
-        # Need to create a fake message update to call show_topup_packages
-        # Since show_topup_packages expects update.message, not update.callback_query
-        # We'll use context.bot.send_message instead
-
         discount_info = await discount_service.get_or_reveal_daily_discount(user_id)
 
         if discount_info:
@@ -868,7 +883,7 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 💰 **全场可省{savings_percent}%** - 所有支付方式通用
 ⏰ _今日24:00前有效，手慢无！_
 
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━
 
 💫 选择支付方式，立即享受折扣："""
         else:
@@ -947,14 +962,8 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
         # Check routing pattern
         if callback_data == 'back_to_method_selection':
             # ===== Back button: Return to payment method selection =====
-            # Create fake update with message for show_topup_packages
-            class FakeUpdate:
-                def __init__(self, message, effective_user):
-                    self.message = message
-                    self.effective_user = effective_user
-
-            fake_update = FakeUpdate(query.message, update.effective_user)
-            await show_topup_packages(fake_update, context)
+            await query.answer()
+            await show_topup_packages(update, context, is_callback=True)
             logger.info(f"User {user_id} returned to payment method selection")
             return
 

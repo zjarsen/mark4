@@ -292,12 +292,12 @@ async def handle_check_queue(
         logger.info(f"Queue status retrieved: {status['total_jobs']} total jobs")
 
         # Format queue status message with improved UI
-        message = "━━━━━━━━━━━━━━━━━━━━\n"
+        message = "━━━━━━━━━━━━━━━━━\n"
         if translation_service:
             message += translation_service.get(user_id, 'queue.status_header', default="📊 **Current Queue Status**")
         else:
             message += "📊 **当前队列状态**"
-        message += "\n━━━━━━━━━━━━━━━━━━━━\n\n"
+        message += "\n━━━━━━━━━━━━━━━━━\n\n"
 
         # Per-manager detailed status (no overview section)
         for workflow_type, servers in status['managers'].items():
@@ -353,7 +353,7 @@ async def handle_check_queue(
             message += "\n"
 
         # Footer with helpful info
-        message += "━━━━━━━━━━━━━━━━━━━━\n"
+        message += "━━━━━━━━━━━━━━━━━\n"
         if translation_service:
             message += translation_service.get(user_id, 'queue.vip_priority_tip', default="💡 **Tip**: VIP users have priority processing")
         else:

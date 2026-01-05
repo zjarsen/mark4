@@ -471,15 +471,8 @@ async def open_topup_menu_callback(update: Update, context: ContextTypes.DEFAULT
         # Import and call show_topup_packages
         from handlers.credit_handlers import show_topup_packages
 
-        # Create a new update object with the message from callback
-        # This allows show_topup_packages to work properly
-        class FakeUpdate:
-            def __init__(self, message, effective_user):
-                self.message = message
-                self.effective_user = effective_user
-
-        fake_update = FakeUpdate(query.message, update.effective_user)
-        await show_topup_packages(fake_update, context)
+        # Call with is_callback=True to edit the existing message
+        await show_topup_packages(update, context, is_callback=True)
 
         # Note: Reply keyboard is already active from language selection
         # No need to send another 👇 message here
