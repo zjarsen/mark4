@@ -242,8 +242,7 @@ async def show_pricing_for_method(
                 # Show discounted price
                 if base_amount in [160, 260]:
                     # VIP packages with discount
-                    vip_label = translation_service.get(user_id, 'topup.button_vip') if base_amount == 160 else translation_service.get(user_id, 'topup.button_black_gold_vip')
-                    if vip_label and translation_service:
+                    if translation_service:
                         button_text = translation_service.get(
                             user_id,
                             'topup.button_vip_with_discount' if base_amount == 160 else 'topup.button_black_gold_vip_with_discount',
@@ -251,20 +250,29 @@ async def show_pricing_for_method(
                             original_price=pricing_service.format_price_display(price_info['base_price'], payment_method)
                         )
                     else:
-                        vip_name = "永久VIP" if base_amount == 160 else "永久黑金VIP"
+                        vip_name = "Lifetime VIP" if base_amount == 160 else "Black Gold VIP"
                         base_display = pricing_service.format_price_display(price_info['base_price'], payment_method)
-                        button_text = f"💎 {vip_name} {price_info['display']} 🎁（原价{base_display}）"
+                        button_text = f"💎 {vip_name} {price_info['display']} 🎁 (Was {base_display})"
                 else:
                     # Credit packages with discount
-                    base_display = pricing_service.format_price_display(price_info['base_price'], payment_method)
-                    button_text = f"💰 {credits}积分 {price_info['display']} 🎁（原价{base_display}）"
+                    if translation_service:
+                        button_text = translation_service.get(
+                            user_id,
+                            'topup.button_credits_with_discount',
+                            credits=credits,
+                            discounted_price=price_info['display'],
+                            original_price=pricing_service.format_price_display(price_info['base_price'], payment_method)
+                        )
+                    else:
+                        base_display = pricing_service.format_price_display(price_info['base_price'], payment_method)
+                        button_text = f"💰 {credits} credits {price_info['display']} 🎁 (Was {base_display})"
             else:
                 # No discount or ineligible
                 if base_amount in [160, 260]:
-                    vip_name = "永久VIP" if base_amount == 160 else "永久黑金VIP"
+                    vip_name = "Lifetime VIP" if base_amount == 160 else "Black Gold VIP"
                     button_text = f"{price_info['display']} = {vip_name}"
                 else:
-                    button_text = f"{price_info['display']} = {credits}积分"
+                    button_text = f"{price_info['display']} = {credits} credits"
 
             keyboard.append([InlineKeyboardButton(
                 button_text,
