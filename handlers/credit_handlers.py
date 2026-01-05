@@ -408,7 +408,11 @@ async def create_payment_for_method(
 
             # For Stars, the invoice is sent as a separate message by Telegram
             # We don't need to edit the pricing menu message - just acknowledge the callback
-            await query.answer("✨ 已发送支付请求，请在弹出窗口中完成支付", show_alert=False)
+            if translation_service:
+                answer_msg = translation_service.get(user_id, 'payment.stars_invoice_sent')
+            else:
+                answer_msg = "✨ 已发送支付请求，请在弹出窗口中完成支付"
+            await query.answer(answer_msg, show_alert=False)
 
             logger.info(
                 f"Created Stars payment {payment_info['payment_id']} for user {user_id}: "
@@ -868,7 +872,11 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
         )
 
         # Show toast notification
-        await query.answer("请从主菜单重新进入充值页面", show_alert=False)
+        if translation_service:
+            toast_msg = translation_service.get(user_id, 'errors.deprecated_button')
+        else:
+            toast_msg = "请从主菜单重新进入充值页面"
+        await query.answer(toast_msg, show_alert=False)
 
         # Redirect to payment method selection (which will show discount)
         discount_info = await discount_service.get_or_reveal_daily_discount(user_id)

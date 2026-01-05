@@ -109,7 +109,7 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if translation_service:
                 msg = translation_service.get(user_id, 'commands.cancel_failed')
             else:
-                msg = "无法取消操作"
+                msg = "取消操作失败"
             await update.message.reply_text(msg)
 
         # Show menu

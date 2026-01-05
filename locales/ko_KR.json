@@ -184,7 +184,8 @@
     "no_style_selected": "먼저 메인 메뉴에서 이미지 처리 옵션 선택",
     "style_selection_error": "스타일 선택 오류, 처음부터 다시 시작",
     "processing_failed": "❌ 처리 실패: {error_msg}",
-    "processing_failed_with_refund": "❌ 처리 실패: {error_msg}\n💰 {cost} 포인트 환불됨."
+    "processing_failed_with_refund": "❌ 처리 실패: {error_msg}\n💰 {cost} 포인트 환불됨.",
+    "deprecated_button": "메인 메뉴에서 충전 페이지로 다시 들어가주세요"
   },
   "callbacks": {
     "deprecated_function": "이 기능은 업데이트됨 - 다시 제출하세요",

@@ -184,7 +184,8 @@
     "no_style_selected": "請先從主菜單選擇圖片處理選項",
     "style_selection_error": "風格選擇錯誤，請重新開始",
     "processing_failed": "❌ 處理失敗: {error_msg}",
-    "processing_failed_with_refund": "❌ 處理失敗: {error_msg}\n💰 {cost} 積分已退還。"
+    "processing_failed_with_refund": "❌ 處理失敗: {error_msg}\n💰 {cost} 積分已退還。",
+    "deprecated_button": "請從主選單重新進入充值頁面"
   },
   "callbacks": {
     "deprecated_function": "此功能已更新，請重新提交任務",

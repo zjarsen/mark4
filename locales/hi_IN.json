@@ -184,7 +184,8 @@
     "no_style_selected": "पहले main menu से image processing option select करो",
     "style_selection_error": "Style selection error, please restart करो",
     "processing_failed": "❌ Processing fail हो गई: {error_msg}",
-    "processing_failed_with_refund": "❌ Processing fail हो गई: {error_msg}\n💰 {cost} क्रेडिट refund कर दिए।"
+    "processing_failed_with_refund": "❌ Processing fail हो गई: {error_msg}\n💰 {cost} क्रेडिट refund कर दिए।",
+    "deprecated_button": "कृपया मुख्य मेनू से टॉप-अप पेज में फिर से प्रवेश करें"
   },
   "callbacks": {
     "deprecated_function": "Ye feature update हो गया है - फिर से submit करो",

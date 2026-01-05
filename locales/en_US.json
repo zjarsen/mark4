@@ -184,7 +184,8 @@
     "no_style_selected": "Please select image processing option from main menu first",
     "style_selection_error": "Style selection error, please restart",
     "processing_failed": "❌ Processing failed: {error_msg}",
-    "processing_failed_with_refund": "❌ Processing failed: {error_msg}\n💰 {cost} credits refunded."
+    "processing_failed_with_refund": "❌ Processing failed: {error_msg}\n💰 {cost} credits refunded.",
+    "deprecated_button": "Please re-enter the top-up page from the main menu"
   },
   "callbacks": {
     "deprecated_function": "This feature was updated - please try again",
