@@ -3,15 +3,6 @@
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import logging
-from core.constants import (
-    WELCOME_MESSAGE,
-    SELECT_FUNCTION_MESSAGE,
-    MENU_OPTION_IMAGE,
-    MENU_OPTION_VIDEO,
-    MENU_OPTION_CHECK_QUEUE,
-    MENU_OPTION_BALANCE_HISTORY,
-    MENU_OPTION_TOPUP
-)
 
 logger = logging.getLogger('mark4_bot')
 
@@ -200,12 +191,12 @@ def _get_main_menu_keyboard(user_id: int) -> ReplyKeyboardMarkup:
         option_balance = translation_service.get(user_id, 'menu.option_balance')
         option_queue = translation_service.get(user_id, 'menu.option_queue')
     else:
-        # Fallback to Chinese constants
-        option_image = MENU_OPTION_IMAGE
-        option_video = MENU_OPTION_VIDEO
-        option_topup = MENU_OPTION_TOPUP
-        option_balance = MENU_OPTION_BALANCE_HISTORY
-        option_queue = MENU_OPTION_CHECK_QUEUE
+        # Fallback to Chinese
+        option_image = "1. 📸 图生图类脱衣！✨"
+        option_video = "2. 🎬 图生成视频类脱衣！✨"
+        option_topup = "3. 💳 充值积分 🎁 每日抽最高5折！"
+        option_balance = "4. 📊 积分余额 & 充值记录"
+        option_queue = "5. 查看当前队列"
 
     # Language option always in English for universal recognition
     option_language = "6. 🌍 Language"
@@ -238,7 +229,7 @@ async def show_main_menu(update: Update):
         if not message_text or message_text.strip() == '':
             message_text = '👆'
     else:
-        message_text = SELECT_FUNCTION_MESSAGE if SELECT_FUNCTION_MESSAGE else '👆'
+        message_text = ""  # Empty string fallback (Chinese constant was empty)
 
     reply_markup = _get_main_menu_keyboard(user_id)
 

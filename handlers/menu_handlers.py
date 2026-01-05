@@ -4,15 +4,6 @@ from telegram import Update
 from telegram.ext import ContextTypes
 import logging
 from core.constants import (
-    MENU_OPTION_IMAGE,
-    MENU_OPTION_VIDEO,
-    MENU_OPTION_CHECK_QUEUE,
-    MENU_OPTION_BALANCE_HISTORY,
-    MENU_OPTION_TOPUP,
-    SEND_IMAGE_PROMPT,
-    FEATURE_NOT_IMPLEMENTED,
-    QUEUE_UNAVAILABLE,
-    UNEXPECTED_INPUT_MESSAGE,
     DEMO_LINK_BRA,
     DEMO_LINK_UNDRESS
 )
@@ -76,7 +67,7 @@ async def handle_menu_selection(update: Update, context: ContextTypes.DEFAULT_TY
             if translation_service:
                 msg = translation_service.get(user_id, 'errors.unexpected_input')
             else:
-                msg = UNEXPECTED_INPUT_MESSAGE
+                msg = "💡 请选择功能\n\n请点击下方菜单按钮\n或发送对应数字（如：1、2、3）"
             await update.message.reply_text(msg)
 
     except Exception as e:
@@ -278,7 +269,7 @@ async def handle_check_queue(
             if translation_service:
                 msg = translation_service.get(user_id, 'queue.unavailable')
             else:
-                msg = QUEUE_UNAVAILABLE
+                msg = "⚠️ 队列系统繁忙中\n请稍后再试或联系客服"
             # Handle both message and callback query
             if update.callback_query:
                 await update.callback_query.answer(msg, show_alert=True)
@@ -384,7 +375,7 @@ async def handle_check_queue(
         if translation_service and user_id:
             msg = translation_service.get(user_id, 'queue.unavailable')
         else:
-            msg = QUEUE_UNAVAILABLE
+            msg = "⚠️ 队列系统繁忙中\n请稍后再试或联系客服"
         # Handle both message and callback query
         if update.callback_query:
             await update.callback_query.answer(msg, show_alert=True)
@@ -417,7 +408,7 @@ async def handle_unexpected_text(update: Update, context: ContextTypes.DEFAULT_T
             if translation_service:
                 msg = translation_service.get(user_id, 'errors.unexpected_input')
             else:
-                msg = UNEXPECTED_INPUT_MESSAGE
+                msg = "💡 请选择功能\n\n请点击下方菜单按钮\n或发送对应数字（如：1、2、3）"
             await update.message.reply_text(msg)
 
             # Show menu
