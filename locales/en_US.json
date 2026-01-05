@@ -15,8 +15,8 @@
   },
   "menu": {
     "select_function": "",
-    "option_image": "1. 📸 Image Undress! ✨",
-    "option_video": "2. 🎬 Video Undress!",
+    "option_image": "1. 📸 Image Undress",
+    "option_video": "2. 🎬 Image→Video Undress",
     "option_topup": "3. 💳 Buy Credits 🎁 Up to 50% OFF Daily!",
     "option_balance": "4. 📊 Balance & History",
     "option_queue": "5. Check Queue",
@@ -83,12 +83,15 @@
     "webhook_html_footer": "You can close this page",
     "creation_error": "Failed to create order: {error}",
     "creation_failed": "Payment failed - please try again later",
-    "vip_already_owned": "You're already {tier}! No need to buy again!"
+    "vip_already_owned": "You're already {tier}! No need to buy again!",
+    "invoice_title_stars": "Top up {credits} credits",
+    "invoice_description_stars": "Get {credits} credits, valid forever",
+    "price_label_stars": "{credits} credits"
   },
   "topup": {
-    "packages_with_discount": "💳 Top-up Packages\n\n🔥🔥🔥 **You're Super Lucky Today!** 🔥🔥🔥\n⚡ _Your exclusive discount unlocked - tap below to see!_\n💰 **Up to 50% OFF** - Valid till 24:00 today only\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 Hot Picks:\n1️⃣ ¥11 = 30 credits ⭐\n2️⃣ ¥32 = 120 credits 🔥\n3️⃣ ¥54 = 250 credits 💎\n4️⃣ ¥108 = 600 credits 👑\n5️⃣ ¥173 = Lifetime VIP ⭐⭐⭐ 【Owner's Pick · Unlimited】\n6️⃣ ¥281 = Black Gold VIP 👑👑👑 【Unlimited + No Queue】\n\n✨ Top-up Perks:\n• Credits valid forever\n• Instant arrival\n\n⚠️ **Important: Payment gateway under maintenance - temporarily unavailable** ⚠️\n📞 Contact support if you need to top up\n\n⏰ **Don't forget to claim today's discount! Click [Lucky Discount] below** ⏰",
-    "packages_normal": "💳 Top-up Packages\n\n🎰 **Today's Lucky Discount is LIVE** - Tap below to check your discount!\n💡 _Random 5%-50% off daily - try your luck today?_\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 Hot Picks:\n1️⃣ ¥11 = 30 credits ⭐\n2️⃣ ¥32 = 120 credits 🔥\n3️⃣ ¥54 = 250 credits 💎\n4️⃣ ¥108 = 600 credits 👑\n5️⃣ ¥173 = Lifetime VIP ⭐⭐⭐ 【Owner's Pick · Unlimited】\n6️⃣ ¥281 = Black Gold VIP 👑👑👑 【Unlimited + No Queue】\n\n✨ Top-up Perks:\n• Credits valid forever\n• Instant arrival\n\n⚠️ **Important: Payment gateway under maintenance - temporarily unavailable** ⚠️\n📞 Contact support if you need to top up",
-    "packages_no_discount": "💳 Top-up Packages\n\n🎁 **First-time Perk** - Spin for today's lucky discount first!\n💰 _Up to 50% OFF_ | Daily reset | 24 hours only\n\n━━━━━━━━━━━━━━━━━━━━\n\n🔥 Hot Picks:\n1️⃣ ¥11 = 30 credits ⭐\n2️⃣ ¥32 = 120 credits 🔥\n3️⃣ ¥54 = 250 credits 💎\n4️⃣ ¥108 = 600 credits 👑\n5️⃣ ¥173 = Lifetime VIP ⭐⭐⭐ 【Owner's Pick · Unlimited】\n6️⃣ ¥281 = Black Gold VIP 👑👑👑 【Unlimited + No Queue】\n\n✨ Top-up Perks:\n• Credits valid forever\n• Instant arrival\n\n⚠️ **Important: Payment gateway under maintenance - temporarily unavailable** ⚠️\n📞 Contact support if you need to top up",
+    "packages_with_discount": "💳 Top-up Packages\n\n🔥🔥🔥 **You're Super Lucky Today!** 🔥🔥🔥\n⚡ _Your exclusive discount unlocked - tap below to see!_\n💰 **Up to 50% OFF** - Valid till 24:00 today only\n\n━━━━━━━━━━━━━━━━━\n\n🔥 Hot Picks:\n1️⃣ ¥11 = 30 credits ⭐\n2️⃣ ¥32 = 120 credits 🔥\n3️⃣ ¥54 = 250 credits 💎\n4️⃣ ¥108 = 600 credits 👑\n5️⃣ ¥173 = Lifetime VIP ⭐⭐⭐ 【Owner's Pick · Unlimited】\n6️⃣ ¥281 = Black Gold VIP 👑👑👑 【Unlimited + No Queue】\n\n✨ Top-up Perks:\n• Credits valid forever\n• Instant arrival\n\n⚠️ **Important: Payment gateway under maintenance - temporarily unavailable** ⚠️\n📞 Contact support if you need to top up\n\n⏰ **Don't forget to claim today's discount! Click [Lucky Discount] below** ⏰",
+    "packages_normal": "💳 Top-up Packages\n\n🎰 **Today's Lucky Discount is LIVE** - Tap below to check your discount!\n💡 _Random 5%-50% off daily - try your luck today?_\n\n━━━━━━━━━━━━━━━━━\n\n🔥 Hot Picks:\n1️⃣ ¥11 = 30 credits ⭐\n2️⃣ ¥32 = 120 credits 🔥\n3️⃣ ¥54 = 250 credits 💎\n4️⃣ ¥108 = 600 credits 👑\n5️⃣ ¥173 = Lifetime VIP ⭐⭐⭐ 【Owner's Pick · Unlimited】\n6️⃣ ¥281 = Black Gold VIP 👑👑👑 【Unlimited + No Queue】\n\n✨ Top-up Perks:\n• Credits valid forever\n• Instant arrival\n\n⚠️ **Important: Payment gateway under maintenance - temporarily unavailable** ⚠️\n📞 Contact support if you need to top up",
+    "packages_no_discount": "💳 Top-up Packages\n\n🎁 **First-time Perk** - Spin for today's lucky discount first!\n💰 _Up to 50% OFF_ | Daily reset | 24 hours only\n\n━━━━━━━━━━━━━━━━━\n\n🔥 Hot Picks:\n1️⃣ ¥11 = 30 credits ⭐\n2️⃣ ¥32 = 120 credits 🔥\n3️⃣ ¥54 = 250 credits 💎\n4️⃣ ¥108 = 600 credits 👑\n5️⃣ ¥173 = Lifetime VIP ⭐⭐⭐ 【Owner's Pick · Unlimited】\n6️⃣ ¥281 = Black Gold VIP 👑👑👑 【Unlimited + No Queue】\n\n✨ Top-up Perks:\n• Credits valid forever\n• Instant arrival\n\n⚠️ **Important: Payment gateway under maintenance - temporarily unavailable** ⚠️\n📞 Contact support if you need to top up",
     "button_2": "¥2 = 5 credits (Test)",
     "button_10": "¥11 = 30 credits",
     "button_30": "¥32 = 120 credits",
@@ -99,11 +102,12 @@
     "button_10_no_discount": "💰 {credits} credits {price} (No discount)",
     "button_vip_with_discount": "💎 Lifetime VIP {discounted_price} 🎁 (Was {original_price})",
     "button_black_gold_vip_with_discount": "👑 Black Gold VIP {discounted_price} 🎁 (Was {original_price})",
-    "button_credits_with_discount": "💰 {credits} credits {discounted_price} 🎁 (Was {original_price})"
+    "button_credits_with_discount": "💰 {credits} credits {discounted_price} 🎁 (Was {original_price})",
+    "button_back": "« Back to Payment Methods"
   },
   "transactions": {
     "header": "📊 Transaction History\n\n",
-    "recent_header": "\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n📝 Last 10 transactions:\n\n",
+    "recent_header": "\n\n━━━━━━━━━━━━━━━━━\n\n📝 Last 10 transactions:\n\n",
     "item_template": "{date} | {type} | {amount:+.0f}pts | Balance {balance:.0f}\n",
     "no_transactions": "No transactions yet\nTop up and start having fun~",
     "type_topup": "Top-up",
@@ -128,7 +132,7 @@
     "celebration_sr": "🎉🎉🎉 **Congrats! Super lucky!** 🎉🎉🎉\n\n**You pulled SR Super Discount!**\n⭐⭐ **30% OFF EVERYTHING** ⭐⭐\n\n💰 **Lifetime VIP only ¥121** (was ¥173)\n💎 **All packages 30% OFF** - awesome deal!\n\n⏰ Valid till 24:00 today - don't miss it!\n\n_Pick your package now and enjoy super discount!_",
     "revealed_r": "✨ **Not bad! R-tier Discount**\n\n15% OFF everything!\n💡 _Tip: Keep using to level up your discount_\n\n💰 **Lifetime VIP only ¥147** (was ¥173)\n\n⏰ Valid today only - use it now!",
     "revealed_c": "🍀 **Discount unlocked! C-tier**\n\n5% OFF - not much but still a discount!\n🎯 _Keep at it - might hit 50% next time_\n\n💰 **Lifetime VIP only ¥164** (was ¥173)\n\n⏰ Valid today only - might as well use it!",
-    "already_revealed": "⚡ **Your discount is activated!**\n\nCurrent discount: **{tier}** ({off}% OFF)\nExpires: **Today 24:00** ⏰\n\n💡 All package prices already show discounted price\n🔥 _Limited time offer, top up now!_\n\n━━━━━━━━━━━━━━━━━━━━\nPick a package below and enjoy the discount!",
+    "already_revealed": "⚡ **Your discount is activated!**\n\nCurrent discount: **{tier}** ({off}% OFF)\nExpires: **Today 24:00** ⏰\n\n💡 All package prices already show discounted price\n🔥 _Limited time offer, top up now!_\n\n━━━━━━━━━━━━━━━━━\nPick a package below and enjoy the discount!",
     "tier_ssr": "SSR God-tier Luck",
     "tier_sr": "SR Super Luck",
     "tier_r": "R Pretty Lucky",
