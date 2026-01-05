@@ -72,10 +72,11 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             savings_percent = int((1 - discount_info['rate']) * 100)
 
             if translation_service:
+                tier_name = translation_service.get(user_id, f"discount.tier_{discount_info['tier'].lower()}")
                 message_text = translation_service.get(
                     user_id,
                     'topup.method_selection_with_discount',
-                    tier=discount_info['display'],
+                    tier=tier_name,
                     emoji=discount_info['emoji'],
                     off=discount_info['off'],
                     savings_percent=savings_percent
@@ -785,12 +786,16 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
             # Show celebration if new reveal
             if is_new:
                 # Show celebration message
-                celebration_msg = translation_service.get(
-                    user_id,
-                    'discount.celebration_inline',
-                    tier=discount_info['display'],
-                    emoji=discount_info['emoji']
-                ) if translation_service else f"🎉 恭喜！抽到{discount_info['display']}折扣 {discount_info['emoji']}"
+                if translation_service:
+                    tier_name = translation_service.get(user_id, f"discount.tier_{discount_info['tier'].lower()}")
+                    celebration_msg = translation_service.get(
+                        user_id,
+                        'discount.celebration_inline',
+                        tier=tier_name,
+                        emoji=discount_info['emoji']
+                    )
+                else:
+                    celebration_msg = f"🎉 恭喜！抽到{discount_info['display']}折扣 {discount_info['emoji']}"
 
                 await query.answer(celebration_msg, show_alert=False)
                 logger.info(f"User {user_id} revealed new discount: {tier} ({discount_info['rate']})")
@@ -799,10 +804,11 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
             savings_percent = int((1 - discount_info['rate']) * 100)
 
             if translation_service:
+                tier_name = translation_service.get(user_id, f"discount.tier_{discount_info['tier'].lower()}")
                 message_text = translation_service.get(
                     user_id,
                     'topup.method_selection_with_discount',
-                    tier=discount_info['display'],
+                    tier=tier_name,
                     emoji=discount_info['emoji'],
                     off=discount_info['off'],
                     savings_percent=savings_percent
@@ -884,10 +890,11 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
         if discount_info:
             savings_percent = int((1 - discount_info['rate']) * 100)
             if translation_service:
+                tier_name = translation_service.get(user_id, f"discount.tier_{discount_info['tier'].lower()}")
                 message_text = translation_service.get(
                     user_id,
                     'topup.method_selection_with_discount',
-                    tier=discount_info['display'],
+                    tier=tier_name,
                     emoji=discount_info['emoji'],
                     off=discount_info['off'],
                     savings_percent=savings_percent
