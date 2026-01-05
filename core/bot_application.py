@@ -64,8 +64,16 @@ class BotApplication:
         # Initialize services
         self._initialize_services()
 
-        # Create Telegram application with post_init callback
-        self.app = Application.builder().token(config.BOT_TOKEN).post_init(self._post_init).build()
+        # Create Telegram application with post_init callback and increased timeouts for media
+        self.app = (
+            Application.builder()
+            .token(config.BOT_TOKEN)
+            .read_timeout(60)
+            .write_timeout(60)
+            .connect_timeout(20)
+            .post_init(self._post_init)
+            .build()
+        )
 
         # Inject dependencies into handlers
         self._inject_dependencies()
