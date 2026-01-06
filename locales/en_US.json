@@ -10,14 +10,14 @@
     "change_language": "🌍 Change Language"
   },
   "welcome": {
-    "message": "✨ Welcome to the Ultimate AI Undress Tool!\n\n🎰 *Daily Lucky Discount*\n• 💰 Up to 50% OFF!\n• 🎁 Resets daily at 24:00 - snooze you lose\n• ⚡ *Spin your discount BEFORE topping up!*\n\n🎁 *Newbie Perks*\n• Pink Lace Style - FREE forever\n• Full Undress Style - FREE once every 2 days\n\n🎨 *Core Features*\n• 📸 Image Undress (10 credits/time) - Multiple styles\n• 🎬 Dynamic Video (30 credits/time) - 3 effects\n• 🔥 Top-tier AI Model - Insanely realistic\n\n💎 *VIP Membership Perks*\n• Lifetime VIP - Unlimited everything\n• Black Gold VIP - Unlimited + Skip the queue\n• Pay once, unlimited forever\n\n🎁 *Click below to spin your lucky discount NOW!*",
+    "message": "✨ Welcome to the Ultimate AI Undress Tool!\n\n🎰 *Daily Lucky Discount*\n• 💰 Up to *50% OFF*!\n• 🎁 Resets daily at 24:00 - snooze you lose\n• ⚡ *Spin your discount BEFORE topping up!*\n\n🎁 *Newbie Perks*\n• Pink Lace Style - *FREE forever*\n• Full Undress Style - *FREE* once every 2 days\n\n🎨 *Core Features*\n• 📸 Image Undress (*10 credits*/time) - Multiple styles\n• 🎬 Dynamic Video (*30 credits*/time) - 3 effects\n• 🔥 Top-tier AI Model - *Insanely realistic*\n\n💎 *VIP Membership Perks*\n• *Lifetime VIP* - Unlimited everything\n• *Black Gold VIP* - Unlimited + Skip the queue\n• Pay once, *unlimited forever*\n\n🎁 _Click below to spin your lucky discount NOW!_",
     "lucky_discount_button": "🎁 Spin for My Lucky Discount"
   },
   "menu": {
     "select_function": "",
     "option_image": "1. 📸 Image Undress",
     "option_video": "2. 🎬 Image→Video Undress",
-    "option_topup": "3. 💳 Buy Credits 🎁 Up to 50% OFF Daily!",
+    "option_topup": "3. 💳 Buy Credits 🎁 Up to *50% OFF* Daily!",
     "option_balance": "4. 📊 Balance & History",
     "option_queue": "5. Check Queue",
     "option_language": "6. 🌍 Change Language"
@@ -50,22 +50,22 @@
     "name_video_c": "Undress + Explicit"
   },
   "credits": {
-    "insufficient": "💳 Not Enough Credits\n\nYour balance: {balance} credits\nRequired: {required} credits\n\nTop up now - credits arrive instantly~",
-    "deducted": "{amount} credits used, balance: {balance} credits",
-    "added": "Top-up successful! +{amount} credits, balance: {balance} credits",
-    "balance_message": "💰 My Credits\n\nBalance: {balance} credits\nTotal spent: {total_spent} credits\n\n📋 Pricing:\n• Image Undress: 10 credits\n• Video: 30 credits",
-    "confirmation": "📋 Confirm Purchase\n\n{workflow_name}\n\n💰 Details:\n• Current balance: {balance} credits\n• This costs: {cost} credits\n• After: {remaining} credits\n\n✨ Processing starts right after confirmation",
-    "confirmation_free_trial": "🎁 Free Trial\n\n{workflow_name}\n\nThis one's FREE!\nBalance: {balance} credits\n\n{cooldown_info}\n\n✨ Processing starts right after confirmation",
+    "insufficient": "💳 Not Enough Credits\n\nYour balance: *{balance}* credits\nRequired: *{required}* credits\n\nTop up now - credits arrive *instantly*~",
+    "deducted": "*{amount}* credits used, balance: *{balance}* credits",
+    "added": "Top-up successful! +*{amount}* credits, balance: *{balance}* credits",
+    "balance_message": "💰 My Credits\n\nBalance: *{balance}* credits\nTotal spent: *{total_spent}* credits\n\n📋 Pricing:\n• Image Undress: *10 credits*\n• Video: *30 credits*",
+    "confirmation": "📋 Confirm Purchase\n\n*{workflow_name}*\n\n💰 Details:\n• Current balance: *{balance}* credits\n• This costs: *{cost}* credits\n• After: *{remaining}* credits\n\n✨ Processing starts *right after* confirmation",
+    "confirmation_free_trial": "🎁 Free Trial\n\n*{workflow_name}*\n\nThis one's *FREE*!\nBalance: *{balance}* credits\n\n{cooldown_info}\n\n✨ Processing starts *right after* confirmation",
     "confirmation_cancelled": "Cancelled",
-    "insufficient_on_confirm": "❌ Not Enough Credits\n\nBalance: {balance} credits\nNeed: {cost} credits\n\nPick a top-up package:"
+    "insufficient_on_confirm": "❌ Not Enough Credits\n\nBalance: *{balance}* credits\nNeed: *{cost}* credits\n\nPick a top-up package:"
   },
   "trial": {
-    "available": "🎁 Free Trial Ready!\n\nThis is your free trial\n• Resets automatically in 2 days\n• No credits needed\n\nUpload a photo and experience the AI magic~",
-    "cooldown": "⏰ Free Trial on Cooldown\n\nNext available: {next_available}\n\n💳 Your options:\n• Balance: {balance} credits\n• This costs: 10 credits\n\n💡 Top up for instant access, or wait for free trial reset",
-    "bra_daily_limit": "Oops! You've maxed out today's free Pink Lace Lingerie uses! 😅\n\n📊 Today's stats:\n   • Used: {current_usage}/{limit} times\n   • Resets: Tomorrow at 00:00 (GMT+8)\n\n💡 Pro tip:\n   • Paid features (Full Undress, Video) have NO daily limit\n   • Got credits? Use anytime!\n\n💎 Or go VIP for unlimited access!\n\nSee you tomorrow! 💕"
+    "available": "🎁 *Free Trial Ready!*\n\nThis is your *free trial*\n• Resets automatically in *2 days*\n• No credits needed\n\nUpload a photo and experience the AI magic~",
+    "cooldown": "⏰ Free Trial on Cooldown\n\nNext available: *{next_available}*\n\n💳 Your options:\n• Balance: *{balance}* credits\n• This costs: *10 credits*\n\n💡 Top up for *instant access*, or wait for free trial reset",
+    "bra_daily_limit": "Oops! You've maxed out today's free Pink Lace Lingerie uses! 😅\n\n📊 Today's stats:\n   • Used: *{current_usage}/{limit}* times\n   • Resets: *Tomorrow at 00:00* (GMT+8)\n\n💡 Pro tip:\n   • Paid features (Full Undress, Video) have *NO daily limit*\n   • Got credits? Use *anytime*!\n\n💎 Or go *VIP* for *unlimited access*!\n\nSee you tomorrow! 💕"
   },
   "payment": {
-    "pending": "⏰ Awaiting Payment Confirmation\n\nPlease complete payment within 3 minutes\n💡 *If Alipay shows \"Restricted Payment\", just restart to switch to an available QR code*\n⚠️ *Confirmation page might not respond after payment - just return to the bot to check for top-up success message*\nOrder will auto-cancel after timeout\n\n📝 Order Info:\n• Order ID: {payment_id}\n• Amount: ¥{amount}\n• You'll get: {credits} credits\n\n💡 Credits arrive automatically after payment",
+    "pending": "⏰ Awaiting Payment Confirmation\n\nPlease complete payment within *3 minutes*\n💡 _If Alipay shows \"Restricted Payment\", just restart to switch to an available QR code_\n⚠️ _Confirmation page might not respond after payment - just return to the bot to check for top-up success message_\nOrder will *auto-cancel* after timeout\n\n📝 Order Info:\n• Order ID: `{payment_id}`\n• Amount: *¥{amount}*\n• You'll get: *{credits}* credits\n\n💡 Credits arrive *automatically* after payment",
     "timeout": "⏰ Payment Timed Out\n\nOrder cancelled - no credits deducted\nFeel free to try again anytime",
     "success": "🎉 Top-up Successful!\n\n+{credits} credits added\nGo have fun~",
     "failed": "Payment failed - please try again",
@@ -109,7 +109,7 @@
     "button_credits_with_discount": "💰 {credits} credits {discounted_price} 🎁 (Was {original_price})",
     "button_back": "« Back to Payment Methods",
     "method_selection_intro": "💫 Choose Your Payment Method\n\nPlease select your preferred method:",
-    "method_selection_with_discount": "🎰 *Super Lucky Day!* 🎰\n\n🔥 Your exclusive discount: {tier} {emoji} - {off}% OFF!\n💰 *Save {savings_percent}% on everything* - All payment methods\n⏰ _Valid till 24:00 today, don't miss out!_\n\n━━━━━━━━━━━━━━━━━\n\n💫 Pick a method and enjoy your discount:",
+    "method_selection_with_discount": "🎰 *Super Lucky Day!* 🎰\n\n🔥 Your exclusive discount: {tier} {emoji} - *{off}% OFF*!\n💰 *Save {savings_percent}% on everything* - All payment methods\n⏰ _Valid till 24:00 today, don't miss out!_\n\n━━━━━━━━━━━━━━━━━\n\n💫 Pick a method and enjoy your discount:",
     "method_selection_no_discount": "💫 *Choose Your Payment Method*\n\nAvailable methods:\n⭐ Telegram Stars - No fees\n💚 WeChat Pay - Fast arrival\n💰 Alipay - Safe & secure\n\nPlease select your preferred method:",
     "method_button_stars": "⭐ Telegram Stars",
     "packages_stars_intro": "⭐ Telegram Stars Top-up\n\nChoose a package:",
@@ -132,18 +132,18 @@
     "benefits_black_gold": "• Unlimited access to everything\n• Priority queue ⚡\n• No credits needed\n• Lifetime validity",
     "status_badge": "👑 {tier}",
     "balance_message": "💰 My Account\n\nMembership: {vip_badge}\nBalance: {balance} credits (Unlimited access)\nTotal spent: {total_spent} credits\n\n✨ VIP perks active",
-    "daily_limit_regular": "Hey there~♡ I've done 50 for you today, I'm exhausted! 🥺\n\nCome back at midnight and we'll pick up where we left off~ 💋\n\nToday's count: {current_usage}/{limit} ✨",
-    "daily_limit_black_gold": "My dear~♡ You've used up all 100 rounds today~ I really need a break! 😘\n\nSee you at midnight~ 💕\n\nToday's count: {current_usage}/{limit} ✨"
+    "daily_limit_regular": "Hey there~♡ I've done *50* for you today, I'm exhausted! 🥺\n\nCome back at *midnight* and we'll pick up where we left off~ 💋\n\nToday's count: *{current_usage}/{limit}* ✨",
+    "daily_limit_black_gold": "My dear~♡ You've used up all *100 rounds* today~ I really need a break! 😘\n\nSee you at *midnight*~ 💕\n\nToday's count: *{current_usage}/{limit}* ✨"
   },
   "discount": {
     "button_hot": "🔥💰 Claim Today's MEGA Discount! 💰🔥",
     "button_normal": "🎰 Daily Lucky Discount - Tap to check",
     "button_revealed": "{emoji} {tier} - {off}% discount activated",
-    "celebration_ssr": "🎊🎊🎊 *Congrats! God-tier luck!* 🎊🎊🎊\n\n*You pulled SSR Divine Discount!*\n🔥🔥 *50% OFF EVERYTHING* 🔥🔥\n\n💰 *Lifetime VIP only ¥87* (was ¥173)\n💎 *All packages 50% OFF* - save half!\n\n⏰ Valid till 24:00 today - grab it fast!\n\n_Pick your package now and enjoy god-tier discount!_",
-    "celebration_sr": "🎉🎉🎉 *Congrats! Super lucky!* 🎉🎉🎉\n\n*You pulled SR Super Discount!*\n⭐⭐ *30% OFF EVERYTHING* ⭐⭐\n\n💰 *Lifetime VIP only ¥121* (was ¥173)\n💎 *All packages 30% OFF* - awesome deal!\n\n⏰ Valid till 24:00 today - don't miss it!\n\n_Pick your package now and enjoy super discount!_",
-    "revealed_r": "✨ *Not bad! R-tier Discount*\n\n15% OFF everything!\n💡 _Tip: Keep using to level up your discount_\n\n💰 *Lifetime VIP only ¥147* (was ¥173)\n\n⏰ Valid today only - use it now!",
-    "revealed_c": "🍀 *Discount unlocked! C-tier*\n\n5% OFF - not much but still a discount!\n🎯 _Keep at it - might hit 50% next time_\n\n💰 *Lifetime VIP only ¥164* (was ¥173)\n\n⏰ Valid today only - might as well use it!",
-    "already_revealed": "⚡ *Your discount is activated!*\n\nCurrent discount: *{tier}* ({off}% OFF)\nExpires: *Today 24:00* ⏰\n\n💡 All package prices already show discounted price\n🔥 _Limited time offer, top up now!_\n\n━━━━━━━━━━━━━━━━━\nPick a package below and enjoy the discount!",
+    "celebration_ssr": "🎊🎊🎊 *Congrats! God-tier luck!* 🎊🎊🎊\n\n*You pulled SSR Divine Discount!*\n🔥🔥 *50% OFF EVERYTHING* 🔥🔥\n\n💰 *Lifetime VIP only ¥87* (was ¥173)\n💎 *All packages 50% OFF* - save half!\n\n⏰ Valid till 24:00 today - *grab it fast!*\n\n_Pick your package now and enjoy god-tier discount!_",
+    "celebration_sr": "🎉🎉🎉 *Congrats! Super lucky!* 🎉🎉🎉\n\n*You pulled SR Super Discount!*\n⭐⭐ *30% OFF EVERYTHING* ⭐⭐\n\n💰 *Lifetime VIP only ¥121* (was ¥173)\n💎 *All packages 30% OFF* - awesome deal!\n\n⏰ Valid till 24:00 today - *don't miss it!*\n\n_Pick your package now and enjoy super discount!_",
+    "revealed_r": "✨ *Not bad! R-tier Discount*\n\n*15% OFF* everything!\n💡 _Tip: Keep using to level up your discount_\n\n💰 *Lifetime VIP only ¥147* (was ¥173)\n\n⏰ Valid today only - *use it now!*",
+    "revealed_c": "🍀 *Discount unlocked! C-tier*\n\n*5% OFF* - not much but still a discount!\n🎯 _Keep at it - might hit 50% next time_\n\n💰 *Lifetime VIP only ¥164* (was ¥173)\n\n⏰ Valid today only - *might as well use it!*",
+    "already_revealed": "⚡ *Your discount is activated!*\n\nCurrent discount: *{tier}* (*{off}% OFF*)\nExpires: *Today 24:00* ⏰\n\n💡 All package prices already show discounted price\n🔥 _Limited time offer, top up now!_\n\n━━━━━━━━━━━━━━━━━\nPick a package below and enjoy the discount!",
     "tier_ssr": "SSR God-tier Luck",
     "tier_sr": "SR Super Luck",
     "tier_r": "R Pretty Lucky",
@@ -151,16 +151,16 @@
     "celebration_inline": "🎉 Congrats! Got {tier} discount {emoji}"
   },
   "queue": {
-    "status": "⏳ Entered processing queue\n\nYour position: #{position}\nQueue total: {total} people\n\n💡 Tip: Tap below anytime to check latest position",
-    "total": "Current queue total: {total}",
+    "status": "⏳ Entered processing queue\n\nYour position: *#{position}*\nQueue total: *{total}* people\n\n💡 Tip: Tap below anytime to check *latest position*",
+    "total": "Current queue total: *{total}*",
     "unavailable": "⚠️ Queue system busy\nTry again later or contact support",
     "status_header": "📊 *Current Queue Status*",
-    "label_image": "Image Processing",
-    "label_video": "Video Processing",
+    "label_image": "*Image Processing*",
+    "label_video": "*Video Processing*",
     "server_status": "  └─ Server *#{server_number}*: *{total_count}* tasks",
     "vip_count": "     • 👑 VIP: *{vip_count}*",
     "regular_count": "     • 👤 Regular: *{regular_count}*",
-    "vip_priority_tip": "💡 *Tip*: VIP users get priority processing",
+    "vip_priority_tip": "💡 *Tip*: VIP users get *priority processing*",
     "status_unavailable": "❌ Unable to get queue status",
     "in_queue_position": "📋 Your task has been added to queue\nPosition: #{position}",
     "refresh_button": "🔄 Refresh",
@@ -171,12 +171,12 @@
     "in_progress": "Processing...",
     "running": "🎨 AI is carefully processing your photo...\nPlease wait, good work is worth the wait~",
     "retrieving": "✨ Processing complete! Preparing your work...",
-    "complete": "🎉 Creation complete!\n\n⏰ Will auto-clean in 5 minutes\nSave to your album ASAP~\n\n💡 Tip: Long-press the image to save",
+    "complete": "🎉 Creation complete!\n\n⏰ Will auto-clean in *5 minutes*\nSave to your album *ASAP*~\n\n💡 Tip: Long-press the image to save",
     "already_processing": "⏳ Your image is being processed\n\nPlease wait patiently for current task to complete\nMultiple submissions won't speed it up~"
   },
   "errors": {
-    "invalid_format": "❌ Unsupported Format\n\nPlease use:\n✅ JPG / JPEG\n✅ PNG\n✅ WEBP\n\n💡 Tip: Just pick from your gallery",
-    "upload_failed": "❌ Upload Failed\n\nPossible causes:\n• Unstable connection\n• File too large\n\n💡 Try:\n1. Check your connection\n2. Compress the image\n3. Contact support if stuck",
+    "invalid_format": "❌ *Unsupported Format*\n\nPlease use:\n✅ JPG / JPEG\n✅ PNG\n✅ WEBP\n\n💡 Tip: Just pick from your gallery",
+    "upload_failed": "❌ *Upload Failed*\n\nPossible causes:\n• Unstable connection\n• File too large\n\n💡 Try:\n1. Check your connection\n2. Compress the image\n3. *Contact support* if stuck",
     "max_retry": "⚠️ Reached attempt limit (3 times)\n\nPlease return to main menu and restart\nIf you have questions, feel free to contact support",
     "system": "❌ System busy\n\nPlease try again later\nIf problem persists, please contact support",
     "invalid_state": "💡 Operation Tip\n\nFirst select function from main menu:\n→ 1. Image Undress\n\nThen upload photo as instructed",

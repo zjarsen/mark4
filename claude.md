@@ -155,6 +155,126 @@ VIP Packages:
 - 260 = Black Gold VIP (¥281 base price)
 ```
 
+## Text Formatting Guidelines
+
+### MarkdownV1 Syntax (Telegram)
+All user-facing messages use Telegram's MarkdownV1 parser. This is the ONLY formatting syntax supported:
+
+**Available Formatting:**
+- Bold: `*text*` - Wrap text with single asterisks
+- Italic: `_text_` - Wrap text with single underscores
+- Backticks: `` `text` `` - Wrap text with single backticks (for code/IDs)
+
+**Critical Rules:**
+- MarkdownV1 is more forgiving than MarkdownV2 - special characters don't need escaping
+- Never use `**text**` (double asterisks) - use `*text*` (single asterisks)
+- Never use `__text__` (double underscores) - use `_text_` (single underscores)
+- Keep formatting simple and consistent across all languages
+
+### Strategic Formatting Patterns
+
+Apply bold/italic formatting consistently to emphasize key information and create visual hierarchy:
+
+#### BOLD (`*text*`) - Use for Critical Info:
+1. **Numbers & Quantities:**
+   - Credit amounts: `*10 credits*`, `*30 credits*`
+   - Percentages & discounts: `*50% OFF*`, `*5折*`, `*30%*`
+   - Prices: `*¥87*`, `*¥173*`
+   - Usage counts: `*{current_usage}/{limit}*`, `*50*`, `*100 rounds*`
+   - Time values: `*2 days*`, `*3 minutes*`, `*5 minutes*`, `*24:00*`, `*midnight*`
+
+2. **VIP & Tiers:**
+   - VIP levels: `*Lifetime VIP*`, `*Black Gold VIP*`, `*VIP*`
+   - Discount tiers: `*SSR Divine Discount*`, `*{tier}*`
+   - Queue labels: `*Image Processing*`, `*Video Processing*`
+
+3. **Status & Actions:**
+   - Status terms: `*FREE*`, `*free trial*`, `*unlimited*`, `*auto-cancel*`
+   - CTAs (Call-to-Actions): `*grab it fast*`, `*don't miss it*`, `*use it now*`, `*ASAP*`
+   - Warnings: `*Important: ...*`, `*NO daily limit*`, `*instant access*`, `*anytime*`
+   - Actions: `*right after*`, `*automatically*`, `*priority processing*`
+
+4. **Positions & Headers:**
+   - Queue positions: `*#{position}*`, `*{total}*`
+   - Section headers: `*Current Queue Status*`, `*Tip*`
+   - Error titles: `*Unsupported Format*`, `*Upload Failed*`
+
+#### ITALIC (`_text_`) - Use for Supplementary Info:
+1. **Tips & Hints:**
+   - Pro tips: `_Tip: Keep using to level up your discount_`
+   - Helpful reminders: `_Valid till 24:00 today, don't miss out!_`
+   - Instructions: `_If Alipay shows "Restricted Payment", just restart..._`
+
+2. **Time-Sensitive CTAs:**
+   - Final encouragement: `_Pick your package now and enjoy god-tier discount!_`
+   - Urgency reminders: `_Limited time offer, top up now!_`
+   - Soft CTAs: `_Click below to spin your lucky discount NOW!_`
+
+#### BACKTICKS (`` `text` ``) - Use for Technical Info:
+- Order IDs: `` `{payment_id}` ``
+- Technical identifiers and codes
+
+### Language-Specific Considerations
+
+**Chinese (zh_CN, zh_TW):**
+- Bold discount terms: `*5折*` (not "50% OFF")
+- Bold key numbers: `*10积分*`, `*30积分*`
+- Maintain casual/playful tone with bold emphasis on benefits
+
+**English (en_US):**
+- Bold all "XX% OFF" patterns
+- Use bold for urgency: `*grab it fast*`, `*don't miss it*`
+- Keep casual gaming/gambling vibe
+
+**Korean (ko_KR):**
+- Bold "XX% OFF" in English when used (e.g., `*50% OFF*`)
+- Bold action words and credits consistently
+- Preserve energetic K-pop style tone
+
+**Hindi (hi_IN):**
+- Uses Hinglish (Hindi + English mix)
+- Bold English terms: `*free trial*`, `*instant access*`, `*50% OFF EVERYTHING*`
+- Bold Hindi numbers: `*50%*`
+- Keep super casual vibe
+
+**Arabic (ar_SA):**
+- RTL language - formatting still works the same
+- Bold English phrases when used: `*50% OFF EVERYTHING*`, `*Lifetime VIP*`
+- Bold Arabic percentages: `*50%*`, `*30%*`
+
+**Key Principles:**
+1. **Consistency First:** Same type of information should always be formatted the same way across all languages
+2. **Preserve Tone:** Match the energy and personality from zh_CN source when translating
+3. **Visual Hierarchy:** Bold creates scanning patterns - use it to guide user's eye to critical info
+4. **Don't Overdo It:** If everything is bold, nothing stands out
+5. **Test Both Ways:** Content should be readable with AND without the formatting
+
+### Quick Reference: What to Bold
+
+✅ **ALWAYS BOLD:**
+- All numbers (credits, prices, percentages, times, counts)
+- All "XX% OFF" or discount percentages
+- VIP tiers and status
+- CTAs and action words
+- "FREE", "unlimited", "instant"
+- Time limits and deadlines
+- Queue positions and counts
+
+❌ **NEVER BOLD:**
+- Entire paragraphs or long sentences
+- Regular descriptive text
+- Connecting words (and, or, the, etc.)
+- Emojis (they're already visually distinctive)
+
+### Formatting Workflow
+
+**When adding/editing translations:**
+1. Write the base translation in the target language first
+2. Apply strategic bold/italic based on patterns above
+3. Cross-check with zh_CN formatting for consistency
+4. Verify readability - content should make sense even if formatting is stripped
+5. Test in Telegram to ensure MarkdownV1 renders correctly
+
 ## Important Notes
 - Telegram Stars has higher commission (35%) vs Alipay/WeChat (8%)
 - All credits are permanent (never expire)
