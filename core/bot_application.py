@@ -35,13 +35,6 @@ from services.pricing_service import PricingService
 
 # Import core
 from core.state_manager import StateManager
-from core.constants import (
-    MENU_OPTION_IMAGE,
-    MENU_OPTION_VIDEO,
-    MENU_OPTION_CHECK_QUEUE,
-    MENU_OPTION_BALANCE_HISTORY,
-    MENU_OPTION_TOPUP
-)
 
 logger = logging.getLogger('mark4_bot')
 
@@ -130,7 +123,8 @@ class BotApplication:
         self.queue_service = QueueService(
             self.config,
             self.comfyui_service,
-            self.notification_service
+            self.notification_service,
+            self.translation_service
         )
 
         # Workflow service (depends on multiple services, including credit_service)

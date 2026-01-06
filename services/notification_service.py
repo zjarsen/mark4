@@ -42,13 +42,18 @@ class NotificationService:
             Sent Message object
         """
         try:
-            from core.constants import QUEUE_STATUS_TEMPLATE, REFRESH_QUEUE_BUTTON
-
-            text = QUEUE_STATUS_TEMPLATE.format(position=position, total=total)
+            if self.translation_service:
+                text = self.translation_service.get(
+                    chat_id, 'queue.status', position=position, total=total
+                )
+                button_text = self.translation_service.get(chat_id, 'buttons.refresh_queue')
+            else:
+                text = f"⏳ 已进入处理队列\n\n您的位置：第 *{position}* 位\n队列总数：*{total}* 人\n\n💡 提示：点击下方按钮可随时查看 *最新排位*"
+                button_text = "刷新队列"
 
             keyboard = [[
                 InlineKeyboardButton(
-                    REFRESH_QUEUE_BUTTON,
+                    button_text,
                     callback_data=f"refresh_{prompt_id}"
                 )
             ]]
@@ -84,13 +89,21 @@ class NotificationService:
             prompt_id: Prompt ID for callback data
         """
         try:
-            from core.constants import QUEUE_STATUS_TEMPLATE, REFRESH_QUEUE_BUTTON
+            # Get chat_id from message
+            chat_id = message.chat_id
 
-            text = QUEUE_STATUS_TEMPLATE.format(position=position, total=total)
+            if self.translation_service:
+                text = self.translation_service.get(
+                    chat_id, 'queue.status', position=position, total=total
+                )
+                button_text = self.translation_service.get(chat_id, 'buttons.refresh_queue')
+            else:
+                text = f"⏳ 已进入处理队列\n\n您的位置：第 *{position}* 位\n队列总数：*{total}* 人\n\n💡 提示：点击下方按钮可随时查看 *最新排位*"
+                button_text = "刷新队列"
 
             keyboard = [[
                 InlineKeyboardButton(
-                    REFRESH_QUEUE_BUTTON,
+                    button_text,
                     callback_data=f"refresh_{prompt_id}"
                 )
             ]]
@@ -112,9 +125,12 @@ class NotificationService:
             chat_id: Chat ID to send to
         """
         try:
-            from core.constants import PROCESSING_IN_PROGRESS
+            if self.translation_service:
+                text = self.translation_service.get(chat_id, 'processing.in_progress')
+            else:
+                text = "处理中..."
 
-            await bot.send_message(chat_id=chat_id, text=PROCESSING_IN_PROGRESS)
+            await bot.send_message(chat_id=chat_id, text=text)
             logger.debug(f"Sent processing status to user {chat_id}")
 
         except Exception as e:
@@ -132,8 +148,7 @@ class NotificationService:
             if self.translation_service:
                 message = self.translation_service.get(chat_id, 'processing.complete')
             else:
-                from core.constants import PROCESSING_COMPLETE_MESSAGE
-                message = PROCESSING_COMPLETE_MESSAGE
+                message = "🎉 创作完成！\n\n⏰ 作品将在 *5分钟后* 自动清理\n请 *及时保存* 到相册～\n\n💡 提示：长按图片即可保存"
 
             await bot.send_message(chat_id=chat_id, text=message)
             logger.info(f"Sent completion notification to user {chat_id}")
@@ -217,46 +232,59 @@ class NotificationService:
             Sent Message object
         """
         try:
-            from core.constants import (
-                CREDIT_CONFIRMATION_MESSAGE,
-                CREDIT_CONFIRMATION_FREE_TRIAL_MESSAGE,
-                VIP_CONFIRMATION_MESSAGE,
-                CONFIRM_CREDITS_BUTTON,
-                CANCEL_CREDITS_BUTTON
-            )
-
             # Build message text
             if is_vip:
                 # VIP confirmation message (simplified)
-                text = VIP_CONFIRMATION_MESSAGE.format(balance=int(balance))
+                if self.translation_service:
+                    text = self.translation_service.get(
+                        chat_id, 'vip.confirmation', balance=int(balance)
+                    )
+                else:
+                    text = f"👑 VIP会员确认\n\n本次使用：免费 (VIP特权)\n当前余额：{int(balance)} 积分\n\n✨ VIP用户享受无限使用权限"
             elif is_free_trial:
                 if not cooldown_info:
                     cooldown_info = ""
-                text = CREDIT_CONFIRMATION_FREE_TRIAL_MESSAGE.format(
-                    workflow_name=workflow_name,
-                    balance=int(balance),
-                    cooldown_info=cooldown_info
-                )
+                if self.translation_service:
+                    text = self.translation_service.get(
+                        chat_id, 'credits.confirmation_free_trial',
+                        workflow_name=workflow_name,
+                        balance=int(balance),
+                        cooldown_info=cooldown_info
+                    )
+                else:
+                    text = f"🎁 免费体验\n\n*{workflow_name}*\n\n本次使用：*免费*\n当前余额：*{int(balance)}* 积分\n\n{cooldown_info}\n\n✨ 确认后 *立即* 开始处理"
             else:
                 remaining = balance - cost
-                text = CREDIT_CONFIRMATION_MESSAGE.format(
-                    workflow_name=workflow_name,
-                    balance=int(balance),
-                    cost=int(cost),
-                    remaining=int(remaining)
-                )
+                if self.translation_service:
+                    text = self.translation_service.get(
+                        chat_id, 'credits.confirmation',
+                        workflow_name=workflow_name,
+                        balance=int(balance),
+                        cost=int(cost),
+                        remaining=int(remaining)
+                    )
+                else:
+                    text = f"📋 确认使用积分\n\n*{workflow_name}*\n\n💰 消费明细：\n• 当前余额：*{int(balance)}* 积分\n• 本次消费：*{int(cost)}* 积分\n• 确认后余额：*{int(remaining)}* 积分\n\n✨ 确认后 *立即* 开始处理"
+
+            # Get button text
+            if self.translation_service:
+                confirm_text = self.translation_service.get(chat_id, 'buttons.confirm')
+                cancel_text = self.translation_service.get(chat_id, 'buttons.cancel')
+            else:
+                confirm_text = "✅ 确认"
+                cancel_text = "❌ 取消"
 
             # Build inline keyboard
             keyboard = [
                 [
                     InlineKeyboardButton(
-                        CONFIRM_CREDITS_BUTTON,
+                        confirm_text,
                         callback_data=f"confirm_credits_{workflow_type}"
                     )
                 ],
                 [
                     InlineKeyboardButton(
-                        CANCEL_CREDITS_BUTTON,
+                        cancel_text,
                         callback_data="cancel_credits"
                     )
                 ]
@@ -289,9 +317,12 @@ class NotificationService:
             error_text: Optional custom error text
         """
         try:
-            from core.constants import ERROR_MESSAGE
-
-            text = error_text if error_text else ERROR_MESSAGE
+            if error_text:
+                text = error_text
+            elif self.translation_service:
+                text = self.translation_service.get(chat_id, 'errors.system')
+            else:
+                text = "❌ *系统繁忙*\n\n请稍后重试\n如问题持续出现，请 *联系客服*"
 
             await bot.send_message(chat_id=chat_id, text=text)
             logger.debug(f"Sent error message to user {chat_id}")
@@ -323,9 +354,11 @@ class NotificationService:
             total: Total queue size
         """
         try:
-            from core.constants import QUEUE_TOTAL_TEMPLATE
+            if self.translation_service:
+                text = self.translation_service.get(chat_id, 'queue.total', total=total)
+            else:
+                text = f"当前队列总人数为：*{total}*"
 
-            text = QUEUE_TOTAL_TEMPLATE.format(total=total)
             await bot.send_message(chat_id=chat_id, text=text)
 
             logger.debug(f"Sent queue total to user {chat_id}: {total}")

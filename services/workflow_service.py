@@ -437,14 +437,12 @@ class WorkflowService:
                         next_available = await self.credit_service.get_next_free_trial_time(user_id)
 
                         if next_available:
-                            from core.constants import FREE_TRIAL_COOLDOWN_MESSAGE
                             next_time_str = next_available.strftime('%Y-%m-%d %H:%M GMT+8')
-                            await update.message.reply_text(
-                                FREE_TRIAL_COOLDOWN_MESSAGE.format(
-                                    next_available=next_time_str,
-                                    balance=balance
-                                )
-                            )
+                            if self.translation_service:
+                                msg = self.translation_service.get(user_id, 'trial.cooldown', next_available=next_time_str, balance=balance)
+                            else:
+                                msg = f"⏰ 免费次数冷却中\n\n下次可用：*{next_time_str}*\n\n💳 当前方案：\n• 您的余额：*{balance}* 积分\n• 本次需要：*10积分*\n\n💡 充值可 *立即使用*，或等待免费次数重置"
+                            await update.message.reply_text(msg)
                             logger.info(
                                 f"User {user_id} on free trial cooldown until {next_time_str}"
                             )
@@ -452,37 +450,38 @@ class WorkflowService:
                             return
 
                     # Insufficient credits (no trial available or other reason)
-                    from core.constants import (
-                        INSUFFICIENT_CREDITS_MESSAGE,
-                        TOPUP_PACKAGES_MESSAGE,
-                        TOPUP_10_BUTTON,
-                        TOPUP_30_BUTTON,
-                        TOPUP_50_BUTTON,
-                        TOPUP_100_BUTTON
-                    )
                     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
                     # Send insufficient credits message
-                    await update.message.reply_text(
-                        INSUFFICIENT_CREDITS_MESSAGE.format(
-                            balance=balance,
-                            required=cost
-                        ),
-                        parse_mode='Markdown'
-                    )
+                    if self.translation_service:
+                        insufficient_msg = self.translation_service.get(user_id, 'credits.insufficient', balance=balance, required=cost)
+                        packages_msg = self.translation_service.get(user_id, 'topup.packages_normal')
+                        btn_10 = self.translation_service.get(user_id, 'topup.button_10')
+                        btn_30 = self.translation_service.get(user_id, 'topup.button_30')
+                        btn_50 = self.translation_service.get(user_id, 'topup.button_50')
+                        btn_100 = self.translation_service.get(user_id, 'topup.button_100')
+                    else:
+                        insufficient_msg = f"💳 积分不足\n\n当前余额：*{balance}* 积分\n本次需要：*{cost}* 积分\n\n充值后 *立即可用*，无需等待～"
+                        packages_msg = "💳 充值套餐\n\n🎰 *今日幸运折扣已开启* - 点击下方按钮查看折扣！\n💡 _每日随机5%-50%折扣，今天试试运气？_"
+                        btn_10 = "¥11 = 30积分"
+                        btn_30 = "¥32 = 120积分"
+                        btn_50 = "¥54 = 250积分"
+                        btn_100 = "¥108 = 600积分"
+
+                    await update.message.reply_text(insufficient_msg, parse_mode='Markdown')
 
                     # Show topup packages inline keyboard
                     keyboard = [
-                        [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                        [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                        [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                        [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                        [InlineKeyboardButton(btn_10, callback_data="topup_10")],
+                        [InlineKeyboardButton(btn_30, callback_data="topup_30")],
+                        [InlineKeyboardButton(btn_50, callback_data="topup_50")],
+                        [InlineKeyboardButton(btn_100, callback_data="topup_100")]
                     ]
                     reply_markup = InlineKeyboardMarkup(keyboard)
 
                     await context.bot.send_message(
                         chat_id=user_id,
-                        text=TOPUP_PACKAGES_MESSAGE,
+                        text=packages_msg,
                         reply_markup=reply_markup,
                         parse_mode='Markdown'
                     )
@@ -534,11 +533,14 @@ class WorkflowService:
             )
 
             # Show credit confirmation
-            from core.constants import WORKFLOW_NAME_IMAGE
+            if self.translation_service:
+                workflow_name = self.translation_service.get(user_id, 'image.style_undress_name')
+            else:
+                workflow_name = "脱到精光"
             message = await self.notification_service.send_credit_confirmation(
                 context.bot,
                 user_id,
-                workflow_name=WORKFLOW_NAME_IMAGE,
+                workflow_name=workflow_name,
                 workflow_type='image',
                 balance=balance,
                 cost=cost,
@@ -619,14 +621,12 @@ class WorkflowService:
                             next_available = await self.credit_service.get_next_free_trial_time(user_id)
 
                             if next_available:
-                                from core.constants import FREE_TRIAL_COOLDOWN_MESSAGE
                                 next_time_str = next_available.strftime('%Y-%m-%d %H:%M GMT+8')
-                                await update.message.reply_text(
-                                    FREE_TRIAL_COOLDOWN_MESSAGE.format(
-                                        next_available=next_time_str,
-                                        balance=balance
-                                    )
-                                )
+                                if self.translation_service:
+                                    msg = self.translation_service.get(user_id, 'trial.cooldown', next_available=next_time_str, balance=balance)
+                                else:
+                                    msg = f"⏰ 免费次数冷却中\n\n下次可用：*{next_time_str}*\n\n💳 当前方案：\n• 您的余额：*{balance}* 积分\n• 本次需要：*10积分*\n\n💡 充值可 *立即使用*，或等待免费次数重置"
+                                await update.message.reply_text(msg)
                                 logger.info(
                                     f"User {user_id} on free trial cooldown until {next_time_str}"
                                 )
@@ -634,36 +634,38 @@ class WorkflowService:
                                 return
 
                         # Insufficient credits (no trial available or other reason)
-                        from core.constants import (
-                            INSUFFICIENT_CREDITS_MESSAGE,
-                            TOPUP_PACKAGES_MESSAGE,
-                            TOPUP_10_BUTTON,
-                            TOPUP_30_BUTTON,
-                            TOPUP_50_BUTTON,
-                            TOPUP_100_BUTTON
-                        )
                         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
                         # Send insufficient credits message
-                        await update.message.reply_text(
-                            INSUFFICIENT_CREDITS_MESSAGE.format(
-                                balance=balance,
-                                required=cost
-                            )
-                        )
+                        if self.translation_service:
+                            insufficient_msg = self.translation_service.get(user_id, 'credits.insufficient', balance=balance, required=cost)
+                            packages_msg = self.translation_service.get(user_id, 'topup.packages_normal')
+                            btn_10 = self.translation_service.get(user_id, 'topup.button_10')
+                            btn_30 = self.translation_service.get(user_id, 'topup.button_30')
+                            btn_50 = self.translation_service.get(user_id, 'topup.button_50')
+                            btn_100 = self.translation_service.get(user_id, 'topup.button_100')
+                        else:
+                            insufficient_msg = f"💳 积分不足\n\n当前余额：*{balance}* 积分\n本次需要：*{cost}* 积分\n\n充值后 *立即可用*，无需等待～"
+                            packages_msg = "💳 充值套餐\n\n🎰 *今日幸运折扣已开启* - 点击下方按钮查看折扣！\n💡 _每日随机5%-50%折扣，今天试试运气？_"
+                            btn_10 = "¥11 = 30积分"
+                            btn_30 = "¥32 = 120积分"
+                            btn_50 = "¥54 = 250积分"
+                            btn_100 = "¥108 = 600积分"
+
+                        await update.message.reply_text(insufficient_msg)
 
                         # Show topup packages inline keyboard
                         keyboard = [
-                            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                            [InlineKeyboardButton(btn_10, callback_data="topup_10")],
+                            [InlineKeyboardButton(btn_30, callback_data="topup_30")],
+                            [InlineKeyboardButton(btn_50, callback_data="topup_50")],
+                            [InlineKeyboardButton(btn_100, callback_data="topup_100")]
                         ]
                         reply_markup = InlineKeyboardMarkup(keyboard)
 
                         await context.bot.send_message(
                             chat_id=user_id,
-                            text=TOPUP_PACKAGES_MESSAGE,
+                            text=packages_msg,
                             reply_markup=reply_markup
                         )
 
@@ -717,15 +719,16 @@ class WorkflowService:
             await image_workflow.upload_image(local_path, filename)
 
             # Determine workflow name based on style
-            from core.constants import (
-                WORKFLOW_NAME_IMAGE_BRA,
-                WORKFLOW_NAME_IMAGE_UNDRESS
-            )
-
-            workflow_name_map = {
-                'bra': WORKFLOW_NAME_IMAGE_BRA,
-                'undress': WORKFLOW_NAME_IMAGE_UNDRESS
-            }
+            if self.translation_service:
+                workflow_name_map = {
+                    'bra': self.translation_service.get(user_id, 'workflow.name_image_bra'),
+                    'undress': self.translation_service.get(user_id, 'workflow.name_image_undress')
+                }
+            else:
+                workflow_name_map = {
+                    'bra': "粉色蕾丝内衣",
+                    'undress': "脱到精光"
+                }
             workflow_name = workflow_name_map.get(style, "图片脱衣")
 
             # Store workflow details in state and show confirmation
@@ -863,38 +866,42 @@ class WorkflowService:
 
                     if not has_trial:
                         # Insufficient credits - show error and topup menu
-                        from core.constants import (
-                            CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
-                            TOPUP_PACKAGES_MESSAGE,
-                            TOPUP_10_BUTTON,
-                            TOPUP_30_BUTTON,
-                            TOPUP_50_BUTTON,
-                            TOPUP_100_BUTTON
-                        )
                         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
                         # Send insufficient credits message
+                        if self.translation_service:
+                            insufficient_msg = self.translation_service.get(user_id, 'credits.insufficient_on_confirm', balance=int(balance), cost=int(cost))
+                            packages_msg = self.translation_service.get(user_id, 'topup.packages_normal')
+                            btn_10 = self.translation_service.get(user_id, 'topup.button_10')
+                            btn_30 = self.translation_service.get(user_id, 'topup.button_30')
+                            btn_50 = self.translation_service.get(user_id, 'topup.button_50')
+                            btn_100 = self.translation_service.get(user_id, 'topup.button_100')
+                        else:
+                            insufficient_msg = f"❌ 积分不足\n\n当前余额：*{int(balance)}* 积分\n所需积分：*{int(cost)}* 积分\n\n请选择充值套餐："
+                            packages_msg = "💳 充值套餐\n\n🎰 *今日幸运折扣已开启* - 点击下方按钮查看折扣！\n💡 _每日随机5%-50%折扣，今天试试运气？_"
+                            btn_10 = "¥11 = 30积分"
+                            btn_30 = "¥32 = 120积分"
+                            btn_50 = "¥54 = 250积分"
+                            btn_100 = "¥108 = 600积分"
+
                         await bot.send_message(
                             chat_id=user_id,
-                            text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
-                                balance=int(balance),
-                                cost=int(cost)
-                            ),
+                            text=insufficient_msg,
                             parse_mode='Markdown'
                         )
 
                         # Show topup packages inline keyboard
                         keyboard = [
-                            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                            [InlineKeyboardButton(btn_10, callback_data="topup_10")],
+                            [InlineKeyboardButton(btn_30, callback_data="topup_30")],
+                            [InlineKeyboardButton(btn_50, callback_data="topup_50")],
+                            [InlineKeyboardButton(btn_100, callback_data="topup_100")]
                         ]
                         reply_markup = InlineKeyboardMarkup(keyboard)
 
                         await bot.send_message(
                             chat_id=user_id,
-                            text=TOPUP_PACKAGES_MESSAGE,
+                            text=packages_msg,
                             reply_markup=reply_markup,
                             parse_mode='Markdown'
                         )
@@ -1051,18 +1058,16 @@ class WorkflowService:
 
                     if limit_reached:
                         # Show cute flirty limit message
-                        from core.constants import VIP_DAILY_LIMIT_REACHED_REGULAR, VIP_DAILY_LIMIT_REACHED_BLACK_GOLD
-
-                        if tier == 'vip':
-                            message = VIP_DAILY_LIMIT_REACHED_REGULAR.format(
-                                current_usage=current_usage,
-                                limit=daily_limit
-                            )
-                        else:  # black_gold
-                            message = VIP_DAILY_LIMIT_REACHED_BLACK_GOLD.format(
-                                current_usage=current_usage,
-                                limit=daily_limit
-                            )
+                        if self.translation_service:
+                            if tier == 'vip':
+                                message = self.translation_service.get(user_id, 'vip.daily_limit_regular', current_usage=current_usage, limit=daily_limit)
+                            else:  # black_gold
+                                message = self.translation_service.get(user_id, 'vip.daily_limit_black_gold', current_usage=current_usage, limit=daily_limit)
+                        else:
+                            if tier == 'vip':
+                                message = f"主人~♡ 人家今天已经帮你处理 *50次* 了，累死宝宝了啦~ 🥺\n\n明天 *0点* 就能继续玩啦，记得想人家哦~ 💋\n\n当前使用：*{current_usage}/{daily_limit}* 次 ✨"
+                            else:  # black_gold
+                                message = f"主人大人~♡ *100次* 都被你玩遍了呢~ 人家真的需要休息啦~ 😘\n\n明天 *0点* 就能继续陪你玩啦，等我哦~ 💕\n\n当前使用：*{current_usage}/{daily_limit}* 次 ✨"
 
                         await bot.send_message(user_id, message, parse_mode='Markdown')
                         self.state_manager.reset_state(user_id)
@@ -1081,12 +1086,10 @@ class WorkflowService:
 
                         if limit_reached:
                             # Show limit reached message
-                            from core.constants import BRA_DAILY_LIMIT_REACHED
-
-                            message = BRA_DAILY_LIMIT_REACHED.format(
-                                current_usage=current_usage,
-                                limit=daily_limit
-                            )
+                            if self.translation_service:
+                                message = self.translation_service.get(user_id, 'trial.bra_daily_limit', current_usage=current_usage, limit=daily_limit)
+                            else:
+                                message = f"哎呀！你今天的粉色蕾丝内衣免费使用次数已经用完啦！😅\n\n📊 今日使用情况:\n   • 已使用: *{current_usage}/{daily_limit}* 次\n   • 重置时间: *明天凌晨 00:00* (GMT+8)\n\n💡 小贴士：\n   • 其他付费功能（脱到精光、视频处理等）*没有每日限制*\n   • 有积分就能 *随时使用* 哦！\n\n💎 或者升级 *VIP* 享受 *无限使用*！\n\n明天见！💕"
 
                             await bot.send_message(user_id, message, parse_mode='Markdown')
                             self.state_manager.reset_state(user_id)
@@ -1108,37 +1111,41 @@ class WorkflowService:
 
                             if not has_trial:
                                 # Insufficient credits - show error and topup menu
-                                from core.constants import (
-                                    CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
-                                    TOPUP_PACKAGES_MESSAGE,
-                                    TOPUP_10_BUTTON,
-                                    TOPUP_30_BUTTON,
-                                    TOPUP_50_BUTTON,
-                                    TOPUP_100_BUTTON
-                                )
                                 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
                                 # Send insufficient credits message
+                                if self.translation_service:
+                                    insufficient_msg = self.translation_service.get(user_id, 'credits.insufficient_on_confirm', balance=int(balance), cost=int(cost))
+                                    packages_msg = self.translation_service.get(user_id, 'topup.packages_normal')
+                                    btn_10 = self.translation_service.get(user_id, 'topup.button_10')
+                                    btn_30 = self.translation_service.get(user_id, 'topup.button_30')
+                                    btn_50 = self.translation_service.get(user_id, 'topup.button_50')
+                                    btn_100 = self.translation_service.get(user_id, 'topup.button_100')
+                                else:
+                                    insufficient_msg = f"❌ 积分不足\n\n当前余额：*{int(balance)}* 积分\n所需积分：*{int(cost)}* 积分\n\n请选择充值套餐："
+                                    packages_msg = "💳 充值套餐\n\n🎰 *今日幸运折扣已开启* - 点击下方按钮查看折扣！\n💡 _每日随机5%-50%折扣，今天试试运气？_"
+                                    btn_10 = "¥11 = 30积分"
+                                    btn_30 = "¥32 = 120积分"
+                                    btn_50 = "¥54 = 250积分"
+                                    btn_100 = "¥108 = 600积分"
+
                                 await bot.send_message(
                                     chat_id=user_id,
-                                    text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
-                                        balance=int(balance),
-                                        cost=int(cost)
-                                    )
+                                    text=insufficient_msg
                                 )
 
                                 # Show topup packages inline keyboard
                                 keyboard = [
-                                    [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                                    [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                                    [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                                    [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                                    [InlineKeyboardButton(btn_10, callback_data="topup_10")],
+                                    [InlineKeyboardButton(btn_30, callback_data="topup_30")],
+                                    [InlineKeyboardButton(btn_50, callback_data="topup_50")],
+                                    [InlineKeyboardButton(btn_100, callback_data="topup_100")]
                                 ]
                                 reply_markup = InlineKeyboardMarkup(keyboard)
 
                                 await bot.send_message(
                                     chat_id=user_id,
-                                    text=TOPUP_PACKAGES_MESSAGE,
+                                    text=packages_msg,
                                     reply_markup=reply_markup
                                 )
 
@@ -1277,37 +1284,38 @@ class WorkflowService:
                 )
 
                 if not has_sufficient:
-                    from core.constants import (
-                        INSUFFICIENT_CREDITS_MESSAGE,
-                        TOPUP_PACKAGES_MESSAGE,
-                        TOPUP_10_BUTTON,
-                        TOPUP_30_BUTTON,
-                        TOPUP_50_BUTTON,
-                        TOPUP_100_BUTTON
-                    )
                     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
                     # Send insufficient credits message
-                    await update.message.reply_text(
-                        INSUFFICIENT_CREDITS_MESSAGE.format(
-                            balance=balance,
-                            required=cost
-                        ),
-                        parse_mode='Markdown'
-                    )
+                    if self.translation_service:
+                        insufficient_msg = self.translation_service.get(user_id, 'credits.insufficient', balance=balance, required=cost)
+                        packages_msg = self.translation_service.get(user_id, 'topup.packages_normal')
+                        btn_10 = self.translation_service.get(user_id, 'topup.button_10')
+                        btn_30 = self.translation_service.get(user_id, 'topup.button_30')
+                        btn_50 = self.translation_service.get(user_id, 'topup.button_50')
+                        btn_100 = self.translation_service.get(user_id, 'topup.button_100')
+                    else:
+                        insufficient_msg = f"💳 积分不足\n\n当前余额：*{balance}* 积分\n本次需要：*{cost}* 积分\n\n充值后 *立即可用*，无需等待～"
+                        packages_msg = "💳 充值套餐\n\n🎰 *今日幸运折扣已开启* - 点击下方按钮查看折扣！\n💡 _每日随机5%-50%折扣，今天试试运气？_"
+                        btn_10 = "¥11 = 30积分"
+                        btn_30 = "¥32 = 120积分"
+                        btn_50 = "¥54 = 250积分"
+                        btn_100 = "¥108 = 600积分"
+
+                    await update.message.reply_text(insufficient_msg, parse_mode='Markdown')
 
                     # Show topup packages inline keyboard
                     keyboard = [
-                        [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                        [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                        [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                        [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                        [InlineKeyboardButton(btn_10, callback_data="topup_10")],
+                        [InlineKeyboardButton(btn_30, callback_data="topup_30")],
+                        [InlineKeyboardButton(btn_50, callback_data="topup_50")],
+                        [InlineKeyboardButton(btn_100, callback_data="topup_100")]
                     ]
                     reply_markup = InlineKeyboardMarkup(keyboard)
 
                     await context.bot.send_message(
                         chat_id=user_id,
-                        text=TOPUP_PACKAGES_MESSAGE,
+                        text=packages_msg,
                         reply_markup=reply_markup,
                         parse_mode='Markdown'
                     )
@@ -1323,17 +1331,18 @@ class WorkflowService:
             await video_workflow.upload_image(local_path, filename)
 
             # Determine workflow name based on style
-            from core.constants import (
-                WORKFLOW_NAME_VIDEO_A,
-                WORKFLOW_NAME_VIDEO_B,
-                WORKFLOW_NAME_VIDEO_C
-            )
-
-            workflow_name_map = {
-                'style_a': WORKFLOW_NAME_VIDEO_A,
-                'style_b': WORKFLOW_NAME_VIDEO_B,
-                'style_c': WORKFLOW_NAME_VIDEO_C
-            }
+            if self.translation_service:
+                workflow_name_map = {
+                    'style_a': self.translation_service.get(user_id, 'workflow.name_video_a'),
+                    'style_b': self.translation_service.get(user_id, 'workflow.name_video_b'),
+                    'style_c': self.translation_service.get(user_id, 'workflow.name_video_c')
+                }
+            else:
+                workflow_name_map = {
+                    'style_a': "脱衣+抖胸",
+                    'style_b': "脱衣+下体流精",
+                    'style_c': "脱衣+ 吃吊喝精"
+                }
             workflow_name = workflow_name_map.get(style, "图片转视频")
 
             # Store workflow details in state and show confirmation
@@ -1455,18 +1464,16 @@ class WorkflowService:
 
                     if limit_reached:
                         # Show cute flirty limit message
-                        from core.constants import VIP_DAILY_LIMIT_REACHED_REGULAR, VIP_DAILY_LIMIT_REACHED_BLACK_GOLD
-
-                        if tier == 'vip':
-                            message = VIP_DAILY_LIMIT_REACHED_REGULAR.format(
-                                current_usage=current_usage,
-                                limit=daily_limit
-                            )
-                        else:  # black_gold
-                            message = VIP_DAILY_LIMIT_REACHED_BLACK_GOLD.format(
-                                current_usage=current_usage,
-                                limit=daily_limit
-                            )
+                        if self.translation_service:
+                            if tier == 'vip':
+                                message = self.translation_service.get(user_id, 'vip.daily_limit_regular', current_usage=current_usage, limit=daily_limit)
+                            else:  # black_gold
+                                message = self.translation_service.get(user_id, 'vip.daily_limit_black_gold', current_usage=current_usage, limit=daily_limit)
+                        else:
+                            if tier == 'vip':
+                                message = f"主人~♡ 人家今天已经帮你处理 *50次* 了，累死宝宝了啦~ 🥺\n\n明天 *0点* 就能继续玩啦，记得想人家哦~ 💋\n\n当前使用：*{current_usage}/{daily_limit}* 次 ✨"
+                            else:  # black_gold
+                                message = f"主人大人~♡ *100次* 都被你玩遍了呢~ 人家真的需要休息啦~ 😘\n\n明天 *0点* 就能继续陪你玩啦，等我哦~ 💕\n\n当前使用：*{current_usage}/{daily_limit}* 次 ✨"
 
                         await bot.send_message(user_id, message, parse_mode='Markdown')
                         self.state_manager.reset_state(user_id)
@@ -1485,38 +1492,42 @@ class WorkflowService:
 
                     if not has_sufficient:
                         # Insufficient credits - show error and topup menu
-                        from core.constants import (
-                            CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE,
-                            TOPUP_PACKAGES_MESSAGE,
-                            TOPUP_10_BUTTON,
-                            TOPUP_30_BUTTON,
-                            TOPUP_50_BUTTON,
-                            TOPUP_100_BUTTON
-                        )
                         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
                         # Send insufficient credits message
+                        if self.translation_service:
+                            insufficient_msg = self.translation_service.get(user_id, 'credits.insufficient_on_confirm', balance=int(balance), cost=int(cost))
+                            packages_msg = self.translation_service.get(user_id, 'topup.packages_normal')
+                            btn_10 = self.translation_service.get(user_id, 'topup.button_10')
+                            btn_30 = self.translation_service.get(user_id, 'topup.button_30')
+                            btn_50 = self.translation_service.get(user_id, 'topup.button_50')
+                            btn_100 = self.translation_service.get(user_id, 'topup.button_100')
+                        else:
+                            insufficient_msg = f"❌ 积分不足\n\n当前余额：*{int(balance)}* 积分\n所需积分：*{int(cost)}* 积分\n\n请选择充值套餐："
+                            packages_msg = "💳 充值套餐\n\n🎰 *今日幸运折扣已开启* - 点击下方按钮查看折扣！\n💡 _每日随机5%-50%折扣，今天试试运气？_"
+                            btn_10 = "¥11 = 30积分"
+                            btn_30 = "¥32 = 120积分"
+                            btn_50 = "¥54 = 250积分"
+                            btn_100 = "¥108 = 600积分"
+
                         await bot.send_message(
                             chat_id=user_id,
-                            text=CREDIT_INSUFFICIENT_ON_CONFIRM_MESSAGE.format(
-                                balance=int(balance),
-                                cost=int(cost)
-                            ),
+                            text=insufficient_msg,
                             parse_mode='Markdown'
                         )
 
                         # Show topup packages inline keyboard
                         keyboard = [
-                            [InlineKeyboardButton(TOPUP_10_BUTTON, callback_data="topup_10")],
-                            [InlineKeyboardButton(TOPUP_30_BUTTON, callback_data="topup_30")],
-                            [InlineKeyboardButton(TOPUP_50_BUTTON, callback_data="topup_50")],
-                            [InlineKeyboardButton(TOPUP_100_BUTTON, callback_data="topup_100")]
+                            [InlineKeyboardButton(btn_10, callback_data="topup_10")],
+                            [InlineKeyboardButton(btn_30, callback_data="topup_30")],
+                            [InlineKeyboardButton(btn_50, callback_data="topup_50")],
+                            [InlineKeyboardButton(btn_100, callback_data="topup_100")]
                         ]
                         reply_markup = InlineKeyboardMarkup(keyboard)
 
                         await bot.send_message(
                             chat_id=user_id,
-                            text=TOPUP_PACKAGES_MESSAGE,
+                            text=packages_msg,
                             reply_markup=reply_markup,
                             parse_mode='Markdown'
                         )

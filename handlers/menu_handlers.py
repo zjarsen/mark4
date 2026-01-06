@@ -91,11 +91,6 @@ async def handle_image_processing(
     try:
         logger.info(f"[IMAGE_PROCESSING] Function called for user {user_id}")
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-        from core.constants import (
-            IMAGE_STYLE_BRA_BUTTON,
-            BACK_TO_MENU_BUTTON,
-            ALREADY_PROCESSING_MESSAGE
-        )
         from datetime import datetime
         import pytz
 
@@ -105,7 +100,7 @@ async def handle_image_processing(
             if translation_service:
                 msg = translation_service.get(user_id, 'processing.already_processing')
             else:
-                msg = ALREADY_PROCESSING_MESSAGE
+                msg = "⏳ 您的图片正在处理中\n\n请耐心等待当前任务完成\n多次提交不会加快处理速度哦～"
             await update.message.reply_text(msg)
             return
 
@@ -117,8 +112,8 @@ async def handle_image_processing(
             bra_button = translation_service.get(user_id, 'image.style_bra_button')
             back_button = translation_service.get(user_id, 'buttons.back_to_menu')
         else:
-            bra_button = IMAGE_STYLE_BRA_BUTTON
-            back_button = BACK_TO_MENU_BUTTON
+            bra_button = "🎁 粉色蕾丝内衣 ✨永久免费✨"
+            back_button = "🏠 返回主菜单"
 
         # Generate dynamic button text for undress style (for now keep it simple)
         if translation_service:
@@ -170,8 +165,7 @@ async def handle_image_processing(
         if translation_service:
             msg = translation_service.get(user_id, 'errors.system')
         else:
-            from core.constants import ERROR_MESSAGE
-            msg = ERROR_MESSAGE
+            msg = "❌ 系统繁忙\n\n请稍后重试\n如问题持续出现，请联系客服"
         await update.message.reply_text(msg)
 
 
@@ -190,21 +184,13 @@ async def handle_video_processing(
     """
     try:
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-        from core.constants import (
-            VIDEO_STYLE_SELECTION_MESSAGE,
-            VIDEO_STYLE_A_BUTTON,
-            VIDEO_STYLE_B_BUTTON,
-            VIDEO_STYLE_C_BUTTON,
-            BACK_TO_MENU_BUTTON,
-            ALREADY_PROCESSING_MESSAGE
-        )
 
         # Check if user is already processing
         if state_manager.is_state(user_id, 'processing'):
             if translation_service:
                 msg = translation_service.get(user_id, 'processing.already_processing')
             else:
-                msg = ALREADY_PROCESSING_MESSAGE
+                msg = "⏳ 您的图片正在处理中\n\n请耐心等待当前任务完成\n多次提交不会加快处理速度哦～"
             await update.message.reply_text(msg)
             return
 
@@ -216,11 +202,11 @@ async def handle_video_processing(
             style_c = translation_service.get(user_id, 'video.style_c_button')
             back_button = translation_service.get(user_id, 'buttons.back_to_menu')
         else:
-            message = VIDEO_STYLE_SELECTION_MESSAGE
-            style_a = VIDEO_STYLE_A_BUTTON
-            style_b = VIDEO_STYLE_B_BUTTON
-            style_c = VIDEO_STYLE_C_BUTTON
-            back_button = BACK_TO_MENU_BUTTON
+            message = "🎬 选择视频风格\n\n模型效果展示：\n\n1. 视频模型1示例：✨✨脱衣+抖胸✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/13)\n\n2. 视频模型2示例：✨✨脱衣+下体流精✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/15)\n\n3. 视频模型3示例：✨✨脱衣+吃吊喝精✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/19)\n\n请选择您想要的动态效果："
+            style_a = "脱衣+抖胸（30积分）"
+            style_b = "脱衣+下体流精（30积分）"
+            style_c = "脱衣+ 吃吊喝精（30积分）"
+            back_button = "🏠 返回主菜单"
 
         # Show style selection keyboard
         keyboard = [

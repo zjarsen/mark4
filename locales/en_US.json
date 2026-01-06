@@ -185,6 +185,7 @@
     "style_selection_error": "Style selection error, please restart",
     "processing_failed": "❌ Processing failed: {error_msg}",
     "processing_failed_with_refund": "❌ Processing failed: {error_msg}\n💰 {cost} credits refunded.",
+    "completion_send_failed": "Processing completed but failed to send, please contact administrator",
     "deprecated_button": "Please re-enter the top-up page from the main menu",
     "invalid_style": "Invalid style selected",
     "credit_deduction_failed": "❌ Credit deduction failed, please try again later",

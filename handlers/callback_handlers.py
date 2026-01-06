@@ -150,11 +150,10 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             }
             style_name = style_map.get(style, style)
         else:
-            from core.constants import WORKFLOW_NAME_VIDEO_A, WORKFLOW_NAME_VIDEO_B, WORKFLOW_NAME_VIDEO_C
             style_map = {
-                'video_style_a': WORKFLOW_NAME_VIDEO_A,
-                'video_style_b': WORKFLOW_NAME_VIDEO_B,
-                'video_style_c': WORKFLOW_NAME_VIDEO_C
+                'video_style_a': '欧美风',
+                'video_style_b': '写实风',
+                'video_style_c': '真人风'
             }
             style_name = style_map.get(style, style)
 
@@ -163,8 +162,7 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             if translation_service:
                 msg = translation_service.get(user_id, 'processing.already_processing')
             else:
-                from core.constants import ALREADY_PROCESSING_MESSAGE
-                msg = ALREADY_PROCESSING_MESSAGE
+                msg = "您已有任务正在处理中，请稍候再试"
             await query.edit_message_text(msg)
             return
 
@@ -193,8 +191,7 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             prompt = translation_service.get(user_id, 'video.send_image_prompt')
             msg = translation_service.get(user_id, 'callbacks.style_selected_video', style_name=style_name, prompt=prompt)
         else:
-            from core.constants import VIDEO_SEND_IMAGE_PROMPT
-            msg = f"已选择 {style_name}\n\n{VIDEO_SEND_IMAGE_PROMPT}"
+            msg = f"已选择 {style_name}\n\n请发送一张图片，我们将根据这张图片为您生成视频。\n\n*图片要求*：\n- 必须是单人全身照\n- 人物姿势：站立、双手自然下垂\n- 背景：纯色背景（白色或纯色）\n- 清晰度：高清、光线充足"
         await query.edit_message_text(msg)
 
         logger.info(f"User {user_id} selected video style: {internal_style}")
@@ -255,8 +252,7 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             if translation_service:
                 msg = translation_service.get(user_id, 'processing.already_processing')
             else:
-                from core.constants import ALREADY_PROCESSING_MESSAGE
-                msg = ALREADY_PROCESSING_MESSAGE
+                msg = "您已有任务正在处理中，请稍候再试"
             await query.edit_message_text(msg)
             return
 
@@ -268,10 +264,9 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             }
             style_name = style_map.get(style, style)
         else:
-            from core.constants import WORKFLOW_NAME_IMAGE_BRA, WORKFLOW_NAME_IMAGE_UNDRESS
             style_map = {
-                'image_style_bra': WORKFLOW_NAME_IMAGE_BRA,
-                'image_style_undress': WORKFLOW_NAME_IMAGE_UNDRESS
+                'image_style_bra': '内衣',
+                'image_style_undress': '裸体'
             }
             style_name = style_map.get(style, style)
 
@@ -287,8 +282,7 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             prompt = translation_service.get(user_id, 'image.send_image_prompt')
             msg = translation_service.get(user_id, 'callbacks.style_selected_image', style_name=style_name, prompt=prompt)
         else:
-            from core.constants import SEND_IMAGE_PROMPT
-            msg = f"已选择 {style_name}\n\n{SEND_IMAGE_PROMPT}"
+            msg = f"已选择 {style_name}\n\n请发送一张图片，我们将为您处理。\n\n*图片要求*：\n- 必须是单人照片\n- 清晰度高\n- 光线充足"
         await query.edit_message_text(msg, parse_mode='Markdown')
 
         logger.info(f"User {user_id} selected image style: {internal_style}")
@@ -348,8 +342,7 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
             if translation_service:
                 msg = translation_service.get(user_id, 'credits.confirmation_cancelled')
             else:
-                from core.constants import CREDIT_CONFIRMATION_CANCELLED_MESSAGE
-                msg = CREDIT_CONFIRMATION_CANCELLED_MESSAGE
+                msg = "操作已取消。您的积分未被扣除。"
             await context.bot.send_message(
                 chat_id=user_id,
                 text=msg

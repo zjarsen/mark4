@@ -24,11 +24,18 @@ async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Get user stats
         stats = await credit_service.get_user_stats(user_id)
 
-        from core.constants import BALANCE_MESSAGE
-        message = BALANCE_MESSAGE.format(
-            balance=stats['balance'],
-            total_spent=stats['total_spent']
-        )
+        if translation_service:
+            message = translation_service.get(
+                user_id,
+                'credits.balance',
+                balance=stats['balance'],
+                total_spent=stats['total_spent']
+            )
+        else:
+            message = f"""💰 积分余额
+
+当前积分：{stats['balance']} 积分
+累计消费：{stats['total_spent']} 积分"""
 
         await update.message.reply_text(message)
         logger.info(f"User {user_id} checked balance: {stats['balance']}")
@@ -286,7 +293,7 @@ async def show_pricing_for_method(
         else:
             back_button_text = "« 返回支付方式选择"
 
-        keyboard.append([InlineKeyboardButton(back_button_text, callback_data="back_to_method_selection")])
+        keyboard.append([InlineKeyboardButton(back_button_text, callback_data="back_to_payment_methods")])
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -473,12 +480,12 @@ async def create_payment_for_method(
 
                 button_text = translation_service.get(user_id, 'payment.button_go_pay')
             else:
-                from core.constants import PAYMENT_PENDING_MESSAGE
-                message = PAYMENT_PENDING_MESSAGE.format(
-                    payment_id=payment_info['payment_id'],
-                    amount=displayed_amount,
-                    credits=payment_info['credits_amount']
-                )
+                message = f"""💳 等待支付
+
+订单号：{payment_info['payment_id']}
+金额：¥{displayed_amount}
+积分：{payment_info['credits_amount']}
+"""
                 payment_method_cn = "支付宝" if payment_method == "alipay" else "微信支付"
                 message += f"\n支付方式：{payment_method_cn}"
                 button_text = "前往支付"
@@ -540,21 +547,19 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
         # Get transactions
         transactions = await credit_service.get_transaction_history(user_id, limit=10)
 
-        from core.constants import (
-            TRANSACTION_HISTORY_HEADER,
-            TRANSACTION_ITEM_TEMPLATE,
-            NO_TRANSACTIONS_MESSAGE
-        )
-
         if not transactions:
-            await update.message.reply_text(NO_TRANSACTIONS_MESSAGE)
+            if translation_service:
+                no_tx_msg = translation_service.get(user_id, 'transactions.no_transactions')
+            else:
+                no_tx_msg = "暂无消费记录"
+            await update.message.reply_text(no_tx_msg)
             return
 
         # Format transactions
         if translation_service:
             message = translation_service.get(user_id, 'transactions.header')
         else:
-            message = TRANSACTION_HISTORY_HEADER
+            message = "📝 交易记录\n\n"
 
         for tx in transactions:
             date = tx['created_at'][:10]  # Extract date
@@ -575,12 +580,7 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
                     balance=tx['balance_after']
                 )
             else:
-                message += TRANSACTION_ITEM_TEMPLATE.format(
-                    date=date,
-                    type=tx_type,
-                    amount=tx['amount'],
-                    balance=tx['balance_after']
-                )
+                message += f"{date} | {tx_type} | {tx['amount']:+d} 积分 | 余额: {tx['balance_after']} 积分\n"
 
         await update.message.reply_text(message)
         logger.info(f"User {user_id} viewed transaction history")
@@ -609,12 +609,6 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
         # Get transactions
         transactions = await credit_service.get_transaction_history(user_id, limit=10)
 
-        from core.constants import (
-            TRANSACTION_ITEM_TEMPLATE,
-            VIP_STATUS_BADGE,
-            BALANCE_MESSAGE_VIP
-        )
-
         # Build VIP or regular message
         if is_vip:
             # VIP balance message
@@ -627,12 +621,14 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
                     total_spent=int(total_spent)
                 )
             else:
-                vip_badge = VIP_STATUS_BADGE.format(tier=tier_display)
-                message = BALANCE_MESSAGE_VIP.format(
-                    vip_badge=vip_badge,
-                    balance=int(balance),
-                    total_spent=int(total_spent)
-                )
+                vip_badge = f"👑 {tier_display}"
+                message = f"""{vip_badge}
+
+💰 当前积分：{int(balance)} 积分
+📈 累计消费：{int(total_spent)} 积分
+
+图片脱衣：VIP 免费
+视频脱衣：VIP 免费"""
         else:
             # Regular balance message
             if translation_service:
@@ -686,12 +682,7 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
                         balance=tx['balance_after']
                     )
                 else:
-                    message += TRANSACTION_ITEM_TEMPLATE.format(
-                        date=date,
-                        type=tx_type,
-                        amount=tx['amount'],
-                        balance=tx['balance_after']
-                    )
+                    message += f"{date} | {tx_type} | {tx['amount']:+d} 积分 | 余额: {tx['balance_after']} 积分\n"
 
         await update.message.reply_text(message)
         logger.info(f"User {user_id} viewed balance and history (VIP: {is_vip})")
@@ -728,17 +719,23 @@ async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, pa
             logger.info(f"Payment {payment_id} already {payment['status']}, skipping timeout menu")
             return
 
-        from core.constants import PAYMENT_TIMEOUT_MESSAGE
-
         # Get bot instance from timeout_service
         bot = timeout_service.bot
+
+        # Get timeout message
+        if translation_service:
+            timeout_msg = translation_service.get(user_id, 'payment.timeout')
+        else:
+            timeout_msg = """⏰ 支付超时
+
+订单已取消，请重新发起充值。"""
 
         # Edit the payment pending message to show timeout
         try:
             await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=message_id,
-                text=PAYMENT_TIMEOUT_MESSAGE
+                text=timeout_msg
             )
         except Exception as e:
             logger.warning(f"Failed to edit timeout message {message_id}: {str(e)}")
@@ -983,7 +980,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
         callback_data = query.data
 
         # Check routing pattern
-        if callback_data == 'back_to_method_selection':
+        if callback_data == 'back_to_payment_methods':
             # ===== Back button: Return to payment method selection =====
             await query.answer()
             await show_topup_packages(update, context, is_callback=True)
@@ -1111,12 +1108,12 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
                 button_text = translation_service.get(user_id, 'payment.button_go_pay')
             else:
-                from core.constants import PAYMENT_PENDING_MESSAGE
-                message = PAYMENT_PENDING_MESSAGE.format(
-                    payment_id=payment_info['payment_id'],
-                    amount=displayed_amount,
-                    credits=payment_info['credits_amount']
-                )
+                message = f"""💳 等待支付
+
+订单号：{payment_info['payment_id']}
+金额：¥{displayed_amount}
+积分：{payment_info['credits_amount']}
+"""
                 payment_method_cn = "支付宝" if payment_method == "alipay" else "微信支付"
                 message += f"\n支付方式：{payment_method_cn}"
                 button_text = "前往支付"

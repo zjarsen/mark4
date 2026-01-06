@@ -185,6 +185,7 @@
     "style_selection_error": "风格选择错误，请重新开始",
     "processing_failed": "❌ 处理失败: {error_msg}",
     "processing_failed_with_refund": "❌ 处理失败: {error_msg}\n💰 {cost} 积分已退还。",
+    "completion_send_failed": "处理完成但发送失败，请联系管理员",
     "deprecated_button": "请从主菜单重新进入充值页面",
     "invalid_style": "选择的风格无效",
     "credit_deduction_failed": "❌ 积分扣除失败，请稍后重试",

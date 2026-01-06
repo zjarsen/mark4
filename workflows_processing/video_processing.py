@@ -145,7 +145,20 @@ class VideoProcessingWorkflowBase(BaseWorkflow):
 
         except Exception as e:
             logger.error(f"Error handling video completion for user {user_id}: {str(e)}")
-            raise
+            # Get error message with translation fallback
+            if notification_service.translation_service:
+                error_msg = notification_service.translation_service.get(
+                    user_id,
+                    'errors.completion_send_failed'
+                )
+            else:
+                error_msg = "处理完成但发送失败，请联系管理员"
+
+            await notification_service.send_error_message(
+                bot,
+                user_id,
+                error_msg
+            )
 
     async def _cleanup_after_timeout(
         self,

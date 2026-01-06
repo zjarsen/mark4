@@ -9,7 +9,7 @@ logger = logging.getLogger('mark4_bot')
 class QueueService:
     """Service for monitoring and managing processing queues."""
 
-    def __init__(self, config, comfyui_service, notification_service):
+    def __init__(self, config, comfyui_service, notification_service, translation_service=None):
         """
         Initialize queue service.
 
@@ -17,10 +17,12 @@ class QueueService:
             config: Configuration object
             comfyui_service: ComfyUI service instance
             notification_service: Notification service instance
+            translation_service: Translation service for i18n
         """
         self.config = config
         self.comfyui_service = comfyui_service
         self.notification_service = notification_service
+        self.translation_service = translation_service
 
     async def get_queue_position(self, prompt_id: str) -> tuple:
         """
@@ -161,16 +163,25 @@ class QueueService:
             else:
                 # Position = 0 means either running or completed
                 # Check completion status to determine which message to show
-                from core.constants import PROCESSING_RUNNING, PROCESSING_RETRIEVING
-
                 outputs = await self.comfyui_service.check_completion(prompt_id)
+
+                # Get user_id from message
+                user_id = queue_message.chat.id
 
                 if outputs:
                     # Processing is complete, image is being retrieved
-                    await queue_message.edit_text(PROCESSING_RETRIEVING)
+                    if self.translation_service:
+                        text = self.translation_service.get(user_id, 'processing.retrieving')
+                    else:
+                        text = "✨ 处理完成！正在为您准备作品..."
+                    await queue_message.edit_text(text)
                 else:
                     # Still processing (running)
-                    await queue_message.edit_text(PROCESSING_RUNNING)
+                    if self.translation_service:
+                        text = self.translation_service.get(user_id, 'processing.running')
+                    else:
+                        text = "🎨 AI正在精心处理您的照片...\n请稍候，好作品值得等待～"
+                    await queue_message.edit_text(text)
 
         except Exception as e:
             logger.error(f"Error refreshing queue position: {str(e)}")
