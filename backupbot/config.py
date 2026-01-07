@@ -4,15 +4,16 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from main bot's .env file
+main_env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(main_env_path)
 
 
 class Config:
     """Configuration for the backup bot."""
 
-    # Bot Configuration
-    BOT_TOKEN = os.getenv('BACKUP_BOT_TOKEN', '8511703907:AAFrblkrogz82MDFqlnhy3VQKhuZ38Avlf4')
+    # Bot Configuration - reads from main .env file
+    BOT_TOKEN = os.getenv('BACKUP_BOT_TOKEN')
 
     # Database Configuration - uses shared database with main bot
     # Path is relative to backupbot/ folder, so we need to go up one level
