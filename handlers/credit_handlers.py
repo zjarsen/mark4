@@ -140,6 +140,10 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
         )])
 
         # 4 payment method buttons
+        # Stripe (Card Payment) button - first for international users
+        stripe_text = translation_service.get(user_id, 'topup.method_button_stripe') if translation_service else "💳 Card Payment"
+        keyboard.append([InlineKeyboardButton(stripe_text, callback_data="method_stripe")])
+
         stars_text = translation_service.get(user_id, 'topup.method_button_stars') if translation_service else "⭐ Telegram Stars"
         keyboard.append([InlineKeyboardButton(stars_text, callback_data="method_stars")])
 
@@ -148,10 +152,6 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         alipay_text = translation_service.get(user_id, 'payment.button_alipay') if translation_service else "💰 支付宝支付"
         keyboard.append([InlineKeyboardButton(alipay_text, callback_data="method_alipay")])
-
-        # Stripe (Card/Apple Pay/Google Pay) button
-        stripe_text = translation_service.get(user_id, 'topup.method_button_stripe') if translation_service else "💳 Card/Apple Pay/Google Pay"
-        keyboard.append([InlineKeyboardButton(stripe_text, callback_data="method_stripe")])
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -234,13 +234,63 @@ async def show_pricing_for_method(
         # Build keyboard
         keyboard = []
 
-        # Handle Stripe differently - fixed USD packages
+        # Handle Stripe differently - fixed USD packages with discount support
         if payment_method == 'stripe':
             stripe_packages = pricing_service.get_stripe_packages()
+            discount_rate = discount_info['rate'] if discount_info else 1.0
+
             for package_id, package_info in stripe_packages.items():
-                price_usd = package_info['price_usd']
-                credits = package_info['credits']
-                button_text = f"${price_usd:.0f} = {credits} credits"
+                # Calculate price with discount
+                price_info = pricing_service.calculate_stripe_price(package_id, discount_rate)
+                credits = price_info['credits']
+                is_vip = price_info['is_vip']
+                vip_tier = price_info['vip_tier']
+
+                # Format button text based on discount and package type
+                if discount_info and price_info['is_discount_eligible']:
+                    # Show discounted price
+                    if is_vip:
+                        # VIP packages with discount
+                        if translation_service:
+                            key = 'topup.stripe_button_vip_discount' if vip_tier == 'vip' else 'topup.stripe_button_black_gold_discount'
+                            button_text = translation_service.get(
+                                user_id, key,
+                                discounted_price=f"{price_info['final_price_usd']:.0f}",
+                                original_price=f"{price_info['base_price_usd']:.0f}"
+                            )
+                        else:
+                            vip_name = "Lifetime VIP" if vip_tier == 'vip' else "Black Gold VIP"
+                            button_text = f"💎 {vip_name} ${price_info['final_price_usd']:.0f} 🎁 (Was ${price_info['base_price_usd']:.0f})"
+                    else:
+                        # Credit packages with discount
+                        if translation_service:
+                            button_text = translation_service.get(
+                                user_id, 'topup.stripe_button_credits_discount',
+                                credits=credits,
+                                discounted_price=f"{price_info['final_price_usd']:.0f}",
+                                original_price=f"{price_info['base_price_usd']:.0f}"
+                            )
+                        else:
+                            button_text = f"💰 {credits} credits ${price_info['final_price_usd']:.0f} 🎁 (Was ${price_info['base_price_usd']:.0f})"
+                else:
+                    # No discount - show base price
+                    if is_vip:
+                        if translation_service:
+                            key = 'topup.stripe_button_vip' if vip_tier == 'vip' else 'topup.stripe_button_black_gold'
+                            button_text = translation_service.get(user_id, key, price=f"{price_info['base_price_usd']:.0f}")
+                        else:
+                            vip_name = "Lifetime VIP" if vip_tier == 'vip' else "Black Gold VIP"
+                            button_text = f"${price_info['base_price_usd']:.0f} = {vip_name}"
+                    else:
+                        if translation_service:
+                            button_text = translation_service.get(
+                                user_id, 'topup.stripe_button_credits',
+                                price=f"{price_info['base_price_usd']:.0f}",
+                                credits=credits
+                            )
+                        else:
+                            button_text = f"${price_info['base_price_usd']:.0f} = {credits} credits"
+
                 keyboard.append([InlineKeyboardButton(
                     button_text,
                     callback_data=f"topup_stripe_{package_id}"
@@ -601,13 +651,17 @@ async def _create_stripe_payment(
         context: Bot context
         user_id: Telegram user ID
         chat_id: Chat ID
-        package_id: Stripe package ID (100 for $1, 500 for $5)
+        package_id: Stripe package ID (200 for $2, 500 for $5, etc.)
     """
     query = update.callback_query
 
-    # Get package info
-    package_info = pricing_service.get_stripe_package(package_id)
-    if not package_info:
+    # Get discount info
+    discount_info = await discount_service.get_current_discount(user_id)
+    discount_rate = discount_info['rate'] if discount_info else 1.0
+
+    # Get package info with discount
+    price_info = pricing_service.calculate_stripe_price(package_id, discount_rate)
+    if not price_info:
         logger.error(f"Invalid Stripe package ID: {package_id}")
         if translation_service:
             msg = translation_service.get(user_id, 'payment.invalid_package')
@@ -616,21 +670,39 @@ async def _create_stripe_payment(
         await query.edit_message_text(msg)
         return
 
-    price_cents = package_info['price_cents']
-    price_usd = package_info['price_usd']
-    credits = package_info['credits']
+    # Use discounted price if eligible
+    price_cents = price_info['final_price_cents']
+    price_usd = price_info['final_price_usd']
+    base_price_usd = price_info['base_price_usd']
+    credits = price_info['credits']
+    is_vip = price_info['is_vip']
+    vip_tier = price_info['vip_tier']
+
+    # Check for VIP redundant purchase
+    if is_vip:
+        current_tier = credit_service.db.get_vip_tier(user_id)
+        if current_tier == vip_tier:
+            tier_name = credit_service._tier_display_name(vip_tier)
+            if translation_service:
+                msg = translation_service.get(user_id, 'payment.vip_already_owned', tier=tier_name)
+            else:
+                msg = f"You're already {tier_name}! No need to buy again!"
+            await query.edit_message_text(msg)
+            return
 
     # Get user's language
     user_language = database_service.get_user_language(user_id) if database_service else 'en_US'
 
     try:
-        # Create Stripe checkout session
+        # Create Stripe checkout session with discounted price
         payment_result = await stripe_provider.create_payment(
             user_id=user_id,
             amount=price_cents,
             currency='usd',
             credits=credits,
-            return_url='https://telepay.swee.live'
+            return_url='https://telepay.swee.live',
+            payment_id=None,  # Let Stripe generate
+            vip_tier=vip_tier  # Pass VIP tier info
         )
 
         session_id = payment_result['payment_id']
@@ -648,25 +720,46 @@ async def _create_stripe_payment(
             payment_url=checkout_url,
             chat_id=chat_id,
             language_code=user_language,
-            payment_method='stripe'
+            payment_method='stripe',
+            vip_tier=vip_tier  # Store VIP tier for webhook processing
         )
 
         # Create message with Mini App button
-        if translation_service:
-            message = translation_service.get(
-                user_id,
-                'payment.stripe_checkout_message',
-                amount=f"${price_usd:.0f}",
-                credits=credits
-            )
-            button_text = translation_service.get(user_id, 'payment.stripe_checkout_button')
+        if is_vip:
+            vip_name = "Lifetime VIP" if vip_tier == 'vip' else "Black Gold VIP"
+            if translation_service:
+                message = translation_service.get(
+                    user_id,
+                    'payment.stripe_checkout_vip_message',
+                    amount=f"${price_usd:.0f}",
+                    vip_tier=vip_name
+                )
+            else:
+                message = f"""💳 Card Payment
+
+VIP Package: {vip_name}
+Amount: ${price_usd:.0f}
+
+Click the button below to complete payment:"""
         else:
-            message = f"""💳 Card Payment
+            if translation_service:
+                message = translation_service.get(
+                    user_id,
+                    'payment.stripe_checkout_message',
+                    amount=f"${price_usd:.0f}",
+                    credits=credits
+                )
+            else:
+                message = f"""💳 Card Payment
 
 Amount: ${price_usd:.0f}
 Credits: {credits}
 
 Click the button below to complete payment:"""
+
+        if translation_service:
+            button_text = translation_service.get(user_id, 'payment.stripe_checkout_button')
+        else:
             button_text = "💳 Pay Now"
 
         # Mini App button that opens Stripe checkout
@@ -692,10 +785,15 @@ Click the button below to complete payment:"""
             parse_mode='Markdown'
         )
 
-        logger.info(
-            f"Created Stripe payment for user {user_id}: "
-            f"${price_usd:.2f} = {credits} credits, session={session_id}"
-        )
+        log_msg = f"Created Stripe payment for user {user_id}: ${price_usd:.2f}"
+        if is_vip:
+            log_msg += f" = {vip_tier}"
+        else:
+            log_msg += f" = {credits} credits"
+        if price_info['is_discount_eligible'] and discount_rate < 1.0:
+            log_msg += f" (discounted from ${base_price_usd:.2f})"
+        log_msg += f", session={session_id}"
+        logger.info(log_msg)
 
     except Exception as e:
         logger.error(f"Error creating Stripe payment: {str(e)}", exc_info=True)

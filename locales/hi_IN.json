@@ -91,7 +91,14 @@
     "processing_error": "Payment fail हो गया, support से contact करें",
     "credit_failed": "Top-up fail हो गया, support से contact करें",
     "stars_invoice_sent": "✨ Telegram Stars payment request भेजा गया\n\nआपको मिलेगा {credits} credits\nAmount: {stars} ⭐\n\nPopup में payment complete करें",
-    "stars_success": "✅ Payment successful!\n\nCredits received: {credits}\nAmount paid: {stars} ⭐\nCurrent balance: {balance} credits\n\nTop-up के liye dhanyavaad!"
+    "stars_success": "✅ Payment successful!\n\nCredits received: {credits}\nAmount paid: {stars} ⭐\nCurrent balance: {balance} credits\n\nTop-up के liye dhanyavaad!",
+    "stripe_checkout_message": "💳 Card Payment\n\n✅ Apple Pay · Google Pay · Visa/MasterCard supported!\n\n💰 Amount: {amount}\n🎁 Credits: {credits}\n\n👇 Neeche button tap karo aur payment complete karo~",
+    "stripe_checkout_vip_message": "💳 Card Payment\n\n✅ Apple Pay · Google Pay · Visa/MasterCard supported!\n\n👑 Package: {vip_tier}\n💰 Amount: {amount}\n\n👇 Neeche button tap karo aur VIP member ban jao~",
+    "stripe_checkout_button": "💳 Abhi Pay Karo",
+    "stripe_error": "Payment create nahi hua 😅 Please phir se try karo!",
+    "stripe_success": "🎉 Payment Successful!\n\n💰 Credits mil gaye: {credits}\n📊 Current balance: {balance} credits\n\nSupport ke liye dhanyavaad! Ab enjoy karo~",
+    "notification_vip_success": "🎉 Badhai ho! Ab aap *{vip_tier}* member ho!\n\n✨ Unlimited access ka maza lo~\n\nSupport ke liye dhanyavaad!",
+    "invalid_package": "Ye package valid nahi hai - please phir se select karo"
   },
   "topup": {
     "packages_with_discount": "💳 Top-up Packages\n\n🔥🔥🔥 *You're Super Lucky Today!* 🔥🔥🔥\n⚡ _Your exclusive discount unlocked - tap below to see!_\n💰 *Up to 50% OFF* - Valid till *24:00* today only\n\n━━━━━━━━━━━━━━━━━\n\n🔥 Hot Picks:\n1️⃣ ¥*11* = *30* credits ⭐\n2️⃣ ¥*32* = *120* credits 🔥\n3️⃣ ¥*54* = *250* credits 💎\n4️⃣ ¥*108* = *600* credits 👑\n5️⃣ ¥*173* = *Lifetime VIP* ⭐⭐⭐ 【Owner's Pick · Unlimited】\n6️⃣ ¥*281* = *Black Gold VIP* 👑👑👑 【Unlimited + No Queue】\n\n✨ Top-up Perks:\n• Credits valid forever\n• Instant arrival\n\n⚠️ *Important: Payment gateway under maintenance - temporarily unavailable* ⚠️\n📞 Contact support if you need to top up\n\n⏰ *Don't forget to claim today's discount! Click [Lucky Discount] below* ⏰",
@@ -115,7 +122,15 @@
     "method_button_stars": "⭐ Telegram Stars",
     "packages_stars_intro": "⭐ Telegram Stars Top-up\n\nPackage choose karo:",
     "packages_alipay_intro": "💰 Alipay Top-up\n\nPackage choose karo:",
-    "packages_wechat_intro": "💚 WeChat Pay Top-up\n\nPackage choose karo:"
+    "packages_wechat_intro": "💚 WeChat Pay Top-up\n\nPackage choose karo:",
+    "method_button_stripe": "💳 Card Payment",
+    "packages_stripe_intro": "💳 Card Payment\n\n✅ Apple Pay · Google Pay · Visa/MasterCard supported!\n💳 USD pricing · Turant delivery\n\nApna package choose karo:",
+    "stripe_button_credits": "${price} = {credits} credits",
+    "stripe_button_credits_discount": "💰 {credits} credits ${discounted_price} 🎁 (Pehle ${original_price})",
+    "stripe_button_vip": "${price} = Lifetime VIP ⭐⭐⭐",
+    "stripe_button_vip_discount": "💎 Lifetime VIP ${discounted_price} 🎁 (Pehle ${original_price})",
+    "stripe_button_black_gold": "${price} = Black Gold VIP 👑👑👑",
+    "stripe_button_black_gold_discount": "👑 Black Gold VIP ${discounted_price} 🎁 (Pehle ${original_price})"
   },
   "transactions": {
     "header": "📊 हाल की खर्च history\n\n",

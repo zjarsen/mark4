@@ -66,6 +66,18 @@ class StripeProvider(PaymentProvider):
             credits = kwargs.get('credits', 0)
             base_url = kwargs.get('return_url', 'https://telepay.swee.live')
             payment_id = kwargs.get('payment_id')
+            vip_tier = kwargs.get('vip_tier')  # 'vip' or 'black_gold' or None
+
+            # Determine product name and description based on VIP tier
+            if vip_tier == 'vip':
+                product_name = 'Lifetime VIP'
+                product_description = 'Unlimited credits forever - no daily limits'
+            elif vip_tier == 'black_gold':
+                product_name = 'Black Gold VIP'
+                product_description = 'Unlimited credits + Priority queue - the ultimate package'
+            else:
+                product_name = f'{credits} Credits'
+                product_description = f'Top-up {credits} credits for your account'
 
             # Create Checkout Session with embedded mode
             session = stripe.checkout.Session.create(
@@ -75,8 +87,8 @@ class StripeProvider(PaymentProvider):
                     'price_data': {
                         'currency': currency.lower(),
                         'product_data': {
-                            'name': f'{credits} Credits',
-                            'description': f'Top-up {credits} credits for your account',
+                            'name': product_name,
+                            'description': product_description,
                         },
                         'unit_amount': int(amount),  # Amount in cents
                     },
@@ -89,6 +101,7 @@ class StripeProvider(PaymentProvider):
                     'user_id': str(user_id),
                     'credits': str(credits),
                     'internal_payment_id': payment_id or '',
+                    'vip_tier': vip_tier or '',
                 },
                 # Enable automatic tax calculation (optional)
                 # automatic_tax={'enabled': True},
@@ -256,11 +269,12 @@ class StripeProvider(PaymentProvider):
             user_id = metadata.get('user_id')
             credits = metadata.get('credits')
             internal_payment_id = metadata.get('internal_payment_id')
+            vip_tier = metadata.get('vip_tier') or None  # 'vip', 'black_gold', or None
 
             if session['payment_status'] == 'paid':
                 logger.info(
                     f"Stripe payment completed: session={session['id']}, "
-                    f"user={user_id}, credits={credits}"
+                    f"user={user_id}, credits={credits}, vip_tier={vip_tier}"
                 )
                 return {
                     'success': True,
@@ -268,6 +282,7 @@ class StripeProvider(PaymentProvider):
                     'internal_payment_id': internal_payment_id,
                     'user_id': int(user_id) if user_id else None,
                     'credits': int(credits) if credits else 0,
+                    'vip_tier': vip_tier,
                     'amount': session['amount_total'],
                     'currency': session['currency'],
                     'message': 'Payment completed successfully',

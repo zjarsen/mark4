@@ -47,15 +47,20 @@ class PricingService:
             'formula': lambda base: base,  # Pass-through (not used for Stripe)
             'currency': 'USD',
             'display_format': '${price:.2f}',
-            'discount_eligible_packages': [],  # No discount for Stripe
+            'discount_eligible_packages': [500, 800, 1500, 2500, 4000],  # Exclude $2 (same logic as ¥10)
             'name': 'Card/Apple Pay/Google Pay'
         }
     }
 
     # Stripe-specific package definitions (fixed USD pricing)
+    # Maps to CNY packages: ¥10→$2, ¥30→$5, ¥50→$8, ¥100→$15, ¥160→$25, ¥260→$40
     STRIPE_PACKAGES = {
-        100: {'price_cents': 100, 'price_usd': 1.00, 'credits': 30},    # $1 = 30 credits
-        500: {'price_cents': 500, 'price_usd': 5.00, 'credits': 250},   # $5 = 250 credits
+        200: {'price_cents': 200, 'price_usd': 2.00, 'credits': 30, 'base_cny': 10},
+        500: {'price_cents': 500, 'price_usd': 5.00, 'credits': 120, 'base_cny': 30},
+        800: {'price_cents': 800, 'price_usd': 8.00, 'credits': 250, 'base_cny': 50},
+        1500: {'price_cents': 1500, 'price_usd': 15.00, 'credits': 600, 'base_cny': 100},
+        2500: {'price_cents': 2500, 'price_usd': 25.00, 'credits': 99999999, 'base_cny': 160, 'is_vip': True, 'vip_tier': 'vip'},
+        4000: {'price_cents': 4000, 'price_usd': 40.00, 'credits': 99999999, 'base_cny': 260, 'is_vip': True, 'vip_tier': 'black_gold'},
     }
 
     def __init__(self):
@@ -203,9 +208,52 @@ class PricingService:
         Get a specific Stripe package by ID.
 
         Args:
-            package_id: Package ID (100 for $1, 500 for $5)
+            package_id: Package ID (200 for $2, 500 for $5, etc.)
 
         Returns:
             Package dictionary with price_cents, price_usd, credits
         """
         return self.STRIPE_PACKAGES.get(package_id)
+
+    def calculate_stripe_price(self, package_id: int, discount_rate: float = 1.0) -> dict:
+        """
+        Calculate Stripe price with optional discount.
+
+        Args:
+            package_id: Stripe package ID (price in cents: 200, 500, 800, 1500, 2500, 4000)
+            discount_rate: Discount multiplier (1.0 = no discount, 0.5 = 50% off)
+
+        Returns:
+            Dictionary with price info including discounted values
+        """
+        package = self.STRIPE_PACKAGES.get(package_id)
+        if not package:
+            return None
+
+        base_price_cents = package['price_cents']
+        base_price_usd = package['price_usd']
+
+        # Check if eligible for discount (exclude $2 package)
+        is_eligible = package_id in self.PRICING_CONFIGS['stripe']['discount_eligible_packages']
+
+        # Apply discount only if eligible
+        actual_discount = discount_rate if is_eligible else 1.0
+
+        # Calculate discounted price (round to nearest cent)
+        final_price_cents = int(base_price_cents * actual_discount)
+        final_price_usd = final_price_cents / 100
+
+        return {
+            'package_id': package_id,
+            'base_price_cents': base_price_cents,
+            'base_price_usd': base_price_usd,
+            'final_price_cents': final_price_cents,
+            'final_price_usd': final_price_usd,
+            'discount_rate': actual_discount,
+            'is_discount_eligible': is_eligible,
+            'credits': package['credits'],
+            'base_cny': package.get('base_cny'),
+            'is_vip': package.get('is_vip', False),
+            'vip_tier': package.get('vip_tier'),
+            'savings_usd': base_price_usd - final_price_usd if is_eligible and actual_discount < 1.0 else 0,
+        }

@@ -52,7 +52,7 @@ timeout_service = PaymentTimeoutService(bot)
 stripe_provider = StripeProvider(config)
 
 
-async def send_payment_notification(user_id: int, payment_id: str, credits: float, new_balance: float, chat_id: int = None, message_id: int = None, language_code: str = 'zh_CN'):
+async def send_payment_notification(user_id: int, payment_id: str, credits: float, new_balance: float, chat_id: int = None, message_id: int = None, language_code: str = 'zh_CN', vip_tier: str = None):
     """
     Send payment success notification to user via Telegram.
     If chat_id and message_id are provided, edit the existing message.
@@ -61,11 +61,12 @@ async def send_payment_notification(user_id: int, payment_id: str, credits: floa
     Args:
         user_id: Telegram user ID
         payment_id: Payment ID
-        credits: Credits added
+        credits: Credits added (0 for VIP purchases)
         new_balance: New balance after payment
         chat_id: Optional chat ID for editing existing message
         message_id: Optional message ID for editing existing message
         language_code: User's language preference for translation
+        vip_tier: Optional VIP tier purchased ('vip' or 'black_gold')
     """
     try:
         # Import translation service
@@ -77,14 +78,28 @@ async def send_payment_notification(user_id: int, payment_id: str, credits: floa
             default_lang='zh_CN'
         )
 
-        # Get translated message
-        message = translation_service.get_lang(
-            language_code,
-            'payment.notification_success',
-            credits=int(credits),
-            new_balance=int(new_balance),
-            payment_id=payment_id
-        )
+        # Get translated message based on purchase type
+        if vip_tier:
+            # VIP purchase notification
+            vip_names = {
+                'vip': {'en': 'Lifetime VIP', 'zh': '永久VIP'},
+                'black_gold': {'en': 'Black Gold VIP', 'zh': '永久黑金VIP'}
+            }
+            vip_name = vip_names.get(vip_tier, {}).get('en' if language_code.startswith('en') else 'zh', vip_tier)
+            message = translation_service.get_lang(
+                language_code,
+                'payment.notification_vip_success',
+                vip_tier=vip_name
+            )
+        else:
+            # Regular credits notification
+            message = translation_service.get_lang(
+                language_code,
+                'payment.notification_success',
+                credits=int(credits),
+                new_balance=int(new_balance),
+                payment_id=payment_id
+            )
 
         if chat_id and message_id:
             # Edit the existing "等待支付中" message
@@ -571,12 +586,13 @@ def stripe_webhook():
     async def process_webhook():
         result = await stripe_provider.handle_webhook_event(event)
 
-        if result.get('success') and result.get('user_id') and result.get('credits'):
+        if result.get('success') and result.get('user_id'):
             user_id = result['user_id']
             credits = result['credits']
+            vip_tier = result.get('vip_tier')  # 'vip', 'black_gold', or None
             payment_id = result.get('internal_payment_id') or result.get('payment_id')
 
-            logger.info(f"Processing Stripe payment: user={user_id}, credits={credits}, payment_id={payment_id}")
+            logger.info(f"Processing Stripe payment: user={user_id}, credits={credits}, vip_tier={vip_tier}, payment_id={payment_id}")
 
             # Check if we have a payment record (created when user initiated payment)
             payment = database_service.get_payment(payment_id)
@@ -589,9 +605,15 @@ def stripe_webhook():
                 logger.warning(f"Stripe payment {payment_id} already processed, skipping")
                 return result
 
-            # Add credits directly
-            await credit_service.add_credits(user_id, credits, f"Stripe payment {payment_id}")
-            logger.info(f"Added {credits} credits to user {user_id}")
+            # Handle VIP tier upgrade or add credits
+            if vip_tier:
+                # VIP purchase - set VIP tier instead of adding credits
+                database_service.set_vip_tier(user_id, vip_tier)
+                logger.info(f"Set VIP tier '{vip_tier}' for user {user_id}")
+            elif credits > 0:
+                # Regular credit purchase
+                await credit_service.add_credits(user_id, credits, f"Stripe payment {payment_id}")
+                logger.info(f"Added {credits} credits to user {user_id}")
 
             # Update payment status in database if record exists
             if payment:
@@ -607,12 +629,15 @@ def stripe_webhook():
             chat_id = payment.get('chat_id') if payment else None
             message_id = payment.get('message_id') if payment else None
 
-            # Send notification
+            # Send notification (for VIP, credits will be 0, pass vip_tier for message)
             await send_payment_notification(
                 user_id, payment_id, credits, new_balance,
-                chat_id, message_id, language_code
+                chat_id, message_id, language_code, vip_tier=vip_tier
             )
-            logger.info(f"Stripe payment completed: user={user_id}, credits={credits}, balance={new_balance}")
+            if vip_tier:
+                logger.info(f"Stripe VIP purchase completed: user={user_id}, tier={vip_tier}")
+            else:
+                logger.info(f"Stripe payment completed: user={user_id}, credits={credits}, balance={new_balance}")
 
         return result
 

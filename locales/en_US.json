@@ -91,10 +91,12 @@
     "credit_failed": "Top-up failed, please contact support",
     "stars_invoice_sent": "✨ Telegram Stars payment request sent\n\nYou'll get {credits} credits\nAmount: {stars} ⭐\n\nPlease complete payment in the popup",
     "stars_success": "✅ Payment successful!\n\nCredits received: {credits}\nAmount paid: {stars} ⭐\nCurrent balance: {balance} credits\n\nThank you for your top-up!",
-    "stripe_checkout_message": "💳 Card Payment\n\nAmount: {amount}\nCredits: {credits}\n\nClick the button below to complete payment:",
+    "stripe_checkout_message": "💳 Card Payment\n\n✅ Apple Pay · Google Pay · Visa/MasterCard\n\n💰 Amount: {amount}\n🎁 Credits: {credits}\n\n👇 Tap the button below to pay",
+    "stripe_checkout_vip_message": "💳 Card Payment\n\n✅ Apple Pay · Google Pay · Visa/MasterCard\n\n👑 Package: {vip_tier}\n💰 Amount: {amount}\n\n👇 Tap the button below to pay",
     "stripe_checkout_button": "💳 Pay Now",
     "stripe_error": "Failed to create payment. Please try again.",
     "stripe_success": "✅ Payment Successful!\n\nCredits added: {credits}\nNew balance: {balance} credits\n\nThank you!",
+    "notification_vip_success": "🎉 Congratulations! You're now {vip_tier}!\n\n✨ Enjoy unlimited access to all features\n\nThank you for your support!",
     "invalid_package": "Invalid package selected"
   },
   "topup": {
@@ -120,8 +122,14 @@
     "packages_stars_intro": "⭐ Telegram Stars Top-up\n\nChoose a package:",
     "packages_alipay_intro": "💰 Alipay Top-up\n\nChoose a package:",
     "packages_wechat_intro": "💚 WeChat Pay Top-up\n\nChoose a package:",
-    "packages_stripe_intro": "💳 Card/Apple Pay/Google Pay\n\nSelect amount:",
-    "method_button_stripe": "💳 Card/Apple Pay/Google Pay"
+    "packages_stripe_intro": "💳 Card Payment\n\n✅ Apple Pay · Google Pay · Visa/MasterCard\n💳 USD pricing · Instant delivery\n\nSelect a package:",
+    "method_button_stripe": "💳 Card Payment",
+    "stripe_button_credits": "${price} = {credits} credits",
+    "stripe_button_credits_discount": "💰 {credits} credits ${discounted_price} 🎁 (Was ${original_price})",
+    "stripe_button_vip": "${price} = Lifetime VIP ⭐⭐⭐",
+    "stripe_button_vip_discount": "💎 Lifetime VIP ${discounted_price} 🎁 (Was ${original_price})",
+    "stripe_button_black_gold": "${price} = Black Gold VIP 👑👑👑",
+    "stripe_button_black_gold_discount": "👑 Black Gold VIP ${discounted_price} 🎁 (Was ${original_price})"
   },
   "transactions": {
     "header": "📊 Transaction History\n\n",
