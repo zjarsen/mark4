@@ -548,7 +548,7 @@ def stripe_session_status():
 
 
 @app.route('/stripe/webhook', methods=['POST'])
-async def stripe_webhook():
+def stripe_webhook():
     """
     Handle Stripe webhook events.
 
@@ -557,15 +557,18 @@ async def stripe_webhook():
     payload = request.get_data()
     sig_header = request.headers.get('Stripe-Signature')
 
+    logger.info(f"Received Stripe webhook, signature present: {bool(sig_header)}")
+
     # Verify webhook signature
     try:
         event = stripe_provider.verify_webhook_signature(payload, sig_header)
+        logger.info(f"Stripe webhook signature verified, event type: {event.get('type')}")
     except ValueError as e:
         logger.error(f"Stripe webhook signature verification failed: {str(e)}")
         return jsonify({'error': 'Invalid signature'}), 400
 
-    # Process the event
-    try:
+    # Process the event using asyncio.run() since Flask route is sync
+    async def process_webhook():
         result = await stripe_provider.handle_webhook_event(event)
 
         if result.get('success') and result.get('user_id') and result.get('credits'):
@@ -573,43 +576,48 @@ async def stripe_webhook():
             credits = result['credits']
             payment_id = result.get('internal_payment_id') or result.get('payment_id')
 
+            logger.info(f"Processing Stripe payment: user={user_id}, credits={credits}, payment_id={payment_id}")
+
             # Check if we have a payment record (created when user initiated payment)
             payment = database_service.get_payment(payment_id)
 
+            # For Stripe, we handle crediting directly (not through legacy payment_service)
+            # because payment_service.process_payment_completion uses WeChatAlipay provider
+
+            # Check if already processed (prevent double crediting)
+            if payment and payment.get('status') == 'completed':
+                logger.warning(f"Stripe payment {payment_id} already processed, skipping")
+                return result
+
+            # Add credits directly
+            await credit_service.add_credits(user_id, credits, f"Stripe payment {payment_id}")
+            logger.info(f"Added {credits} credits to user {user_id}")
+
+            # Update payment status in database if record exists
             if payment:
-                # Process payment completion through payment service
-                success, new_balance, error = await payment_service.process_payment_completion(payment_id)
+                database_service.update_payment_status(payment_id, 'completed')
+                logger.info(f"Updated payment {payment_id} status to completed")
 
-                if success:
-                    # Get language code from payment record
-                    language_code = payment.get('language_code', 'zh_CN')
-                    chat_id = payment.get('chat_id')
-                    message_id = payment.get('message_id')
+            # Get new balance
+            user_stats = await credit_service.get_user_stats(user_id)
+            new_balance = user_stats['balance']
 
-                    # Send notification
-                    await send_payment_notification(
-                        user_id, payment_id, credits, new_balance,
-                        chat_id, message_id, language_code
-                    )
-                    logger.info(f"Stripe payment completed: user={user_id}, credits={credits}")
-                else:
-                    logger.error(f"Failed to process Stripe payment completion: {error}")
-            else:
-                # No existing payment record - create one and credit directly
-                # This handles cases where webhook arrives before/without local record
-                logger.warning(f"No local payment record for Stripe session {payment_id}, creating one")
+            # Get notification details from payment record or use defaults
+            language_code = payment.get('language_code', 'zh_CN') if payment else 'zh_CN'
+            chat_id = payment.get('chat_id') if payment else None
+            message_id = payment.get('message_id') if payment else None
 
-                # Add credits directly
-                await credit_service.add_credits(user_id, credits, f"Stripe payment {payment_id}")
+            # Send notification
+            await send_payment_notification(
+                user_id, payment_id, credits, new_balance,
+                chat_id, message_id, language_code
+            )
+            logger.info(f"Stripe payment completed: user={user_id}, credits={credits}, balance={new_balance}")
 
-                # Get new balance and send notification
-                user_stats = await credit_service.get_user_stats(user_id)
-                new_balance = user_stats['balance']
+        return result
 
-                # Send notification directly to user
-                await send_payment_notification(user_id, payment_id, credits, new_balance)
-                logger.info(f"Stripe payment credited directly: user={user_id}, credits={credits}")
-
+    try:
+        result = asyncio.run(process_webhook())
         return jsonify({'status': 'success'}), 200
 
     except Exception as e:
