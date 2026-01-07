@@ -29,6 +29,7 @@ from services.translation_service import TranslationService
 # Import payment providers
 from payments.wechat_alipay_provider import WeChatAlipayProvider
 from payments.telegram_stars_provider import TelegramStarsProvider
+from payments.stripe_provider import StripeProvider
 
 # Import pricing service
 from services.pricing_service import PricingService
@@ -107,6 +108,7 @@ class BotApplication:
         self.pricing_service = PricingService()
         self.payment_provider = WeChatAlipayProvider(self.config)
         self.stars_provider = TelegramStarsProvider(self.config, self.bot, self.translation_service)
+        self.stripe_provider = StripeProvider(self.config)
         self.payment_service = PaymentService(
             self.config,
             self.database_service,
@@ -179,6 +181,7 @@ class BotApplication:
         credit_handlers.translation_service = self.translation_service
         credit_handlers.pricing_service = self.pricing_service
         credit_handlers.database_service = self.database_service
+        credit_handlers.stripe_provider = self.stripe_provider
 
         # Inject into language_handlers
         from handlers import language_handlers

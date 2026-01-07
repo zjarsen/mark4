@@ -96,6 +96,11 @@ class Config:
     ADMIN_TOPUP_PASSWORD = os.getenv('ADMIN_TOPUP_PASSWORD')  # Admin password for testing top-ups
     ADMIN_TOPUP_AMOUNT = int(os.getenv('ADMIN_TOPUP_AMOUNT', '100000'))  # Credits to add for admin top-up
 
+    # Stripe Configuration
+    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+    STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+    STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+
     def __init__(self):
         """Initialize configuration and validate required settings."""
         self.validate()

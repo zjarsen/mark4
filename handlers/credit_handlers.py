@@ -1,6 +1,6 @@
 """Handlers for credit-related operations."""
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import ContextTypes
 import logging
 
@@ -139,7 +139,7 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
             callback_data="reveal_discount_unified"
         )])
 
-        # 3 payment method buttons
+        # 4 payment method buttons
         stars_text = translation_service.get(user_id, 'topup.method_button_stars') if translation_service else "⭐ Telegram Stars"
         keyboard.append([InlineKeyboardButton(stars_text, callback_data="method_stars")])
 
@@ -148,6 +148,10 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         alipay_text = translation_service.get(user_id, 'payment.button_alipay') if translation_service else "💰 支付宝支付"
         keyboard.append([InlineKeyboardButton(alipay_text, callback_data="method_alipay")])
+
+        # Stripe (Card/Apple Pay/Google Pay) button
+        stripe_text = translation_service.get(user_id, 'topup.method_button_stripe') if translation_service else "💳 Card/Apple Pay/Google Pay"
+        keyboard.append([InlineKeyboardButton(stripe_text, callback_data="method_stripe")])
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -194,7 +198,7 @@ async def show_pricing_for_method(
     Show pricing menu for selected payment method (NEW FLOW - Step 2).
 
     Args:
-        payment_method: 'stars', 'alipay', or 'wechat'
+        payment_method: 'stars', 'alipay', 'wechat', or 'stripe'
 
     User flow:
     1. User selected payment method → THIS FUNCTION (shows Lucky Discount + 6 packages)
@@ -214,17 +218,51 @@ async def show_pricing_for_method(
         method_names = {
             'stars': '⭐ Telegram Stars',
             'wechat': '💚 微信支付',
-            'alipay': '💰 支付宝'
+            'alipay': '💰 支付宝',
+            'stripe': '💳 Card/Apple Pay/Google Pay'
         }
         method_name = method_names.get(payment_method, payment_method)
 
         if translation_service:
             message_text = translation_service.get(user_id, f'topup.packages_{payment_method}_intro')
         else:
-            message_text = f"{method_name} 充值\n\n选择充值套餐："
+            if payment_method == 'stripe':
+                message_text = f"{method_name}\n\nSelect amount:"
+            else:
+                message_text = f"{method_name} 充值\n\n选择充值套餐："
 
         # Build keyboard
         keyboard = []
+
+        # Handle Stripe differently - fixed USD packages
+        if payment_method == 'stripe':
+            stripe_packages = pricing_service.get_stripe_packages()
+            for package_id, package_info in stripe_packages.items():
+                price_usd = package_info['price_usd']
+                credits = package_info['credits']
+                button_text = f"${price_usd:.0f} = {credits} credits"
+                keyboard.append([InlineKeyboardButton(
+                    button_text,
+                    callback_data=f"topup_stripe_{package_id}"
+                )])
+
+            # Add back button
+            if translation_service:
+                back_button_text = translation_service.get(user_id, 'topup.button_back')
+            else:
+                back_button_text = "« Back to payment methods"
+
+            keyboard.append([InlineKeyboardButton(back_button_text, callback_data="back_to_payment_methods")])
+
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await query.edit_message_text(
+                message_text,
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )
+            logger.info(f"User {user_id} viewing Stripe pricing menu")
+            return
 
         # Package buttons with method-specific pricing (discount already revealed on method selection page)
         packages = [
@@ -340,14 +378,19 @@ async def create_payment_for_method(
     Args:
         update: Telegram update object
         context: Bot context
-        payment_method: Payment method ('stars', 'alipay', 'wechat')
-        base_amount_cny: Base CNY amount (10, 30, 50, 100, 160, 260)
+        payment_method: Payment method ('stars', 'alipay', 'wechat', 'stripe')
+        base_amount_cny: Base CNY amount (10, 30, 50, 100, 160, 260) or Stripe package ID (100, 500)
     """
     try:
         query = update.callback_query
         user_id = update.effective_user.id
         chat_id = query.message.chat_id
         message_id = query.message.message_id
+
+        # Handle Stripe separately (USD-based, no discount)
+        if payment_method == 'stripe':
+            await _create_stripe_payment(update, context, user_id, chat_id, base_amount_cny)
+            return
 
         # Get discount info
         discount_info = await discount_service.get_current_discount(user_id)
@@ -537,6 +580,130 @@ async def create_payment_for_method(
             await query.edit_message_text(msg)
         except:
             pass
+
+
+# Stripe provider will be injected by bot_application.py
+stripe_provider = None
+
+
+async def _create_stripe_payment(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    user_id: int,
+    chat_id: int,
+    package_id: int
+):
+    """
+    Create Stripe payment and send Mini App button.
+
+    Args:
+        update: Telegram update object
+        context: Bot context
+        user_id: Telegram user ID
+        chat_id: Chat ID
+        package_id: Stripe package ID (100 for $1, 500 for $5)
+    """
+    query = update.callback_query
+
+    # Get package info
+    package_info = pricing_service.get_stripe_package(package_id)
+    if not package_info:
+        logger.error(f"Invalid Stripe package ID: {package_id}")
+        if translation_service:
+            msg = translation_service.get(user_id, 'payment.invalid_package')
+        else:
+            msg = "Invalid package selected"
+        await query.edit_message_text(msg)
+        return
+
+    price_cents = package_info['price_cents']
+    price_usd = package_info['price_usd']
+    credits = package_info['credits']
+
+    # Get user's language
+    user_language = database_service.get_user_language(user_id) if database_service else 'en_US'
+
+    try:
+        # Create Stripe checkout session
+        payment_result = await stripe_provider.create_payment(
+            user_id=user_id,
+            amount=price_cents,
+            currency='usd',
+            credits=credits,
+            return_url='https://telepay.swee.live'
+        )
+
+        session_id = payment_result['payment_id']
+        checkout_url = payment_result['checkout_url']
+
+        # Store payment record in database using session_id for easy webhook lookup
+        database_service.create_payment_record(
+            payment_id=session_id,
+            user_id=user_id,
+            provider='stripe',
+            amount=price_usd,
+            currency='USD',
+            credits_amount=credits,
+            status='pending',
+            payment_url=checkout_url,
+            chat_id=chat_id,
+            language_code=user_language,
+            payment_method='stripe'
+        )
+
+        # Create message with Mini App button
+        if translation_service:
+            message = translation_service.get(
+                user_id,
+                'payment.stripe_checkout_message',
+                amount=f"${price_usd:.0f}",
+                credits=credits
+            )
+            button_text = translation_service.get(user_id, 'payment.stripe_checkout_button')
+        else:
+            message = f"""💳 Card Payment
+
+Amount: ${price_usd:.0f}
+Credits: {credits}
+
+Click the button below to complete payment:"""
+            button_text = "💳 Pay Now"
+
+        # Mini App button that opens Stripe checkout
+        keyboard = [[
+            InlineKeyboardButton(
+                button_text,
+                web_app=WebAppInfo(url=checkout_url)
+            )
+        ]]
+
+        # Add back button
+        if translation_service:
+            back_text = translation_service.get(user_id, 'topup.button_back')
+        else:
+            back_text = "« Back"
+        keyboard.append([InlineKeyboardButton(back_text, callback_data="back_to_payment_methods")])
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await query.edit_message_text(
+            message,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+
+        logger.info(
+            f"Created Stripe payment for user {user_id}: "
+            f"${price_usd:.2f} = {credits} credits, session={session_id}"
+        )
+
+    except Exception as e:
+        logger.error(f"Error creating Stripe payment: {str(e)}", exc_info=True)
+        if translation_service:
+            msg = translation_service.get(user_id, 'payment.stripe_error')
+        else:
+            msg = "Failed to create payment. Please try again."
+        await query.edit_message_text(msg)
 
 
 async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -841,7 +1008,7 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
                 callback_data="reveal_discount_unified"
             )])
 
-            # Add 3 payment method buttons
+            # Add 4 payment method buttons
             stars_text = translation_service.get(user_id, 'topup.method_button_stars') if translation_service else "⭐ Telegram Stars"
             keyboard.append([InlineKeyboardButton(stars_text, callback_data="method_stars")])
 
@@ -850,6 +1017,9 @@ async def handle_lucky_discount_callback(update: Update, context: ContextTypes.D
 
             alipay_text = translation_service.get(user_id, 'payment.button_alipay') if translation_service else "💰 支付宝支付"
             keyboard.append([InlineKeyboardButton(alipay_text, callback_data="method_alipay")])
+
+            stripe_text = translation_service.get(user_id, 'topup.method_button_stripe') if translation_service else "💳 Card/Apple Pay/Google Pay"
+            keyboard.append([InlineKeyboardButton(stripe_text, callback_data="method_stripe")])
 
             reply_markup = InlineKeyboardMarkup(keyboard)
 

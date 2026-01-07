@@ -41,7 +41,21 @@ class PricingService:
             'display_format': '¥{price}',
             'discount_eligible_packages': [30, 50, 100, 160, 260],  # Exclude ¥10
             'name': '微信支付'
+        },
+        'stripe': {
+            # Fixed USD pricing (no formula needed - use STRIPE_PACKAGES instead)
+            'formula': lambda base: base,  # Pass-through (not used for Stripe)
+            'currency': 'USD',
+            'display_format': '${price:.2f}',
+            'discount_eligible_packages': [],  # No discount for Stripe
+            'name': 'Card/Apple Pay/Google Pay'
         }
+    }
+
+    # Stripe-specific package definitions (fixed USD pricing)
+    STRIPE_PACKAGES = {
+        100: {'price_cents': 100, 'price_usd': 1.00, 'credits': 30},    # $1 = 30 credits
+        500: {'price_cents': 500, 'price_usd': 5.00, 'credits': 250},   # $5 = 250 credits
     }
 
     def __init__(self):
@@ -171,4 +185,27 @@ class PricingService:
             Formatted price string (e.g., "46 ⭐" or "¥32")
         """
         config = self.get_pricing_config(payment_method)
+        if payment_method == 'stripe':
+            return config['display_format'].format(price=price)
         return config['display_format'].format(price=int(price))
+
+    def get_stripe_packages(self) -> dict:
+        """
+        Get Stripe package definitions.
+
+        Returns:
+            Dictionary of Stripe packages with price and credit info
+        """
+        return self.STRIPE_PACKAGES
+
+    def get_stripe_package(self, package_id: int) -> dict:
+        """
+        Get a specific Stripe package by ID.
+
+        Args:
+            package_id: Package ID (100 for $1, 500 for $5)
+
+        Returns:
+            Package dictionary with price_cents, price_usd, credits
+        """
+        return self.STRIPE_PACKAGES.get(package_id)
