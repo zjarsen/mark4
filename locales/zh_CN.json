@@ -62,7 +62,8 @@
   "trial": {
     "available": "🎁 *免费体验可用！*\n\n这是您的 *免费体验次数*\n• 使用后 *2天内* 自动重置\n• 无需消耗积分\n\n请上传照片，开始体验AI魔法～",
     "cooldown": "⏰ 免费次数冷却中\n\n下次可用：*{next_available}*\n\n💳 当前方案：\n• 您的余额：*{balance}* 积分\n• 本次需要：*10积分*\n\n💡 充值可 *立即使用*，或等待免费次数重置",
-    "bra_daily_limit": "哎呀！你今天的粉色蕾丝内衣免费使用次数已经用完啦！😅\n\n📊 今日使用情况:\n   • 已使用: *{current_usage}/{limit}* 次\n   • 重置时间: *明天凌晨 00:00* (GMT+8)\n\n💡 小贴士：\n   • 其他付费功能（脱到精光、视频处理等）*没有每日限制*\n   • 有积分就能 *随时使用* 哦！\n\n💎 或者升级 *VIP* 享受 *无限使用*！\n\n明天见！💕"
+    "bra_daily_limit": "哎呀！你今天的粉色蕾丝内衣免费使用次数已经用完啦！😅\n\n📊 今日使用情况:\n   • 已使用: *{current_usage}/{limit}* 次\n   • 重置时间: *明天凌晨 00:00* (GMT+8)\n\n💡 小贴士：\n   • 其他付费功能（脱到精光、视频处理等）*没有每日限制*\n   • 有积分就能 *随时使用* 哦！\n\n💎 或者升级 *VIP* 享受 *无限使用*！\n\n明天见！💕",
+    "cooldown_info": "使用后 {days}天{hours}小时 后可再次免费使用"
   },
   "payment": {
     "pending": "⏰ 等待支付确认\n\n请在 *3分钟内* 完成支付\n💡 _若支付宝显示「限制收款」，重新发起即可切换可用的二维码_\n⚠️ _支付完成后确认界面可能无响应，请返回机器人查看充值成功消息_\n订单将在超时后 *自动取消*\n\n📝 订单信息：\n• 订单号：`{payment_id}`\n• 金额：*¥{amount}*\n• 将获得：*{credits}* 积分\n\n💡 支付完成后积分 *自动到账*",
@@ -79,7 +80,7 @@
     "webhook_html_title": "支付处理中",
     "webhook_html_heading": "支付处理中",
     "webhook_html_body": "您的支付正在处理中，积分将在确认后自动到账。",
-    "webhook_html_return": "请返回 Telegram bot 查看您的余额。",
+    "webhook_html_return": "请返回机器人查看您的余额。",
     "webhook_html_footer": "此页面可以关闭",
     "creation_error": "创建支付订单失败: {error}",
     "creation_failed": "创建支付失败，请稍后重试",
@@ -87,12 +88,12 @@
     "invoice_title_stars": "充值 {credits} 积分",
     "invoice_description_stars": "获得 {credits} 积分，永久有效",
     "price_label_stars": "{credits}积分",
-    "stars_invoice_sent": "✨ 已发送 Telegram Stars 支付请求\n\n获得 {credits} 积分\n支付金额：{stars} ⭐\n\n请在弹出窗口中完成支付",
+    "stars_invoice_sent": "✨ 已发送星星支付请求\n\n获得 {credits} 积分\n支付金额：{stars} ⭐\n\n请在弹出窗口中完成支付",
     "stars_success": "✅ 支付成功！\n\n获得积分：{credits}\n支付金额：{stars} ⭐\n当前余额：{balance} 积分\n\n感谢您的充值！",
     "processing_error": "支付处理失败，请联系客服",
     "credit_failed": "充值处理失败，请联系客服",
-    "stripe_checkout_message": "💳 国际支付\n\n✅ 支持 Apple Pay · Google Pay · Visa/MasterCard\n\n💰 金额：{amount}\n🎁 积分：{credits}\n\n👇 点击下方按钮完成支付",
-    "stripe_checkout_vip_message": "💳 国际支付\n\n✅ 支持 Apple Pay · Google Pay · Visa/MasterCard\n\n👑 套餐：{vip_tier}\n💰 金额：{amount}\n\n👇 点击下方按钮完成支付",
+    "stripe_checkout_message": "💳 国际支付\n\n✅ 支持苹果支付·谷歌支付·信用卡\n\n💰 金额：{amount}\n🎁 积分：{credits}\n\n👇 点击下方按钮完成支付",
+    "stripe_checkout_vip_message": "💳 国际支付\n\n✅ 支持苹果支付·谷歌支付·信用卡\n\n👑 套餐：{vip_tier}\n💰 金额：{amount}\n\n👇 点击下方按钮完成支付",
     "stripe_checkout_button": "💳 立即支付",
     "stripe_error": "创建支付失败，请重试。",
     "stripe_success": "✅ 支付成功！\n\n获得积分：{credits}\n当前余额：{balance} 积分\n\n感谢您的充值！",
@@ -102,13 +103,13 @@
   "topup": {
     "method_selection_intro": "💫 选择您的支付方式\n\n请选择您偏好的支付方式：",
     "method_selection_with_discount": "🎰 *超级幸运日！* 🎰\n\n🔥 您的专属折扣：{tier} {emoji} - {off}折！\n💰 *全场可省{savings_percent}%* - 所有支付方式通用\n⏰ _今日24:00前有效，手慢无！_\n\n━━━━━━━━━━━━━━━━━\n\n💫 选择支付方式，立即享受折扣：",
-    "method_selection_no_discount": "💫 *选择您的支付方式*\n\n支持以下支付方式：\n⭐ Telegram Stars - 无手续费\n💚 微信支付 - 快速到账\n💰 支付宝 - 安全便捷\n\n请选择您偏好的支付方式：",
-    "method_button_stars": "⭐ Telegram Stars",
-    "packages_stars_intro": "⭐ Telegram Stars 充值\n\n选择充值套餐：",
+    "method_selection_no_discount": "💫 *选择您的支付方式*\n\n支持以下支付方式：\n⭐ 星星支付 - 无手续费\n💚 微信支付 - 快速到账\n💰 支付宝 - 安全便捷\n\n请选择您偏好的支付方式：",
+    "method_button_stars": "⭐ 星星支付",
+    "packages_stars_intro": "⭐ 星星充值\n\n选择充值套餐：",
     "packages_alipay_intro": "💰 支付宝充值\n\n选择充值套餐：",
     "packages_wechat_intro": "💚 微信支付充值\n\n选择充值套餐：",
-    "packages_stripe_intro": "💳 国际支付\n\n✅ 支持 Apple Pay · Google Pay · Visa/MasterCard\n🌍 美元结算 · 即时到账\n\n选择套餐：",
-    "method_button_stripe": "💳 卡/Google/Apple Pay",
+    "packages_stripe_intro": "💳 国际支付\n\n✅ 支持苹果支付·谷歌支付·信用卡\n🌍 美元结算·即时到账\n\n选择套餐：",
+    "method_button_stripe": "💳 信用卡/谷歌/苹果支付",
     "stripe_button_credits": "${price} = {credits}积分",
     "stripe_button_credits_discount": "💰 {credits}积分 ${discounted_price} 🎁（原价${original_price}）",
     "stripe_button_vip": "${price} = 永久VIP ⭐⭐⭐",
@@ -152,18 +153,18 @@
   },
   "discount": {
     "button_hot": "🔥💰 点我领取今日超级折扣！ 💰🔥",
-    "button_normal": "🎰 每日幸运折扣 - 点击查看",
-    "button_revealed": "{emoji} {tier} - {off}折扣已激活",
+    "button_normal": "🎰 每日幸运折扣，点击查看",
+    "button_revealed": "{emoji} {tier}，{off}折扣已激活",
     "celebration_inline": "🎉 恭喜！抽到{tier}折扣 {emoji}",
-    "celebration_ssr": "🎊🎊🎊 *恭喜恭喜！神级运气！* 🎊🎊🎊\n\n*您抽到了 SSR 神级折扣！*\n🔥🔥 *全场5折优惠* 🔥🔥\n\n💰 *永久VIP 仅需 ¥87*（原价¥173）\n💎 *所有套餐5折* - 省钱一半！\n\n⏰ 限今日24:00前有效 - *抓紧时间抢购！*\n\n_立即选择套餐，享受神级折扣！_",
-    "celebration_sr": "🎉🎉🎉 *恭喜您！超级幸运！* 🎉🎉🎉\n\n*您抽到了 SR 超级折扣！*\n⭐⭐ *全场7折优惠* ⭐⭐\n\n💰 *永久VIP 仅需 ¥121*（原价¥173）\n💎 *所有套餐7折* - 超值划算！\n\n⏰ 限今日24:00前有效 - *机不可失！*\n\n_立即选择套餐，享受超级折扣！_",
-    "revealed_r": "✨ *今日运气不错！R级折扣*\n\n全场 *85折*，省 *15%*！\n💡 _提示：连续使用可提升折扣等级哦_\n\n💰 *永久VIP 仅需 ¥147*（原价¥173）\n\n⏰ 限今日有效 - *立即使用！*",
-    "revealed_c": "🍀 *今日折扣已开启！C级折扣*\n\n全场 *95折*，虽然不多但也是优惠！\n🎯 _坚持使用，下次可能抽到5折哦_\n\n💰 *永久VIP 仅需 ¥164*（原价¥173）\n\n⏰ 限今日有效 - *不用白不用！*",
+    "celebration_ssr": "🎊🎊🎊 *恭喜恭喜！神级运气！* 🎊🎊🎊\n\n*您抽到了神级折扣！*\n🔥🔥 *全场5折优惠* 🔥🔥\n\n💰 *永久VIP 仅需 ¥87*（原价¥173）\n💎 *所有套餐5折*，省钱一半！\n\n⏰ 限今日24:00前有效，*抓紧时间抢购！*\n\n_立即选择套餐，享受神级折扣！_",
+    "celebration_sr": "🎉🎉🎉 *恭喜您！超级幸运！* 🎉🎉🎉\n\n*您抽到了超级折扣！*\n⭐⭐ *全场7折优惠* ⭐⭐\n\n💰 *永久VIP 仅需 ¥121*（原价¥173）\n💎 *所有套餐7折*，超值划算！\n\n⏰ 限今日24:00前有效，*机不可失！*\n\n_立即选择套餐，享受超级折扣！_",
+    "revealed_r": "✨ *今日运气不错！*\n\n全场 *85折*，省 *15%*！\n💡 _提示：连续使用可提升折扣等级哦_\n\n💰 *永久VIP 仅需 ¥147*（原价¥173）\n\n⏰ 限今日有效，*立即使用！*",
+    "revealed_c": "🍀 *今日折扣已开启！*\n\n全场 *95折*，虽然不多但也是优惠！\n🎯 _坚持使用，下次可能抽到5折哦_\n\n💰 *永久VIP 仅需 ¥164*（原价¥173）\n\n⏰ 限今日有效，*不用白不用！*",
     "already_revealed": "⚡ *您今日的折扣已激活！*\n\n当前折扣：*{tier}* ({off}折)\n有效期至：*今日24:00* ⏰\n\n💡 所有套餐价格已显示折扣后价格\n🔥 _限时优惠，抓紧充值！_\n\n━━━━━━━━━━━━━━━━━\n选择下方套餐，立即享受折扣！",
-    "tier_ssr": "SSR神级运气",
-    "tier_sr": "SR超级运气",
-    "tier_r": "R运气不错",
-    "tier_c": "C普通运气"
+    "tier_ssr": "神级运气",
+    "tier_sr": "超级运气",
+    "tier_r": "运气不错",
+    "tier_c": "普通运气"
   },
   "queue": {
     "status": "⏳ 已进入处理队列\n\n您的位置：第 *{position}* 位\n队列总数：*{total}* 人\n\n💡 提示：点击下方按钮可随时查看 *最新排位*",
@@ -243,13 +244,29 @@
     "admin_topup_success": "管理员已充值",
     "menu_description": "显示主菜单"
   },
-  "trial": {
-    "cooldown_info": "使用后 {days}天{hours}小时 后可再次免费使用"
-  },
   "transaction": {
     "free_bra_usage": "免费使用: 粉色蕾丝内衣"
   },
   "admin": {
     "topup_description": "管理员测试充值"
+  },
+  "onboarding": {
+    "title": "🔗 保持联系，快速设置",
+    "description": "⚠️ 此类机器人经常被封禁。\n\n为确保您不会失去访问权限，并且随时能找到我们，请完成以下2个简单步骤：",
+    "step1_label": "第1步：关注我们的公告频道",
+    "step1_desc": "如果本机器人被封，我们会在频道发布新机器人链接",
+    "step1_button": "关注频道",
+    "step2_label": "第2步：启动备用机器人",
+    "step2_desc": "当我们迁移到新机器人时会直接通知您",
+    "step2_button": "启动备用机器人",
+    "verify_button": "完成验证并继续",
+    "error_channel": "❌ 请先关注 @zuiqiangtuoyi，这样您就不会失去我们！",
+    "error_backup_bot": "❌ 请先启动 @HumanityBackupBot，这样我们可以随时联系到您！",
+    "success": "设置完成！您现在不会再失去我们了，尽情使用吧！",
+    "success_instruction": "请从主菜单选择功能。"
+  },
+  "backup_bot": {
+    "welcome": "你好 {name}！\n\n这是备用通知机器人。\n\n如果我们的主机器人被封禁，我们会在这里通知你新机器人的链接，这样你就不会失去访问权限。\n\n你不需要做任何其他事情，只需保留这个聊天，你就会收到重要更新。\n\n感谢你保持联系！",
+    "help": "**备用机器人帮助**\n\n此机器人作为备用通知渠道。\n\n如果我们的主服务机器人被封禁，我们会在这里发送新机器人的链接。\n\n**命令：**\n/start - 启动机器人\n/help - 显示此帮助信息\n\n你不需要做任何事情，只需保持这个聊天打开！"
   }
 }

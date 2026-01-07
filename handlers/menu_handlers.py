@@ -94,6 +94,13 @@ async def handle_image_processing(
         from datetime import datetime
         import pytz
 
+        # Check onboarding requirement first
+        from handlers.onboarding_handlers import is_onboarding_required, show_onboarding_flow
+        if is_onboarding_required(user_id):
+            logger.info(f"[IMAGE_PROCESSING] User {user_id} needs to complete onboarding")
+            await show_onboarding_flow(update, context, user_id, source_feature='image')
+            return
+
         # Check if user is already processing
         if state_manager.is_state(user_id, 'processing'):
             logger.info(f"[IMAGE_PROCESSING] User {user_id} already processing, showing error")
@@ -184,6 +191,13 @@ async def handle_video_processing(
     """
     try:
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+        # Check onboarding requirement first
+        from handlers.onboarding_handlers import is_onboarding_required, show_onboarding_flow
+        if is_onboarding_required(user_id):
+            logger.info(f"[VIDEO_PROCESSING] User {user_id} needs to complete onboarding")
+            await show_onboarding_flow(update, context, user_id, source_feature='video')
+            return
 
         # Check if user is already processing
         if state_manager.is_state(user_id, 'processing'):

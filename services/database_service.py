@@ -216,6 +216,30 @@ class DatabaseService:
             except Exception:
                 pass  # Column already exists
 
+            # Migration: Add onboarding tracking columns
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN DEFAULT 0")
+                logger.info("Added onboarding_completed column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN onboarding_completed_at TIMESTAMP")
+                logger.info("Added onboarding_completed_at column to users table")
+            except Exception:
+                pass  # Column already exists
+
+            # Backup bot users table - tracks users who started the backup bot
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS backup_bot_users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    source_bot_id TEXT NOT NULL,
+                    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, source_bot_id)
+                )
+            """)
+
             # Feature pricing table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS feature_pricing (
@@ -920,6 +944,104 @@ class DatabaseService:
 
         except Exception as e:
             logger.error(f"Error setting language for user {user_id}: {str(e)}")
+            return False
+
+    # Onboarding operations
+    def is_onboarding_complete(self, user_id: int) -> bool:
+        """
+        Check if user has completed onboarding.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            True if onboarding is complete
+        """
+        user = self.get_user(user_id)
+        return bool(user.get('onboarding_completed', 0)) if user else False
+
+    def mark_onboarding_complete(self, user_id: int) -> bool:
+        """
+        Mark user's onboarding as complete.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            True if successful
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                UPDATE users
+                SET onboarding_completed = 1,
+                    onboarding_completed_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = ?
+            """, (user_id,))
+
+            conn.commit()
+            logger.info(f"Marked onboarding complete for user {user_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error marking onboarding complete for user {user_id}: {str(e)}")
+            return False
+
+    def check_user_started_backup_bot(self, user_id: int, source_bot_id: str) -> bool:
+        """
+        Check if user has started the backup bot from a specific source bot.
+
+        Args:
+            user_id: User ID
+            source_bot_id: The bot ID that referred the user
+
+        Returns:
+            True if user has started the backup bot
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT 1 FROM backup_bot_users
+                WHERE user_id = ? AND source_bot_id = ?
+            """, (user_id, source_bot_id))
+
+            return cursor.fetchone() is not None
+
+        except Exception as e:
+            logger.error(f"Error checking backup bot status for user {user_id}: {str(e)}")
+            return False
+
+    def record_backup_bot_start(self, user_id: int, source_bot_id: str) -> bool:
+        """
+        Record that a user started the backup bot from a specific source.
+
+        Args:
+            user_id: User ID
+            source_bot_id: The bot ID that referred the user
+
+        Returns:
+            True if successful
+        """
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                INSERT OR IGNORE INTO backup_bot_users (user_id, source_bot_id)
+                VALUES (?, ?)
+            """, (user_id, source_bot_id))
+
+            conn.commit()
+            logger.info(f"Recorded backup bot start for user {user_id} from {source_bot_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error recording backup bot start for user {user_id}: {str(e)}")
             return False
 
     def close(self):

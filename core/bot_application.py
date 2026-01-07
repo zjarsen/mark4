@@ -187,6 +187,12 @@ class BotApplication:
         from handlers import language_handlers
         language_handlers.translation_service = self.translation_service
 
+        # Inject into onboarding_handlers
+        from handlers import onboarding_handlers
+        onboarding_handlers.database_service = self.database_service
+        onboarding_handlers.config = self.config
+        onboarding_handlers.translation_service = self.translation_service
+
         # Store services in bot_data for access from handlers
         self.app.bot_data['workflow_service'] = self.workflow_service
         self.app.bot_data['state_manager'] = self.state_manager
@@ -398,6 +404,15 @@ class BotApplication:
             CallbackQueryHandler(
                 open_topup_menu_callback,
                 pattern="^open_topup_menu$"
+            )
+        )
+
+        # Onboarding verify callback handler
+        from handlers.callback_handlers import onboarding_verify_callback
+        self.app.add_handler(
+            CallbackQueryHandler(
+                onboarding_verify_callback,
+                pattern="^onboarding_verify$"
             )
         )
 

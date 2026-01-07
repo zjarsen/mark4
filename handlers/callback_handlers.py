@@ -480,3 +480,15 @@ async def open_topup_menu_callback(update: Update, context: ContextTypes.DEFAULT
         else:
             msg = "打开充值菜单失败，请稍后重试"
         await query.answer(msg, show_alert=True)
+
+
+async def onboarding_verify_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle callback for verifying onboarding completion.
+
+    Args:
+        update: Telegram Update
+        context: Telegram Context
+    """
+    from handlers.onboarding_handlers import handle_onboarding_verify
+    await handle_onboarding_verify(update, context)

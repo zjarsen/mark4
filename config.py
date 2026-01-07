@@ -101,6 +101,11 @@ class Config:
     STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
     STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 
+    # Onboarding Configuration
+    BOT_ID = os.getenv('BOT_ID', 'default_bot')  # Unique ID for this bot instance
+    REQUIRED_CHANNEL = os.getenv('REQUIRED_CHANNEL', '@zuiqiangtuoyi')
+    BACKUP_BOT_USERNAME = os.getenv('BACKUP_BOT_USERNAME', 'HumanityBackupBot')
+
     def __init__(self):
         """Initialize configuration and validate required settings."""
         self.validate()
