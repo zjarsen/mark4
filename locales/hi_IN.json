@@ -123,7 +123,7 @@
     "packages_stars_intro": "⭐ Telegram Stars Top-up\n\nPackage choose karo:",
     "packages_alipay_intro": "💰 Alipay Top-up\n\nPackage choose karo:",
     "packages_wechat_intro": "💚 WeChat Pay Top-up\n\nPackage choose karo:",
-    "method_button_stripe": "💳 Card Payment",
+    "method_button_stripe": "💳 Card/Google/Apple Pay",
     "packages_stripe_intro": "💳 Card Payment\n\n✅ Apple Pay · Google Pay · Visa/MasterCard supported!\n💳 USD pricing · Turant delivery\n\nApna package choose karo:",
     "stripe_button_credits": "${price} = {credits} credits",
     "stripe_button_credits_discount": "💰 {credits} credits ${discounted_price} 🎁 (Pehle ${original_price})",

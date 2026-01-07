@@ -109,7 +109,7 @@
     "packages_alipay_intro": "💰 支付寶充值\n\n選擇充值套餐：",
     "packages_wechat_intro": "💚 微信支付充值\n\n選擇充值套餐：",
     "packages_stripe_intro": "💳 信用卡/行動支付\n\n✅ 支援 Apple Pay · Google Pay · Visa/MasterCard\n🔒 安全加密 · 即時到帳\n\n選擇套餐，馬上開始使用：",
-    "method_button_stripe": "💳 信用卡付款",
+    "method_button_stripe": "💳 卡/Google/Apple Pay",
     "stripe_button_credits": "US${price} = {credits}積分",
     "stripe_button_credits_discount": "💰 {credits}積分 US${discounted_price} 🎁（原價US${original_price}）",
     "stripe_button_vip": "US${price} = 永久VIP ⭐⭐⭐",

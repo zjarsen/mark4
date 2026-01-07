@@ -140,8 +140,8 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
         )])
 
         # 4 payment method buttons
-        # Stripe (Card Payment) button - first for international users
-        stripe_text = translation_service.get(user_id, 'topup.method_button_stripe') if translation_service else "💳 Card Payment"
+        # Stripe (Card/Google/Apple Pay) button - first for international users
+        stripe_text = translation_service.get(user_id, 'topup.method_button_stripe') if translation_service else "💳 Card/Google/Apple Pay"
         keyboard.append([InlineKeyboardButton(stripe_text, callback_data="method_stripe")])
 
         stars_text = translation_service.get(user_id, 'topup.method_button_stars') if translation_service else "⭐ Telegram Stars"

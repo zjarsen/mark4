@@ -123,7 +123,7 @@
     "packages_stars_intro": "⭐ شحن Telegram Stars\n\nاختر الباقة:",
     "packages_alipay_intro": "💰 شحن Alipay\n\nاختر الباقة:",
     "packages_wechat_intro": "💚 شحن WeChat Pay\n\nاختر الباقة:",
-    "method_button_stripe": "💳 الدفع بالبطاقة",
+    "method_button_stripe": "💳 بطاقة/Google/Apple Pay",
     "packages_stripe_intro": "💳 الدفع بالبطاقة\n\n✅ Apple Pay · Google Pay · Visa/MasterCard\n💵 تسعير بالدولار · وصول فوري للنقاط\n\n🔥 اختر باقتك:",
     "stripe_button_credits": "${price} = *{credits}* نقطة",
     "stripe_button_credits_discount": "💰 *{credits}* نقطة ${discounted_price} 🎁 (كان ${original_price})",

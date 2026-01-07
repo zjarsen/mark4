@@ -123,7 +123,7 @@
     "packages_alipay_intro": "💰 Alipay Top-up\n\nChoose a package:",
     "packages_wechat_intro": "💚 WeChat Pay Top-up\n\nChoose a package:",
     "packages_stripe_intro": "💳 Card Payment\n\n✅ Apple Pay · Google Pay · Visa/MasterCard\n💳 USD pricing · Instant delivery\n\nSelect a package:",
-    "method_button_stripe": "💳 Card Payment",
+    "method_button_stripe": "💳 Card/Google/Apple Pay",
     "stripe_button_credits": "${price} = {credits} credits",
     "stripe_button_credits_discount": "💰 {credits} credits ${discounted_price} 🎁 (Was ${original_price})",
     "stripe_button_vip": "${price} = Lifetime VIP ⭐⭐⭐",

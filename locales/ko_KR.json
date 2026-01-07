@@ -123,7 +123,7 @@
     "packages_stars_intro": "⭐ Telegram Stars 충전\n\n충전 패키지 선택:",
     "packages_alipay_intro": "💰 Alipay 충전\n\n충전 패키지 선택:",
     "packages_wechat_intro": "💚 WeChat Pay 충전\n\n충전 패키지 선택:",
-    "method_button_stripe": "💳 카드 결제",
+    "method_button_stripe": "💳 카드/Google/Apple Pay",
     "packages_stripe_intro": "💳 카드 결제\n\n✅ Apple Pay · Google Pay · Visa/MasterCard\n💳 간편 결제 · 즉시 지급\n\n충전 패키지를 선택하세요:",
     "stripe_button_credits": "${price} = {credits} 포인트",
     "stripe_button_credits_discount": "💰 {credits} 포인트 ${discounted_price} 🎁 (원가 ${original_price})",
