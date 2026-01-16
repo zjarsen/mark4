@@ -62,7 +62,8 @@ class NotificationService:
             message = await bot.send_message(
                 chat_id=chat_id,
                 text=text,
-                reply_markup=reply_markup
+                reply_markup=reply_markup,
+                parse_mode="Markdown"
             )
 
             logger.info(f"Sent queue position to user {chat_id}: {position}/{total}")
@@ -109,7 +110,7 @@ class NotificationService:
             ]]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
-            await message.edit_text(text=text, reply_markup=reply_markup)
+            await message.edit_text(text=text, reply_markup=reply_markup, parse_mode="Markdown")
 
             logger.debug(f"Updated queue position: {position}/{total}")
 
@@ -130,7 +131,7 @@ class NotificationService:
             else:
                 text = "处理中..."
 
-            await bot.send_message(chat_id=chat_id, text=text)
+            await bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown")
             logger.debug(f"Sent processing status to user {chat_id}")
 
         except Exception as e:
@@ -150,7 +151,7 @@ class NotificationService:
             else:
                 message = "🎉 创作完成！\n\n⏰ 作品将在 *5分钟后* 自动清理\n请 *及时保存* 到相册～\n\n💡 提示：长按图片即可保存"
 
-            await bot.send_message(chat_id=chat_id, text=message)
+            await bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
             logger.info(f"Sent completion notification to user {chat_id}")
 
         except Exception as e:
@@ -294,7 +295,8 @@ class NotificationService:
             message = await bot.send_message(
                 chat_id=chat_id,
                 text=text,
-                reply_markup=reply_markup
+                reply_markup=reply_markup,
+                parse_mode="Markdown"
             )
 
             logger.info(
@@ -324,7 +326,7 @@ class NotificationService:
             else:
                 text = "❌ *系统繁忙*\n\n请稍后重试\n如问题持续出现，请 *联系客服*"
 
-            await bot.send_message(chat_id=chat_id, text=text)
+            await bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown")
             logger.debug(f"Sent error message to user {chat_id}")
 
         except Exception as e:
@@ -359,7 +361,7 @@ class NotificationService:
             else:
                 text = f"当前队列总人数为：*{total}*"
 
-            await bot.send_message(chat_id=chat_id, text=text)
+            await bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown")
 
             logger.debug(f"Sent queue total to user {chat_id}: {total}")
 

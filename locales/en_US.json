@@ -42,6 +42,56 @@
     "style_b_name": "Undress + Dripping",
     "style_c_name": "Undress + Explicit"
   },
+  "styles": {
+    "i2i_1": {
+      "name": "Pink Lace Lingerie",
+      "button": "🎁 Pink Lace Lingerie ✨Always FREE✨"
+    },
+    "i2i_2": {
+      "name": "Fully Naked",
+      "button": "Fully Naked (10 credits)"
+    },
+    "i2i_3": {
+      "name": "Cum Dripping Pussy",
+      "button": "Cum Dripping Pussy (10 credits)"
+    },
+    "i2i_4": {
+      "name": "Cum in Mouth",
+      "button": "Cum in Mouth (10 credits)"
+    },
+    "i2i_5": {
+      "name": "Ass Up + Cum Drip",
+      "button": "Ass Up + Cum Drip (10 credits)"
+    },
+    "i2i_6": {
+      "name": "Naked Blowjob Facial",
+      "button": "Naked Blowjob Facial (10 credits)"
+    },
+    "i2i_7": {
+      "name": "Big Dick Girl",
+      "button": "Big Dick Girl (10 credits)"
+    },
+    "i2i_8": {
+      "name": "Cowgirl Sex",
+      "button": "Cowgirl Sex (10 credits)"
+    },
+    "i2i_9": {
+      "name": "Upskirt No Panties",
+      "button": "Upskirt No Panties (10 credits)"
+    },
+    "i2v_1": {
+      "name": "Undress + Bounce",
+      "button": "Undress + Bounce (30 credits)"
+    },
+    "i2v_2": {
+      "name": "Undress + Dripping",
+      "button": "Undress + Dripping (30 credits)"
+    },
+    "i2v_3": {
+      "name": "Undress + Explicit",
+      "button": "Undress + Explicit (30 credits)"
+    }
+  },
   "workflow": {
     "name_image_bra": "Pink Lace Lingerie",
     "name_image_undress": "Full Undress",
@@ -226,7 +276,8 @@
     "refresh_queue": "Refresh Queue",
     "confirm": "✅ Confirm",
     "cancel": "❌ Cancel",
-    "back_to_menu": "🏠 Back to Menu"
+    "back_to_menu": "🏠 Back to Menu",
+    "back_to_style_selection": "🔙 Back to Style Selection"
   },
   "features": {
     "not_implemented": "This feature is still in development"

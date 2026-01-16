@@ -34,33 +34,16 @@ class PaymentStatus(Enum):
 # Only technical constants remain below.
 # ============================================================================
 
-# Demo video links (technical URLs)
-DEMO_LINK_BRA = "https://t.me/zuiqiangtuoyi/25"
-DEMO_LINK_UNDRESS = "https://t.me/zuiqiangtuoyi/29"
-
 # Payment timeout duration (in seconds)
 PAYMENT_TIMEOUT_SECONDS = 180  # 3 minutes
 
-# Workflow file names
-WORKFLOW_IMAGE_PROCESSING = "i2i_undress_final_v5.json"
-
-# Image workflow file names
-WORKFLOW_IMAGE_STYLE_BRA = "i2i_bra_v5.json"
-WORKFLOW_IMAGE_STYLE_UNDRESS = "i2i_undress_final_v5.json"
-
-WORKFLOW_VIDEO_PROCESSING = "video_processing.json"  # Future
-WORKFLOW_I2I_OLD = "i2i_1.json"  # Old workflow (deprecated)
-
-# Video workflow file names
-WORKFLOW_VIDEO_STYLE_A = "i2v_undress_douxiong.json"
-WORKFLOW_VIDEO_STYLE_B = "i2v_undress_liujing.json"
-WORKFLOW_VIDEO_STYLE_C = "i2v_undress_shejing.json"
-
 # Node IDs in workflows
-NODE_LOAD_IMAGE = "7"  # Image workflow
-NODE_SAVE_IMAGE = "27"  # Image workflow
-NODE_LOAD_IMAGE_VIDEO = "267"  # Video workflows
-NODE_SAVE_VIDEO = "245"  # Video workflows
+NODE_LOAD_IMAGE = "7"       # i2i workflows - input node
+NODE_SAVE_IMAGE = "27"      # i2i workflows - output node
+NODE_LOAD_IMAGE_VIDEO = "267"  # i2v workflows - input node
+NODE_SAVE_VIDEO = "245"     # i2v workflows - output node
+
+# Note: Workflow files and style config are now in core/styles.py
 
 # Top-up packages (amount in CNY: credits)
 TOPUP_PACKAGES = {

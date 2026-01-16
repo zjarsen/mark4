@@ -1,16 +1,16 @@
 {
   "1": {
     "inputs": {
-      "ckpt_name": "Qwen-Rapid-AIO-NSFW-v5.safetensors"
+      "ckpt_name": "Qwen-Rapid-AIO-NSFW-v19.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
-      "title": "Load Checkpoint"
+      "title": "Checkpoint加载器（简易）"
     }
   },
   "2": {
     "inputs": {
-      "seed": 1038486306173946,
+      "seed": 1075309020915162,
       "steps": 8,
       "cfg": 1,
       "sampler_name": "euler_ancestral",
@@ -35,12 +35,12 @@
     },
     "class_type": "KSampler",
     "_meta": {
-      "title": "KSampler"
+      "title": "K采样器"
     }
   },
   "3": {
     "inputs": {
-      "prompt": "脱掉所有女性人物的所有衣服，完全裸体，超级细的腰，超级模特的腰臀比，露出巨大的互相靠近的乳房，和光滑白嫩的外阴",
+      "prompt": "这个女人全身裸露，女上位的姿势在跟一个男人性交，她性感地看向镜头，揉捏着自己巨大的裸露的胸部，从下体流出少量白色精液",
       "clip": [
         "1",
         1
@@ -89,16 +89,16 @@
     },
     "class_type": "VAEDecode",
     "_meta": {
-      "title": "VAE Decode"
+      "title": "VAE解码"
     }
   },
   "7": {
     "inputs": {
-      "image": "screenshot-20250924-173737.png"
+      "image": "2.png"
     },
     "class_type": "LoadImage",
     "_meta": {
-      "title": "Load Image"
+      "title": "加载图像"
     }
   },
   "9": {
@@ -115,7 +115,7 @@
     },
     "class_type": "EmptyLatentImage",
     "_meta": {
-      "title": "Empty Latent Image"
+      "title": "空Latent图像"
     }
   },
   "17": {
@@ -141,7 +141,7 @@
     },
     "class_type": "ImageScaleToTotalPixels",
     "_meta": {
-      "title": "Scale Image to Total Pixels"
+      "title": "缩放图像（像素）"
     }
   },
   "27": {
@@ -154,38 +154,42 @@
     },
     "class_type": "SaveImage",
     "_meta": {
-      "title": "Save Image"
+      "title": "保存图像"
     }
   },
-  "31": {
+  "33": {
     "inputs": {
-      "direction": "right",
-      "match_image_size": true,
+      "text1": "before",
+      "text2": "after",
+      "footer_height": 100,
+      "font_name": "Caveat-VariableFont_wght.ttf",
+      "font_size": 50,
+      "mode": "normal",
+      "border_thickness": 20,
       "image1": [
-        "5",
+        "7",
         0
       ],
       "image2": [
-        "7",
+        "5",
         0
       ]
     },
-    "class_type": "ImageConcanate",
+    "class_type": "CR Simple Image Compare",
     "_meta": {
-      "title": "Image Concatenate"
+      "title": "📱 CR Simple Image Compare"
     }
   },
-  "32": {
+  "34": {
     "inputs": {
-      "filename_prefix": "ComfyUI",
       "images": [
-        "31",
+        "33",
         0
       ]
     },
-    "class_type": "SaveImage",
+    "class_type": "PreviewImage",
     "_meta": {
-      "title": "Save Image"
+      "title": "预览图像"
     }
   }
 }

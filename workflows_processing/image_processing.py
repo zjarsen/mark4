@@ -14,8 +14,8 @@ class ImageProcessingWorkflow(BaseWorkflow):
 
     def get_workflow_filename(self) -> str:
         """Return workflow JSON filename."""
-        from core.constants import WORKFLOW_IMAGE_PROCESSING
-        return WORKFLOW_IMAGE_PROCESSING
+        from core.styles import get_style
+        return get_style('i2i_2').workflow_file  # Default to undress style
 
     def get_output_node_id(self) -> str:
         """Return output node ID."""
@@ -95,11 +95,15 @@ class ImageProcessingWorkflow(BaseWorkflow):
             # Send completion notification
             await notification_service.send_completion_notification(bot, user_id)
 
-            # Delete queue message if exists
-            if state_manager.has_queue_message(user_id):
-                queue_msg = state_manager.get_queue_message(user_id)
-                await notification_service.delete_message_safe(queue_msg)
-                state_manager.remove_queue_message(user_id)
+            # Delete queue/processing message if exists
+            state = state_manager.get_state(user_id)
+            queue_msg_id = state.get('queue_message_id')
+            if queue_msg_id:
+                try:
+                    await bot.delete_message(chat_id=user_id, message_id=queue_msg_id)
+                    logger.info(f"Deleted queue/processing message {queue_msg_id} for user {user_id}")
+                except Exception as e:
+                    logger.warning(f"Could not delete queue/processing message {queue_msg_id}: {e}")
 
             # Schedule cleanup after timeout
             cleanup_task = asyncio.create_task(
@@ -268,11 +272,15 @@ class ImageProcessingStyleBase(BaseWorkflow):
             # Send completion notification
             await notification_service.send_completion_notification(bot, user_id)
 
-            # Delete queue message if exists
-            if state_manager.has_queue_message(user_id):
-                queue_msg = state_manager.get_queue_message(user_id)
-                await notification_service.delete_message_safe(queue_msg)
-                state_manager.remove_queue_message(user_id)
+            # Delete queue/processing message if exists
+            state = state_manager.get_state(user_id)
+            queue_msg_id = state.get('queue_message_id')
+            if queue_msg_id:
+                try:
+                    await bot.delete_message(chat_id=user_id, message_id=queue_msg_id)
+                    logger.info(f"Deleted queue/processing message {queue_msg_id} for user {user_id}")
+                except Exception as e:
+                    logger.warning(f"Could not delete queue/processing message {queue_msg_id}: {e}")
 
             # Schedule cleanup after timeout
             cleanup_task = asyncio.create_task(
@@ -366,18 +374,81 @@ class ImageProcessingStyleBase(BaseWorkflow):
 
 
 class ImageProcessingStyleBra(ImageProcessingStyleBase):
-    """Image processing workflow for Bra style (粉色蕾丝内衣)."""
+    """Image processing workflow for i2i_1 style (粉色蕾丝内衣)."""
 
     def get_workflow_filename(self) -> str:
-        """Return workflow JSON filename for Bra style."""
-        from core.constants import WORKFLOW_IMAGE_STYLE_BRA
-        return WORKFLOW_IMAGE_STYLE_BRA
+        """Return workflow JSON filename for i2i_1 style."""
+        from core.styles import get_style
+        return get_style('i2i_1').workflow_file
 
 
 class ImageProcessingStyleUndress(ImageProcessingStyleBase):
-    """Image processing workflow for Undress style (脱到精光)."""
+    """Image processing workflow for i2i_2 style (全部脱光)."""
 
     def get_workflow_filename(self) -> str:
-        """Return workflow JSON filename for Undress style."""
-        from core.constants import WORKFLOW_IMAGE_STYLE_UNDRESS
-        return WORKFLOW_IMAGE_STYLE_UNDRESS
+        """Return workflow JSON filename for i2i_2 style."""
+        from core.styles import get_style
+        return get_style('i2i_2').workflow_file
+
+
+class ImageProcessingStylePussyDrip(ImageProcessingStyleBase):
+    """Image processing workflow for i2i_3 style (下体流精)."""
+
+    def get_workflow_filename(self) -> str:
+        """Return workflow JSON filename for i2i_3 style."""
+        from core.styles import get_style
+        return get_style('i2i_3').workflow_file
+
+
+class ImageProcessingStyleMouthDrip(ImageProcessingStyleBase):
+    """Image processing workflow for i2i_4 style (口吐精液)."""
+
+    def get_workflow_filename(self) -> str:
+        """Return workflow JSON filename for i2i_4 style."""
+        from core.styles import get_style
+        return get_style('i2i_4').workflow_file
+
+
+class ImageProcessingStyleBackPussyDrip(ImageProcessingStyleBase):
+    """Image processing workflow for i2i_5 style (屁股视角+下体流精)."""
+
+    def get_workflow_filename(self) -> str:
+        """Return workflow JSON filename for i2i_5 style."""
+        from core.styles import get_style
+        return get_style('i2i_5').workflow_file
+
+
+class ImageProcessingStyleBlowjobDrip(ImageProcessingStyleBase):
+    """Image processing workflow for i2i_6 style (裸体颜射口交)."""
+
+    def get_workflow_filename(self) -> str:
+        """Return workflow JSON filename for i2i_6 style."""
+        from core.styles import get_style
+        return get_style('i2i_6').workflow_file
+
+
+class ImageProcessingStyleGirlWithDick(ImageProcessingStyleBase):
+    """Image processing workflow for i2i_7 style (大屌萌妹)."""
+
+    def get_workflow_filename(self) -> str:
+        """Return workflow JSON filename for i2i_7 style."""
+        from core.styles import get_style
+        return get_style('i2i_7').workflow_file
+
+
+class ImageProcessingStyleCowgirl(ImageProcessingStyleBase):
+    """Image processing workflow for i2i_8 style (女上位)."""
+
+    def get_workflow_filename(self) -> str:
+        """Return workflow JSON filename for i2i_8 style."""
+        from core.styles import get_style
+        return get_style('i2i_8').workflow_file
+
+
+class ImageProcessingStyleUpskirt(ImageProcessingStyleBase):
+    """Image processing workflow for i2i_9 style (裙底风光)."""
+
+    def get_workflow_filename(self) -> str:
+        """Return workflow JSON filename for i2i_9 style."""
+        from core.styles import get_style
+        return get_style('i2i_9').workflow_file

@@ -37,7 +37,7 @@ async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 当前积分：{stats['balance']} 积分
 累计消费：{stats['total_spent']} 积分"""
 
-        await update.message.reply_text(message)
+        await update.message.reply_text(message, parse_mode='Markdown')
         logger.info(f"User {user_id} checked balance: {stats['balance']}")
 
     except Exception as e:
@@ -46,7 +46,7 @@ async def check_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = translation_service.get(user_id, 'errors.system')
         else:
             msg = "查询余额失败，请稍后重试"
-        await update.message.reply_text(msg)
+        await update.message.reply_text(msg, parse_mode='Markdown')
 
 
 async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE, is_callback: bool = False):
@@ -184,9 +184,9 @@ async def show_topup_packages(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         if is_callback:
             query = update.callback_query
-            await query.edit_message_text(msg)
+            await query.edit_message_text(msg, parse_mode='Markdown')
         else:
-            await update.message.reply_text(msg)
+            await update.message.reply_text(msg, parse_mode='Markdown')
 
 
 async def show_pricing_for_method(
@@ -411,7 +411,7 @@ async def show_pricing_for_method(
         else:
             msg = "显示价格失败，请稍后重试"
         try:
-            await query.edit_message_text(msg)
+            await query.edit_message_text(msg, parse_mode='Markdown')
         except:
             pass
 
@@ -469,7 +469,7 @@ async def create_payment_for_method(
                     msg = translation_service.get(user_id, 'payment.vip_already_owned', tier=tier_name)
                 else:
                     msg = f"您已经是{tier_name}了，无需重复购买！"
-                await query.edit_message_text(msg)
+                await query.edit_message_text(msg, parse_mode='Markdown')
                 return
 
         # Get user's language for payment record
@@ -492,7 +492,7 @@ async def create_payment_for_method(
                     msg = translation_service.get(user_id, 'payment.creation_error', error=str(error))
                 else:
                     msg = f"创建支付失败: {error}"
-                await query.edit_message_text(msg)
+                await query.edit_message_text(msg, parse_mode='Markdown')
                 return
 
             # If VIP purchase, store VIP tier in payment metadata
@@ -538,7 +538,7 @@ async def create_payment_for_method(
                     msg = translation_service.get(user_id, 'payment.creation_error', error=str(error))
                 else:
                     msg = f"创建支付失败: {error}"
-                await query.edit_message_text(msg)
+                await query.edit_message_text(msg, parse_mode='Markdown')
                 return
 
             # If VIP purchase, store VIP tier in payment metadata
@@ -627,7 +627,7 @@ async def create_payment_for_method(
         else:
             msg = "创建支付失败，请稍后重试"
         try:
-            await query.edit_message_text(msg)
+            await query.edit_message_text(msg, parse_mode='Markdown')
         except:
             pass
 
@@ -667,7 +667,7 @@ async def _create_stripe_payment(
             msg = translation_service.get(user_id, 'payment.invalid_package')
         else:
             msg = "Invalid package selected"
-        await query.edit_message_text(msg)
+        await query.edit_message_text(msg, parse_mode='Markdown')
         return
 
     # Use discounted price if eligible
@@ -687,7 +687,7 @@ async def _create_stripe_payment(
                 msg = translation_service.get(user_id, 'payment.vip_already_owned', tier=tier_name)
             else:
                 msg = f"You're already {tier_name}! No need to buy again!"
-            await query.edit_message_text(msg)
+            await query.edit_message_text(msg, parse_mode='Markdown')
             return
 
     # Get user's language
@@ -801,7 +801,7 @@ Click the button below to complete payment:"""
             msg = translation_service.get(user_id, 'payment.stripe_error')
         else:
             msg = "Failed to create payment. Please try again."
-        await query.edit_message_text(msg)
+        await query.edit_message_text(msg, parse_mode='Markdown')
 
 
 async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -817,7 +817,7 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
                 no_tx_msg = translation_service.get(user_id, 'transactions.no_transactions')
             else:
                 no_tx_msg = "暂无消费记录"
-            await update.message.reply_text(no_tx_msg)
+            await update.message.reply_text(no_tx_msg, parse_mode='Markdown')
             return
 
         # Format transactions
@@ -847,7 +847,7 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
             else:
                 message += f"{date} | {tx_type} | {tx['amount']:+d} 积分 | 余额: {tx['balance_after']} 积分\n"
 
-        await update.message.reply_text(message)
+        await update.message.reply_text(message, parse_mode='Markdown')
         logger.info(f"User {user_id} viewed transaction history")
 
     except Exception as e:
@@ -856,7 +856,7 @@ async def show_transaction_history(update: Update, context: ContextTypes.DEFAULT
             msg = translation_service.get(user_id, 'errors.system')
         else:
             msg = "查询记录失败，请稍后重试"
-        await update.message.reply_text(msg)
+        await update.message.reply_text(msg, parse_mode='Markdown')
 
 
 async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -949,7 +949,7 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
                 else:
                     message += f"{date} | {tx_type} | {tx['amount']:+d} 积分 | 余额: {tx['balance_after']} 积分\n"
 
-        await update.message.reply_text(message)
+        await update.message.reply_text(message, parse_mode='Markdown')
         logger.info(f"User {user_id} viewed balance and history (VIP: {is_vip})")
 
     except Exception as e:
@@ -959,7 +959,7 @@ async def show_balance_and_history(update: Update, context: ContextTypes.DEFAULT
             msg = translation_service.get(user_id, 'errors.system')
         else:
             msg = "查询失败，请稍后重试"
-        await update.message.reply_text(msg)
+        await update.message.reply_text(msg, parse_mode='Markdown')
 
 
 async def handle_payment_timeout(user_id: int, chat_id: int, message_id: int, payment_id: str, amount_cny: int):
@@ -1318,7 +1318,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                         msg = translation_service.get(user_id, 'payment.vip_already_owned', tier=tier_name)
                     else:
                         msg = f"您已经是{tier_name}了，无需重复购买！"
-                    await query.edit_message_text(msg)
+                    await query.edit_message_text(msg, parse_mode='Markdown')
                     return
 
             # Get user's language for payment record
@@ -1339,7 +1339,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     msg = translation_service.get(user_id, 'payment.creation_error', error=str(error))
                 else:
                     msg = f"创建支付失败: {error}"
-                await query.edit_message_text(msg)
+                await query.edit_message_text(msg, parse_mode='Markdown')
                 return
 
             # If VIP purchase, store VIP tier in payment metadata
@@ -1524,7 +1524,7 @@ async def handle_topup_callback(update: Update, context: ContextTypes.DEFAULT_TY
         else:
             msg = "创建支付失败，请稍后重试"
         try:
-            await query.edit_message_text(msg)
+            await query.edit_message_text(msg, parse_mode='Markdown')
         except:
             pass
 
@@ -1550,7 +1550,7 @@ async def handle_successful_payment(update: Update, context: ContextTypes.DEFAUL
                 msg = translation_service.get(user_id, 'payment.processing_error')
             else:
                 msg = "支付处理失败，请联系客服"
-            await update.message.reply_text(msg)
+            await update.message.reply_text(msg, parse_mode='Markdown')
             return
 
         payment_id = result['payment_id']
@@ -1571,7 +1571,7 @@ async def handle_successful_payment(update: Update, context: ContextTypes.DEFAUL
                 msg = translation_service.get(user_id, 'payment.credit_failed')
             else:
                 msg = "充值处理失败，请联系客服"
-            await update.message.reply_text(msg)
+            await update.message.reply_text(msg, parse_mode='Markdown')
             return
 
         # Get payment details for confirmation message
@@ -1600,7 +1600,7 @@ async def handle_successful_payment(update: Update, context: ContextTypes.DEFAUL
 
 感谢您的充值！"""
 
-        await update.message.reply_text(message)
+        await update.message.reply_text(message, parse_mode='Markdown')
 
         logger.info(
             f"Stars payment completed successfully: user {user_id}, "
@@ -1615,6 +1615,6 @@ async def handle_successful_payment(update: Update, context: ContextTypes.DEFAUL
         else:
             msg = "系统错误，请稍后重试"
         try:
-            await update.message.reply_text(msg)
+            await update.message.reply_text(msg, parse_mode='Markdown')
         except:
             pass

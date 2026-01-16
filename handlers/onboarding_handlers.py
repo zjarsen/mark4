@@ -208,45 +208,29 @@ async def handle_image_processing_after_onboarding(update: Update, context: Cont
     This sends a new message instead of editing since we're coming from a callback.
     """
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-    from datetime import datetime
-    import pytz
+    from core.styles import get_enabled_styles_by_type
 
-    # Get injected services from menu_handlers
-    from handlers import menu_handlers
-    credit_service = menu_handlers.credit_service
-    state_manager = menu_handlers.state_manager
+    # Get all enabled i2i styles
+    i2i_styles = get_enabled_styles_by_type('i2i')
 
-    # Check trial status for undress style
-    has_trial = await credit_service.has_free_trial(user_id)
-
-    # Get translated button text
+    # Get translated back button and style selection text
     if translation_service:
-        bra_button = translation_service.get(user_id, 'image.style_bra_button')
         back_button = translation_service.get(user_id, 'buttons.back_to_menu')
         style_selection_text = translation_service.get(user_id, 'image.style_selection')
     else:
-        bra_button = "🎁 粉红蕾丝内衣 ✨永久免费✨"
         back_button = "🏠 返回主菜单"
         style_selection_text = "🎨 选择脱衣风格"
 
-    # Build undress button based on trial status
-    if has_trial:
+    # Build keyboard dynamically from all enabled i2i styles
+    keyboard = []
+    for idx, style in enumerate(i2i_styles, start=1):
         if translation_service:
-            undress_button = "🎁 " + translation_service.get(user_id, 'image.style_undress_name') + " ✨FREE✨"
+            button_text = f"{idx}. " + translation_service.get(user_id, f'{style.locale_key}.button')
         else:
-            undress_button = "🎁 全脱光 ✨免费体验✨"
-    else:
-        if translation_service:
-            undress_button = translation_service.get(user_id, 'image.style_undress_button')
-        else:
-            undress_button = "全脱光 (10积分)"
+            button_text = f"{idx}. {style.id}"
+        keyboard.append([InlineKeyboardButton(button_text, callback_data=f"select_{style.id}")])
 
-    keyboard = [
-        [InlineKeyboardButton(bra_button, callback_data="style_image_bra")],
-        [InlineKeyboardButton(undress_button, callback_data="style_image_undress")],
-        [InlineKeyboardButton(back_button, callback_data="back_to_menu")]
-    ]
-
+    keyboard.append([InlineKeyboardButton(back_button, callback_data="back_to_menu")])
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Send as a new message
@@ -265,12 +249,12 @@ async def handle_video_processing_after_onboarding(update: Update, context: Cont
     """
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-    # Get translated content
+    # Get translated content using new styles.* locale keys
     if translation_service:
         style_selection_text = translation_service.get(user_id, 'video.style_selection')
-        style_a_button = translation_service.get(user_id, 'video.style_a_button')
-        style_b_button = translation_service.get(user_id, 'video.style_b_button')
-        style_c_button = translation_service.get(user_id, 'video.style_c_button')
+        style_a_button = translation_service.get(user_id, 'styles.i2v_1.button')
+        style_b_button = translation_service.get(user_id, 'styles.i2v_2.button')
+        style_c_button = translation_service.get(user_id, 'styles.i2v_3.button')
         back_button = translation_service.get(user_id, 'buttons.back_to_menu')
     else:
         style_selection_text = "🎬 选择视频风格"
@@ -280,9 +264,9 @@ async def handle_video_processing_after_onboarding(update: Update, context: Cont
         back_button = "🏠 返回主菜单"
 
     keyboard = [
-        [InlineKeyboardButton(style_a_button, callback_data="style_video_a")],
-        [InlineKeyboardButton(style_b_button, callback_data="style_video_b")],
-        [InlineKeyboardButton(style_c_button, callback_data="style_video_c")],
+        [InlineKeyboardButton(style_a_button, callback_data="select_i2v_1")],
+        [InlineKeyboardButton(style_b_button, callback_data="select_i2v_2")],
+        [InlineKeyboardButton(style_c_button, callback_data="select_i2v_3")],
         [InlineKeyboardButton(back_button, callback_data="back_to_menu")]
     ]
 

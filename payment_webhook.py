@@ -106,14 +106,16 @@ async def send_payment_notification(user_id: int, payment_id: str, credits: floa
             await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=message_id,
-                text=message
+                text=message,
+                parse_mode='Markdown'
             )
             logger.info(f"Edited payment message for user {user_id} (msg: {message_id}, lang: {language_code})")
         else:
             # Send new message if no message_id provided
             await bot.send_message(
                 chat_id=user_id,
-                text=message
+                text=message,
+                parse_mode='Markdown'
             )
             logger.info(f"Sent payment notification to user {user_id} (lang: {language_code})")
     except Exception as e:

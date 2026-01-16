@@ -1,7 +1,7 @@
 {
   "1": {
     "inputs": {
-      "ckpt_name": "Qwen-Rapid-AIO-NSFW-v5.3.safetensors"
+      "ckpt_name": "Qwen-Rapid-AIO-NSFW-v19.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
@@ -10,7 +10,7 @@
   },
   "2": {
     "inputs": {
-      "seed": 555984232326281,
+      "seed": 1075309020915162,
       "steps": 8,
       "cfg": 1,
       "sampler_name": "euler_ancestral",
@@ -40,7 +40,7 @@
   },
   "3": {
     "inputs": {
-      "prompt": "脱掉所有女性人物的所有衣服,只留下超级细的淡粉色粉色蕾丝半透明的胸罩包裹着特别巨大的乳房，和淡粉色蕾丝的超级细的内裤，超级细的腰，超级模特的腰臀比。她的身体没有肋骨印，浑身洁白光滑",
+      "prompt": "这个女人在给侧面的一个男人的阴茎口交，她全身赤裸，露出巨大的胸部，她的双手在揉捏自己的胸部，嘴里流出精液，她偷偷看向镜头",
       "clip": [
         "1",
         1
@@ -94,7 +94,7 @@
   },
   "7": {
     "inputs": {
-      "image": "3.png"
+      "image": "2.png"
     },
     "class_type": "LoadImage",
     "_meta": {

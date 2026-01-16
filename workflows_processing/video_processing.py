@@ -119,11 +119,15 @@ class VideoProcessingWorkflowBase(BaseWorkflow):
             # Send completion notification
             await notification_service.send_completion_notification(bot, user_id)
 
-            # Delete queue message if exists
-            if state_manager.has_queue_message(user_id):
-                queue_msg = state_manager.get_queue_message(user_id)
-                await notification_service.delete_message_safe(queue_msg)
-                state_manager.remove_queue_message(user_id)
+            # Delete queue/processing message if exists
+            state = state_manager.get_state(user_id)
+            queue_msg_id = state.get('queue_message_id')
+            if queue_msg_id:
+                try:
+                    await bot.delete_message(chat_id=user_id, message_id=queue_msg_id)
+                    logger.info(f"Deleted queue/processing message {queue_msg_id} for user {user_id}")
+                except Exception as e:
+                    logger.warning(f"Could not delete queue/processing message {queue_msg_id}: {e}")
 
             # Schedule 5-minute cleanup
             cleanup_task = asyncio.create_task(
@@ -209,42 +213,42 @@ class VideoProcessingWorkflowBase(BaseWorkflow):
 
 
 class VideoProcessingStyleA(VideoProcessingWorkflowBase):
-    """Video processing workflow for Style A."""
+    """Video processing workflow for i2v_1 style."""
 
     def get_workflow_filename(self) -> str:
-        """Return workflow JSON filename for Style A."""
-        from core.constants import WORKFLOW_VIDEO_STYLE_A
-        return WORKFLOW_VIDEO_STYLE_A
+        """Return workflow JSON filename for i2v_1 style."""
+        from core.styles import get_style
+        return get_style('i2v_1').workflow_file
 
     def get_output_node_id(self) -> str:
-        """Return output node ID for Style A."""
+        """Return output node ID for i2v_1 style."""
         from core.constants import NODE_SAVE_VIDEO
         return NODE_SAVE_VIDEO
 
 
 class VideoProcessingStyleB(VideoProcessingWorkflowBase):
-    """Video processing workflow for Style B."""
+    """Video processing workflow for i2v_2 style."""
 
     def get_workflow_filename(self) -> str:
-        """Return workflow JSON filename for Style B."""
-        from core.constants import WORKFLOW_VIDEO_STYLE_B
-        return WORKFLOW_VIDEO_STYLE_B
+        """Return workflow JSON filename for i2v_2 style."""
+        from core.styles import get_style
+        return get_style('i2v_2').workflow_file
 
     def get_output_node_id(self) -> str:
-        """Return output node ID for Style B."""
+        """Return output node ID for i2v_2 style."""
         from core.constants import NODE_SAVE_VIDEO
         return NODE_SAVE_VIDEO
 
 
 class VideoProcessingStyleC(VideoProcessingWorkflowBase):
-    """Video processing workflow for Style C."""
+    """Video processing workflow for i2v_3 style."""
 
     def get_workflow_filename(self) -> str:
-        """Return workflow JSON filename for Style C."""
-        from core.constants import WORKFLOW_VIDEO_STYLE_C
-        return WORKFLOW_VIDEO_STYLE_C
+        """Return workflow JSON filename for i2v_3 style."""
+        from core.styles import get_style
+        return get_style('i2v_3').workflow_file
 
     def get_output_node_id(self) -> str:
-        """Return output node ID for Style C."""
+        """Return output node ID for i2v_3 style."""
         from core.constants import NODE_SAVE_VIDEO
         return NODE_SAVE_VIDEO

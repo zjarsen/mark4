@@ -1,16 +1,16 @@
 {
   "1": {
     "inputs": {
-      "ckpt_name": "Qwen-Rapid-AIO-NSFW-v5.safetensors"
+      "ckpt_name": "Qwen-Rapid-AIO-NSFW-v19.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
-      "title": "Load Checkpoint"
+      "title": "Checkpoint加载器（简易）"
     }
   },
   "2": {
     "inputs": {
-      "seed": 498516997862858,
+      "seed": 1075309020915162,
       "steps": 8,
       "cfg": 1,
       "sampler_name": "euler_ancestral",
@@ -35,12 +35,12 @@
     },
     "class_type": "KSampler",
     "_meta": {
-      "title": "KSampler"
+      "title": "K采样器"
     }
   },
   "3": {
     "inputs": {
-      "prompt": "这是个大胸女人，脱掉所有女性人物的所有衣服裤子内裤，全身上下完全裸体，超级细的腰，超级模特的腰臀比，保持她姿势完全不变",
+      "prompt": "脱掉所有女性人物的所有裤子和裙子还有内裤，下身完全裸露，她转过身，撅起屁股对准镜头，展示光滑的阴部，偷偷看向镜头，阴道流出白色的精液",
       "clip": [
         "1",
         1
@@ -89,16 +89,16 @@
     },
     "class_type": "VAEDecode",
     "_meta": {
-      "title": "VAE Decode"
+      "title": "VAE解码"
     }
   },
   "7": {
     "inputs": {
-      "image": "12.jpg"
+      "image": "2.png"
     },
     "class_type": "LoadImage",
     "_meta": {
-      "title": "Load Image"
+      "title": "加载图像"
     }
   },
   "9": {
@@ -115,7 +115,7 @@
     },
     "class_type": "EmptyLatentImage",
     "_meta": {
-      "title": "Empty Latent Image"
+      "title": "空Latent图像"
     }
   },
   "17": {
@@ -141,7 +141,7 @@
     },
     "class_type": "ImageScaleToTotalPixels",
     "_meta": {
-      "title": "Scale Image to Total Pixels"
+      "title": "缩放图像（像素）"
     }
   },
   "27": {
@@ -154,7 +154,7 @@
     },
     "class_type": "SaveImage",
     "_meta": {
-      "title": "Save Image"
+      "title": "保存图像"
     }
   },
   "33": {
@@ -189,7 +189,7 @@
     },
     "class_type": "PreviewImage",
     "_meta": {
-      "title": "Preview Image"
+      "title": "预览图像"
     }
   }
 }

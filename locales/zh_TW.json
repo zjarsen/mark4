@@ -42,6 +42,56 @@
     "style_b_name": "脫衣+下體流精",
     "style_c_name": "脫衣+吃吊喝精"
   },
+  "styles": {
+    "i2i_1": {
+      "name": "粉色蕾絲",
+      "button": "🎁 粉色蕾絲 ✨永久免費✨"
+    },
+    "i2i_2": {
+      "name": "全部脫光",
+      "button": "全部脫光（10積分）"
+    },
+    "i2i_3": {
+      "name": "下體流精",
+      "button": "下體流精（10積分）"
+    },
+    "i2i_4": {
+      "name": "口吐精液",
+      "button": "口吐精液（10積分）"
+    },
+    "i2i_5": {
+      "name": "屁股視角+下體流精",
+      "button": "屁股視角+下體流精（10積分）"
+    },
+    "i2i_6": {
+      "name": "裸體顏射口交",
+      "button": "裸體顏射口交（10積分）"
+    },
+    "i2i_7": {
+      "name": "大屌萌妹",
+      "button": "大屌萌妹（10積分）"
+    },
+    "i2i_8": {
+      "name": "女上位",
+      "button": "女上位（10積分）"
+    },
+    "i2i_9": {
+      "name": "裙底風光",
+      "button": "裙底風光（10積分）"
+    },
+    "i2v_1": {
+      "name": "脫衣+抖胸",
+      "button": "脫衣+抖胸（30積分）"
+    },
+    "i2v_2": {
+      "name": "脫衣+下體流精",
+      "button": "脫衣+下體流精（30積分）"
+    },
+    "i2v_3": {
+      "name": "脫衣+吃吊喝精",
+      "button": "脫衣+吃吊喝精（30積分）"
+    }
+  },
   "workflow": {
     "name_image_bra": "粉色蕾絲內衣",
     "name_image_undress": "脫到精光",
@@ -226,7 +276,8 @@
     "refresh_queue": "重新整理佇列",
     "confirm": "✅ 確認",
     "cancel": "❌ 取消",
-    "back_to_menu": "🏠 返回主選單"
+    "back_to_menu": "🏠 返回主選單",
+    "back_to_style_selection": "🔙 返回選擇風格"
   },
   "features": {
     "not_implemented": "此功能仍在開發中"

@@ -3,10 +3,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 import logging
-from core.constants import (
-    DEMO_LINK_BRA,
-    DEMO_LINK_UNDRESS
-)
+from core.styles import get_style, get_enabled_styles_by_type
 
 logger = logging.getLogger('mark4_bot')
 
@@ -108,52 +105,37 @@ async def handle_image_processing(
                 msg = translation_service.get(user_id, 'processing.already_processing')
             else:
                 msg = "⏳ 您的图片正在处理中\n\n请耐心等待当前任务完成\n多次提交不会加快处理速度哦～"
-            await update.message.reply_text(msg)
+            await update.message.reply_text(msg, parse_mode='Markdown')
             return
 
         # Check trial status for undress style
         has_trial = await credit_service.has_free_trial(user_id)
 
-        # Get translated button text
+        # Get all enabled i2i styles
+        i2i_styles = get_enabled_styles_by_type('i2i')
+
+        # Get translated back button
         if translation_service:
-            bra_button = translation_service.get(user_id, 'image.style_bra_button')
             back_button = translation_service.get(user_id, 'buttons.back_to_menu')
         else:
-            bra_button = "🎁 粉色蕾丝内衣 ✨永久免费✨"
             back_button = "🏠 返回主菜单"
 
-        # Generate dynamic button text for undress style (for now keep it simple)
-        if translation_service:
-            undress_button_text = translation_service.get(user_id, 'image.style_undress_button')
-        else:
-            undress_button_text = "脱到精光（10积分）"
-
         # For now, use simplified version of style selection message
-        # The complex trial status display can be enhanced later
         if translation_service:
             message = translation_service.get(user_id, 'image.style_selection')
         else:
-            message = f"""🎨 选择脱衣风格
+            message = "🎨 选择脱衣风格\n\n请选择您想要的风格："
 
-━━━━━━━━━━━━━━━━━━
-1️⃣ 粉色蕾丝内衣示例✨✨
-[🔞点击观看🔞]({DEMO_LINK_BRA})
+        # Build keyboard dynamically from all enabled i2i styles
+        keyboard = []
+        for idx, style in enumerate(i2i_styles, start=1):
+            if translation_service:
+                button_text = f"{idx}. " + translation_service.get(user_id, f'{style.locale_key}.button')
+            else:
+                button_text = f"{idx}. {style.id}"
+            keyboard.append([InlineKeyboardButton(button_text, callback_data=f"select_{style.id}")])
 
-🎁💝 *100%永久免费！* 💝🎁
-🆓 *无需积分！随时使用！* 🆓
-━━━━━━━━━━━━━━━━━━
-
-2️⃣ 脱到精光示例✨✨
-[🔞点击观看🔞]({DEMO_LINK_UNDRESS})
-
-请选择您想要的风格："""
-
-        # Build keyboard with dynamic button text
-        keyboard = [
-            [InlineKeyboardButton(bra_button, callback_data="image_style_bra")],
-            [InlineKeyboardButton(undress_button_text, callback_data="image_style_undress")],
-            [InlineKeyboardButton(back_button, callback_data="back_to_menu")]
-        ]
+        keyboard.append([InlineKeyboardButton(back_button, callback_data="back_to_menu")])
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await update.message.reply_text(
@@ -173,7 +155,7 @@ async def handle_image_processing(
             msg = translation_service.get(user_id, 'errors.system')
         else:
             msg = "❌ 系统繁忙\n\n请稍后重试\n如问题持续出现，请联系客服"
-        await update.message.reply_text(msg)
+        await update.message.reply_text(msg, parse_mode='Markdown')
 
 
 async def handle_video_processing(
@@ -205,15 +187,15 @@ async def handle_video_processing(
                 msg = translation_service.get(user_id, 'processing.already_processing')
             else:
                 msg = "⏳ 您的图片正在处理中\n\n请耐心等待当前任务完成\n多次提交不会加快处理速度哦～"
-            await update.message.reply_text(msg)
+            await update.message.reply_text(msg, parse_mode='Markdown')
             return
 
-        # Get translated text
+        # Get translated text using new styles.* locale keys
         if translation_service:
             message = translation_service.get(user_id, 'video.style_selection')
-            style_a = translation_service.get(user_id, 'video.style_a_button')
-            style_b = translation_service.get(user_id, 'video.style_b_button')
-            style_c = translation_service.get(user_id, 'video.style_c_button')
+            style_a = translation_service.get(user_id, 'styles.i2v_1.button')
+            style_b = translation_service.get(user_id, 'styles.i2v_2.button')
+            style_c = translation_service.get(user_id, 'styles.i2v_3.button')
             back_button = translation_service.get(user_id, 'buttons.back_to_menu')
         else:
             message = "🎬 选择视频风格\n\n模型效果展示：\n\n1. 视频模型1示例：✨✨脱衣+抖胸✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/13)\n\n2. 视频模型2示例：✨✨脱衣+下体流精✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/15)\n\n3. 视频模型3示例：✨✨脱衣+吃吊喝精✨✨：\n[🔞点击观看🔞](https://t.me/zuiqiangtuoyi/19)\n\n请选择您想要的动态效果："
@@ -222,11 +204,11 @@ async def handle_video_processing(
             style_c = "脱衣+ 吃吊喝精（30积分）"
             back_button = "🏠 返回主菜单"
 
-        # Show style selection keyboard
+        # Show style selection keyboard - using new callback format
         keyboard = [
-            [InlineKeyboardButton(style_a, callback_data="video_style_a")],
-            [InlineKeyboardButton(style_b, callback_data="video_style_b")],
-            [InlineKeyboardButton(style_c, callback_data="video_style_c")],
+            [InlineKeyboardButton(style_a, callback_data="select_i2v_1")],
+            [InlineKeyboardButton(style_b, callback_data="select_i2v_2")],
+            [InlineKeyboardButton(style_c, callback_data="select_i2v_3")],
             [InlineKeyboardButton(back_button, callback_data="back_to_menu")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -292,14 +274,14 @@ async def handle_check_queue(
 
         # Per-manager detailed status (no overview section)
         for workflow_type, servers in status['managers'].items():
-            # Workflow type icon and label
-            if workflow_type == 'image':
+            # Workflow type icon and label (i2i = image, i2v = video)
+            if workflow_type == 'i2i':
                 workflow_icon = "🖼️"
                 if translation_service:
                     workflow_label = translation_service.get(user_id, 'queue.label_image', default="Image Processing")
                 else:
                     workflow_label = "图片处理"
-            else:
+            else:  # i2v
                 workflow_icon = "🎬"
                 if translation_service:
                     workflow_label = translation_service.get(user_id, 'queue.label_video', default="Video Processing")

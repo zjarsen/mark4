@@ -82,7 +82,7 @@ class BotApplication:
         # Core services
         # Note: ComfyUIService now requires workflow_type parameter
         # This default instance is used by QueueService for backwards compatibility
-        self.comfyui_service = ComfyUIService(self.config, 'image_undress')
+        self.comfyui_service = ComfyUIService(self.config, 'i2i')
         self.file_service = FileService(self.config)
 
         # Database and credit services
@@ -334,19 +334,19 @@ class BotApplication:
             )
         )
 
-        # Video style selection callback handler
+        # Video style selection callback handler (select_i2v_1, select_i2v_2, select_i2v_3)
         self.app.add_handler(
             CallbackQueryHandler(
                 callback_handlers.video_style_callback,
-                pattern="^video_style_|^back_to_menu"
+                pattern="^select_i2v_|^back_to_menu"
             )
         )
 
-        # Image style selection callback handler
+        # Image style selection callback handler (select_i2i_1, select_i2i_2, back_to_i2i_styles)
         self.app.add_handler(
             CallbackQueryHandler(
                 callback_handlers.image_style_callback,
-                pattern="^image_style_|^back_to_menu"
+                pattern="^select_i2i_|^back_to_menu|^back_to_i2i_styles"
             )
         )
 
@@ -441,7 +441,7 @@ class BotApplication:
                         msg = self.translation_service.get(user_id, 'queue.status_unavailable')
                     else:
                         msg = "❌ 无法获取队列状态"
-                    await query.edit_message_text(msg)
+                    await query.edit_message_text(msg, parse_mode='Markdown')
                     return
 
                 # Determine which queue manager to check based on job_id pattern
@@ -479,14 +479,14 @@ class BotApplication:
                             button_text = "🔄 刷新"
                         keyboard = [[InlineKeyboardButton(button_text, callback_data=f"refresh_queue_{job_id}")]]
                         reply_markup = InlineKeyboardMarkup(keyboard)
-                        await query.edit_message_text(message_text, reply_markup=reply_markup)
+                        await query.edit_message_text(message_text, reply_markup=reply_markup, parse_mode='Markdown')
                     else:
                         # Job not found in queue - being processed, show processing message without button
                         if self.translation_service:
                             message_text = self.translation_service.get(user_id, 'queue.task_processing')
                         else:
                             message_text = "🚀 您的任务现在正在服务器上处理！\n⏱️ 这可能需要几分钟..."
-                        await query.edit_message_text(message_text)
+                        await query.edit_message_text(message_text, parse_mode='Markdown')
 
                     logger.info(f"Refreshed queue position for user {user_id}, job {job_id}: position={position}")
 
@@ -571,12 +571,12 @@ class BotApplication:
     def run(self):
         """Start the bot with polling."""
         logger.info(f"Starting bot: {self.config.BOT_USERNAME}")
-        logger.info(f"ComfyUI servers: Image={self.config.COMFYUI_IMAGE_UNDRESS_SERVER}, Video={self.config.COMFYUI_VIDEO_DOUXIONG_SERVER}")
+        logger.info(f"ComfyUI servers: I2I={self.config.COMFYUI_I2I_SERVER}, I2V={self.config.COMFYUI_I2V_SERVER}")
 
         print("=" * 60)
         print(f"🤖 Bot starting: @{self.config.BOT_USERNAME}")
-        print(f"🎨 ComfyUI Image: {self.config.COMFYUI_IMAGE_UNDRESS_SERVER}")
-        print(f"🎨 ComfyUI Video: {self.config.COMFYUI_VIDEO_DOUXIONG_SERVER}")
+        print(f"🎨 ComfyUI I2I: {self.config.COMFYUI_I2I_SERVER}")
+        print(f"🎨 ComfyUI I2V: {self.config.COMFYUI_I2V_SERVER}")
         print(f"📁 Uploads directory: {self.config.USER_UPLOADS_DIR}")
         print(f"📁 Retrieve directory: {self.config.COMFYUI_RETRIEVE_DIR}")
         print(f"⏱️  Cleanup timeout: {self.config.CLEANUP_TIMEOUT}s")

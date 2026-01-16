@@ -297,21 +297,21 @@ def dashboard_features():
         start_date_str = start_date_gmt8.strftime('%Y-%m-%d %H:%M:%S')
         end_date_str = end_date_gmt8.strftime('%Y-%m-%d %H:%M:%S')
 
-        # Feature display names and costs
+        # Feature display names and costs (using db_feature_type values from styles.py)
         FEATURE_DISPLAY_NAMES = {
-            'image_bra': '📸 粉色蕾丝内衣',
-            'image_undress': '📸 脱到精光',
-            'video_a': '🎬 脱衣+抖胸',
-            'video_b': '🎬 脱衣+下体流精',
-            'video_c': '🎬 脱衣+吃吊喝精'
+            'image_bra': '📸 粉色蕾丝内衣 (i2i_1)',
+            'image_undress': '📸 脱到精光 (i2i_2)',
+            'video_style_a': '🎬 脱衣+抖胸 (i2v_1)',
+            'video_style_b': '🎬 脱衣+下体流精 (i2v_2)',
+            'video_style_c': '🎬 脱衣+吃吊喝精 (i2v_3)'
         }
 
         FEATURE_COSTS = {
             'image_bra': 0,
             'image_undress': 10,
-            'video_a': 30,
-            'video_b': 30,
-            'video_c': 30
+            'video_style_a': 30,
+            'video_style_b': 30,
+            'video_style_c': 30
         }
 
         # Get feature usage totals by feature_type
@@ -378,9 +378,9 @@ def dashboard_features():
                     'date': date,
                     'image_bra': 0,
                     'image_undress': 0,
-                    'video_a': 0,
-                    'video_b': 0,
-                    'video_c': 0
+                    'video_style_a': 0,
+                    'video_style_b': 0,
+                    'video_style_c': 0
                 }
 
             daily_usage_map[date][feature_type] = count

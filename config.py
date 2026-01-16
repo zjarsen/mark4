@@ -18,35 +18,32 @@ class Config:
     BOT_TOKEN = os.getenv('BOT_TOKEN')
     BOT_USERNAME = os.getenv('BOT_USERNAME', 'declothing_free1_bot')
 
-    # ComfyUI Server Configuration - Workflow-specific servers
-    COMFYUI_IMAGE_UNDRESS_SERVER = os.getenv('COMFYUI_IMAGE_UNDRESS_SERVER')
-    COMFYUI_IMAGE_BRA_SERVER = os.getenv('COMFYUI_IMAGE_BRA_SERVER')
-    COMFYUI_VIDEO_DOUXIONG_SERVER = os.getenv('COMFYUI_VIDEO_DOUXIONG_SERVER')
-    COMFYUI_VIDEO_LIUJING_SERVER = os.getenv('COMFYUI_VIDEO_LIUJING_SERVER')
-    COMFYUI_VIDEO_SHEJING_SERVER = os.getenv('COMFYUI_VIDEO_SHEJING_SERVER')
+    # ComfyUI Server Configuration (unified)
+    COMFYUI_I2I_SERVER = os.getenv('COMFYUI_I2I_SERVER')
+    COMFYUI_I2V_SERVER = os.getenv('COMFYUI_I2V_SERVER')
 
     # Helper method to get workflow server URLs
-    def get_workflow_urls(self, workflow_type: str):
+    def get_workflow_urls(self, style_type: str):
         """
-        Get all ComfyUI URLs for a specific workflow type.
+        Get all ComfyUI URLs for a style type.
 
         Args:
-            workflow_type: One of 'image_undress', 'image_bra', 'video_douxiong', 'video_liujing', 'video_shejing'
+            style_type: 'i2i' or 'i2v'
 
         Returns:
             Dict with upload_url, prompt_url, queue_url, history_url, view_url
         """
+        if style_type not in ('i2i', 'i2v'):
+            raise ValueError(f"Unknown style type: {style_type}. Use 'i2i' or 'i2v'.")
+
         server_map = {
-            'image_undress': self.COMFYUI_IMAGE_UNDRESS_SERVER,
-            'image_bra': self.COMFYUI_IMAGE_BRA_SERVER,
-            'video_douxiong': self.COMFYUI_VIDEO_DOUXIONG_SERVER,
-            'video_liujing': self.COMFYUI_VIDEO_LIUJING_SERVER,
-            'video_shejing': self.COMFYUI_VIDEO_SHEJING_SERVER
+            'i2i': self.COMFYUI_I2I_SERVER,
+            'i2v': self.COMFYUI_I2V_SERVER
         }
 
-        server = server_map.get(workflow_type)
+        server = server_map.get(style_type)
         if not server:
-            raise ValueError(f"Unknown workflow type: {workflow_type}")
+            raise ValueError(f"COMFYUI_{style_type.upper()}_SERVER environment variable not set.")
 
         return {
             'upload_url': f"{server}/api/upload/image",

@@ -7,9 +7,17 @@ import logging
 from workflows_processing.image_processing import (
     ImageProcessingWorkflow,
     ImageProcessingStyleBra,
-    ImageProcessingStyleUndress
+    ImageProcessingStyleUndress,
+    ImageProcessingStylePussyDrip,
+    ImageProcessingStyleMouthDrip,
+    ImageProcessingStyleBackPussyDrip,
+    ImageProcessingStyleBlowjobDrip,
+    ImageProcessingStyleGirlWithDick,
+    ImageProcessingStyleCowgirl,
+    ImageProcessingStyleUpskirt
 )
 from services.queue_manager_base import QueuedJob
+from core.styles import get_style, get_enabled_styles_by_type, STYLES
 
 logger = logging.getLogger('mark4_bot')
 
@@ -52,26 +60,30 @@ class WorkflowService:
         self.database_service = database_service
         self.translation_service = translation_service
 
-        # Create workflow-specific ComfyUI service instances
+        # Create ComfyUI service instances (one per type: i2i and i2v)
         from services.comfyui_service import ComfyUIService
 
-        image_comfyui = ComfyUIService(config, 'image_undress')
-        image_bra_comfyui = ComfyUIService(config, 'image_bra')
-        video_douxiong_comfyui = ComfyUIService(config, 'video_douxiong')
-        video_liujing_comfyui = ComfyUIService(config, 'video_liujing')
-        video_shejing_comfyui = ComfyUIService(config, 'video_shejing')
+        i2i_comfyui = ComfyUIService(config, 'i2i')
+        i2v_comfyui = ComfyUIService(config, 'i2v')
 
         # Initialize workflow implementations with their specific ComfyUI services
         self.image_workflow = ImageProcessingWorkflow(
             config,
-            image_comfyui,
+            i2i_comfyui,
             file_service
         )
 
-        # Initialize image workflow implementations (styled)
+        # Initialize image workflow implementations (styled) - keyed by new style IDs
         self.image_workflows = {
-            'bra': ImageProcessingStyleBra(config, image_bra_comfyui, file_service),
-            'undress': ImageProcessingStyleUndress(config, image_comfyui, file_service)
+            'i2i_1': ImageProcessingStyleBra(config, i2i_comfyui, file_service),
+            'i2i_2': ImageProcessingStyleUndress(config, i2i_comfyui, file_service),
+            'i2i_3': ImageProcessingStylePussyDrip(config, i2i_comfyui, file_service),
+            'i2i_4': ImageProcessingStyleMouthDrip(config, i2i_comfyui, file_service),
+            'i2i_5': ImageProcessingStyleBackPussyDrip(config, i2i_comfyui, file_service),
+            'i2i_6': ImageProcessingStyleBlowjobDrip(config, i2i_comfyui, file_service),
+            'i2i_7': ImageProcessingStyleGirlWithDick(config, i2i_comfyui, file_service),
+            'i2i_8': ImageProcessingStyleCowgirl(config, i2i_comfyui, file_service),
+            'i2i_9': ImageProcessingStyleUpskirt(config, i2i_comfyui, file_service)
         }
 
         # Initialize video workflow implementations
@@ -82,50 +94,47 @@ class WorkflowService:
         )
 
         self.video_workflows = {
-            'style_a': VideoProcessingStyleA(config, video_douxiong_comfyui, file_service),
-            'style_b': VideoProcessingStyleB(config, video_liujing_comfyui, file_service),
-            'style_c': VideoProcessingStyleC(config, video_shejing_comfyui, file_service)
+            'i2v_1': VideoProcessingStyleA(config, i2v_comfyui, file_service),
+            'i2v_2': VideoProcessingStyleB(config, i2v_comfyui, file_service),
+            'i2v_3': VideoProcessingStyleC(config, i2v_comfyui, file_service)
         }
 
-        # Store ComfyUI services for queue service (uses image_undress by default)
-        self.comfyui_service = image_comfyui
+        # Store ComfyUI services for queue service
+        self.comfyui_service = i2i_comfyui
+        self.i2i_comfyui = i2i_comfyui
+        self.i2v_comfyui = i2v_comfyui
 
         # Initialize queue managers dictionary for scalability (future: multiple servers per type)
         from services.image_queue_manager import ImageQueueManager
         from services.video_queue_manager import VideoQueueManager
 
         self.queue_managers = {
-            'image': {
-                'undress': ImageQueueManager(comfyui_service=image_comfyui),
-                # Future: 'undress_2': ImageQueueManager(comfyui_service=image_comfyui_2),
+            'i2i': {
+                'default': ImageQueueManager(comfyui_service=i2i_comfyui),
             },
-            'video': {
-                'default': VideoQueueManager(comfyui_service=video_douxiong_comfyui),
-                # Future: 'douxiong_2': VideoQueueManager(comfyui_service=video_douxiong_comfyui_2),
+            'i2v': {
+                'default': VideoQueueManager(comfyui_service=i2v_comfyui),
             }
         }
 
         # Convenience accessors (for backward compatibility with existing code)
-        self.image_queue_manager = self.queue_managers['image']['undress']
-        self.video_queue_manager = self.queue_managers['video']['default']
+        self.image_queue_manager = self.queue_managers['i2i']['default']
+        self.video_queue_manager = self.queue_managers['i2v']['default']
 
-        logger.info("Queue managers initialized (indexed by type and server)")
+        logger.info("Queue managers initialized (indexed by type: i2i, i2v)")
 
-    def get_queue_manager(self, workflow_type: str, server_key: str = 'default'):
+    def get_queue_manager(self, style_type: str, server_key: str = 'default'):
         """
-        Get a specific queue manager by workflow type and server key.
+        Get a specific queue manager by style type and server key.
 
         Args:
-            workflow_type: 'image' or 'video'
-            server_key: Server identifier (default: 'undress' for image, 'default' for video)
+            style_type: 'i2i' or 'i2v'
+            server_key: Server identifier (default: 'default')
 
         Returns:
             Queue manager instance or None if not found
         """
-        if workflow_type == 'image' and server_key == 'default':
-            server_key = 'undress'  # Map default to undress for images
-
-        return self.queue_managers.get(workflow_type, {}).get(server_key)
+        return self.queue_managers.get(style_type, {}).get(server_key)
 
     def get_all_queue_managers(self):
         """
@@ -175,7 +184,7 @@ class WorkflowService:
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         try:
-            sent_message = await bot.send_message(user_id, message_text, reply_markup=reply_markup)
+            sent_message = await bot.send_message(user_id, message_text, reply_markup=reply_markup, parse_mode='Markdown')
             # Store message ID and job_id in state manager for later deletion and refresh
             state_updates = {'queue_message_id': sent_message.message_id}
             if job_id:
@@ -201,12 +210,13 @@ class WorkflowService:
                 await bot.edit_message_text(
                     chat_id=user_id,
                     message_id=queue_msg_id,
-                    text=message_text
+                    text=message_text,
+                    parse_mode='Markdown'
                 )
                 logger.info(f"Updated queue message {queue_msg_id} to processing for user {user_id}")
             else:
                 # Fallback: send new message if no queue message exists
-                sent_message = await bot.send_message(user_id, message_text)
+                sent_message = await bot.send_message(user_id, message_text, parse_mode='Markdown')
                 self.state_manager.update_state(user_id, queue_message_id=sent_message.message_id)
                 logger.info(f"Sent processing message {sent_message.message_id} to user {user_id}")
         except Exception as e:
@@ -252,7 +262,7 @@ class WorkflowService:
             else:
                 message = f"❌ 处理失败: {error_msg}\n💰 {cost} 积分已退还。" if cost > 0 else f"❌ 处理失败: {error_msg}"
 
-            await bot.send_message(user_id, message)
+            await bot.send_message(user_id, message, parse_mode='Markdown')
         except Exception as e:
             logger.error(f"Error sending error message: {e}")
 
@@ -295,9 +305,7 @@ class WorkflowService:
         """
         try:
             logger.info(f"Image job {prompt_id} completed for user {user_id}")
-            # Delete queue messages before showing result
-            await self._delete_queue_messages(bot, user_id)
-            # Start monitoring for results (existing _monitor_and_complete logic)
+            # Start monitoring for results (queue message deleted after image is sent)
             asyncio.create_task(
                 self._monitor_and_complete(bot, user_id, prompt_id, filename)
             )
@@ -343,9 +351,7 @@ class WorkflowService:
         """
         try:
             logger.info(f"Styled image job {prompt_id} (style: {style}) completed for user {user_id}")
-            # Delete queue messages before showing result
-            await self._delete_queue_messages(bot, user_id)
-            # Start monitoring for results
+            # Start monitoring for results (queue message deleted after image is sent)
             asyncio.create_task(
                 self._monitor_and_complete_image_styled(bot, user_id, prompt_id, filename, style)
             )
@@ -392,9 +398,7 @@ class WorkflowService:
         """
         try:
             logger.info(f"Video job {prompt_id} (style: {style}) completed for user {user_id}")
-            # Delete queue messages before showing result
-            await self._delete_queue_messages(bot, user_id)
-            # Start monitoring for results
+            # Start monitoring for results (queue message deleted after video is sent)
             asyncio.create_task(
                 self._monitor_and_complete_video(bot, user_id, prompt_id, filename, style)
             )
@@ -442,7 +446,7 @@ class WorkflowService:
                                 msg = self.translation_service.get(user_id, 'trial.cooldown', next_available=next_time_str, balance=balance)
                             else:
                                 msg = f"⏰ 免费次数冷却中\n\n下次可用：*{next_time_str}*\n\n💳 当前方案：\n• 您的余额：*{balance}* 积分\n• 本次需要：*10积分*\n\n💡 充值可 *立即使用*，或等待免费次数重置"
-                            await update.message.reply_text(msg)
+                            await update.message.reply_text(msg, parse_mode='Markdown')
                             logger.info(
                                 f"User {user_id} on free trial cooldown until {next_time_str}"
                             )
@@ -593,20 +597,29 @@ class WorkflowService:
                     msg = self.translation_service.get(user_id, 'errors.invalid_style')
                 else:
                     msg = "选择的风格无效"
-                await update.message.reply_text(msg)
+                await update.message.reply_text(msg, parse_mode='Markdown')
                 self.state_manager.reset_state(user_id)
                 return
 
             image_workflow = self.image_workflows[style]
 
-            # Check credits based on style
-            # 'undress' supports free trial, 'bra' is paid only
+            # Get style config to determine pricing
+            style_config = get_style(style)
+
+            # Check credits based on style configuration
             has_free_trial = False
             cooldown_info = None
 
             if self.credit_service:
-                if style == 'undress':
-                    # Check with free trial support
+                if style_config.is_free:
+                    # Permanently free style (i2i_1)
+                    balance = await self.credit_service.get_balance(user_id)
+                    cost = 0
+                    has_free_trial = True  # Skip credit deduction later
+                    logger.info(f"User {user_id} using {style} (permanently free)")
+
+                elif style == 'i2i_2':
+                    # i2i_2 has free trial support
                     has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
                         user_id,
                         'image_processing'
@@ -626,7 +639,7 @@ class WorkflowService:
                                     msg = self.translation_service.get(user_id, 'trial.cooldown', next_available=next_time_str, balance=balance)
                                 else:
                                     msg = f"⏰ 免费次数冷却中\n\n下次可用：*{next_time_str}*\n\n💳 当前方案：\n• 您的余额：*{balance}* 积分\n• 本次需要：*10积分*\n\n💡 充值可 *立即使用*，或等待免费次数重置"
-                                await update.message.reply_text(msg)
+                                await update.message.reply_text(msg, parse_mode='Markdown')
                                 logger.info(
                                     f"User {user_id} on free trial cooldown until {next_time_str}"
                                 )
@@ -652,7 +665,7 @@ class WorkflowService:
                             btn_50 = "¥54 = 250积分"
                             btn_100 = "¥108 = 600积分"
 
-                        await update.message.reply_text(insufficient_msg)
+                        await update.message.reply_text(insufficient_msg, parse_mode='Markdown')
 
                         # Show topup packages inline keyboard
                         keyboard = [
@@ -666,7 +679,8 @@ class WorkflowService:
                         await context.bot.send_message(
                             chat_id=user_id,
                             text=packages_msg,
-                            reply_markup=reply_markup
+                            reply_markup=reply_markup,
+                            parse_mode='Markdown'
                         )
 
                         logger.warning(
@@ -701,35 +715,61 @@ class WorkflowService:
                             else:
                                 cooldown_info = f"使用后 {days}天{hours}小时 后可再次免费使用"
 
-                else:  # style == 'bra' - permanently free (0 credits, no payment ever)
-                    # Get user's balance for display only (not used for checking)
+                else:
+                    # Paid styles (i2i_3 through i2i_9) - no free trial, credits required
+                    cost = style_config.cost
                     balance = await self.credit_service.get_balance(user_id)
 
-                    # Bra style is permanently free - set cost to 0
-                    cost = 0
+                    if balance < cost:
+                        # Insufficient credits
+                        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-                    # Mark as free trial to skip credit deduction later
-                    has_free_trial = True
+                        if self.translation_service:
+                            insufficient_msg = self.translation_service.get(user_id, 'credits.insufficient', balance=balance, required=cost)
+                            packages_msg = self.translation_service.get(user_id, 'topup.packages_normal')
+                            btn_10 = self.translation_service.get(user_id, 'topup.button_10')
+                            btn_30 = self.translation_service.get(user_id, 'topup.button_30')
+                            btn_50 = self.translation_service.get(user_id, 'topup.button_50')
+                            btn_100 = self.translation_service.get(user_id, 'topup.button_100')
+                        else:
+                            insufficient_msg = f"💳 积分不足\n\n当前余额：*{balance}* 积分\n本次需要：*{cost}* 积分\n\n充值后 *立即可用*，无需等待～"
+                            packages_msg = "💳 充值套餐\n\n🎰 *今日幸运折扣已开启* - 点击下方按钮查看折扣！\n💡 _每日随机5%-50%折扣，今天试试运气？_"
+                            btn_10 = "¥11 = 30积分"
+                            btn_30 = "¥32 = 120积分"
+                            btn_50 = "¥54 = 250积分"
+                            btn_100 = "¥108 = 600积分"
 
-                    logger.info(
-                        f"User {user_id} using bra style (permanently free)"
-                    )
+                        await update.message.reply_text(insufficient_msg, parse_mode='Markdown')
+
+                        keyboard = [
+                            [InlineKeyboardButton(btn_10, callback_data="topup_10")],
+                            [InlineKeyboardButton(btn_30, callback_data="topup_30")],
+                            [InlineKeyboardButton(btn_50, callback_data="topup_50")],
+                            [InlineKeyboardButton(btn_100, callback_data="topup_100")]
+                        ]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+
+                        await context.bot.send_message(
+                            chat_id=user_id,
+                            text=packages_msg,
+                            reply_markup=reply_markup,
+                            parse_mode='Markdown'
+                        )
+
+                        logger.warning(f"User {user_id} has insufficient credits for {style}: balance={balance}, required={cost}")
+                        self.state_manager.reset_state(user_id)
+                        return
+
+                    logger.info(f"User {user_id} using paid style {style}, cost={cost}, balance={balance}")
 
             # Upload image to ComfyUI
             await image_workflow.upload_image(local_path, filename)
-
-            # Determine workflow name based on style
             if self.translation_service:
-                workflow_name_map = {
-                    'bra': self.translation_service.get(user_id, 'workflow.name_image_bra'),
-                    'undress': self.translation_service.get(user_id, 'workflow.name_image_undress')
-                }
+                workflow_name = self.translation_service.get(user_id, f'{style_config.locale_key}.name')
             else:
-                workflow_name_map = {
-                    'bra': "粉色蕾丝内衣",
-                    'undress': "脱到精光"
-                }
-            workflow_name = workflow_name_map.get(style, "图片脱衣")
+                # Fallback names
+                fallback_names = {'i2i_1': "粉色蕾丝内衣", 'i2i_2': "脱到精光"}
+                workflow_name = fallback_names.get(style, "图片脱衣")
 
             # Store workflow details in state and show confirmation
             self.state_manager.update_state(
@@ -737,7 +777,7 @@ class WorkflowService:
                 state='waiting_for_credit_confirmation',
                 uploaded_file_path=local_path,
                 filename=filename,
-                workflow_type=f'image_{style}',  # e.g., 'image_bra' or 'image_undress'
+                workflow_type=style_config.db_feature_type,  # e.g., 'image_bra' or 'image_undress' for DB compatibility
                 image_style=style
             )
 
@@ -746,7 +786,7 @@ class WorkflowService:
                 context.bot,
                 user_id,
                 workflow_name=workflow_name,
-                workflow_type=f'image_{style}',
+                workflow_type=style_config.db_feature_type,
                 balance=balance,
                 cost=cost,
                 is_free_trial=has_free_trial,
@@ -935,7 +975,7 @@ class WorkflowService:
                         msg = self.translation_service.get(user_id, 'errors.credit_deduction_failed')
                     else:
                         msg = "❌ 积分扣除失败，请稍后重试"
-                    await bot.send_message(user_id, msg)
+                    await bot.send_message(user_id, msg, parse_mode='Markdown')
                     self.state_manager.reset_state(user_id)
                     return False
 
@@ -1080,7 +1120,7 @@ class WorkflowService:
                 else:
                     # Non-VIP users: re-check credits based on style
                     # Special handling for bra feature: check daily limit for non-VIP users
-                    if style == 'bra':
+                    if style == 'i2i_1':
                         # Check non-VIP bra daily usage limit (5 per day)
                         limit_reached, current_usage, daily_limit = await self.credit_service.check_bra_daily_limit(user_id)
 
@@ -1098,7 +1138,7 @@ class WorkflowService:
                         logger.info(
                             f"Non-VIP user {user_id} - bra usage allowed ({current_usage}/{daily_limit} today)"
                         )
-                    elif style == 'undress':
+                    elif style == 'i2i_2':
                         # Check with free trial support
                         has_sufficient, balance, cost = await self.credit_service.check_sufficient_credits(
                             user_id,
@@ -1131,7 +1171,8 @@ class WorkflowService:
 
                                 await bot.send_message(
                                     chat_id=user_id,
-                                    text=insufficient_msg
+                                    text=insufficient_msg,
+                                    parse_mode='Markdown'
                                 )
 
                                 # Show topup packages inline keyboard
@@ -1146,13 +1187,14 @@ class WorkflowService:
                                 await bot.send_message(
                                     chat_id=user_id,
                                     text=packages_msg,
-                                    reply_markup=reply_markup
+                                    reply_markup=reply_markup,
+                                    parse_mode='Markdown'
                                 )
 
                                 self.state_manager.reset_state(user_id)
                                 return False
 
-                    else:  # style == 'bra' - permanently free (no credit checks)
+                    else:  # style == 'i2i_1' - permanently free (no credit checks)
                         # Bra style is permanently free - skip all credit checks
                         logger.info(
                             f"User {user_id} proceeding with bra style (permanently free)"
@@ -1160,7 +1202,7 @@ class WorkflowService:
 
             # Deduct credits BEFORE queueing (new approach)
             cost = 0
-            if self.credit_service and not is_vip and style != 'bra':
+            if self.credit_service and not is_vip and style != 'i2i_1':
                 # Get cost and deduct credits for undress style
                 _, _, cost = await self.credit_service.check_sufficient_credits(
                     user_id,
@@ -1184,10 +1226,10 @@ class WorkflowService:
                         msg = self.translation_service.get(user_id, 'errors.credit_deduction_failed')
                     else:
                         msg = "❌ 积分扣除失败，请稍后重试"
-                    await bot.send_message(user_id, msg)
+                    await bot.send_message(user_id, msg, parse_mode='Markdown')
                     self.state_manager.reset_state(user_id)
                     return False
-            elif style == 'bra' and self.credit_service:
+            elif style == 'i2i_1' and self.credit_service:
                 # Create transaction record for free bra usage (amount = 0)
                 balance = await self.credit_service.get_balance(user_id)
                 description_text = self.translation_service.get(user_id, 'transaction.free_bra_usage') if (self.translation_service and self.database_service) else "免费使用: 粉色蕾丝内衣"
@@ -1270,7 +1312,7 @@ class WorkflowService:
                     msg = self.translation_service.get(user_id, 'errors.invalid_style')
                 else:
                     msg = "选择的风格无效"
-                await update.message.reply_text(msg)
+                await update.message.reply_text(msg, parse_mode='Markdown')
                 self.state_manager.reset_state(user_id)
                 return
 
@@ -1330,20 +1372,14 @@ class WorkflowService:
             # Upload image to ComfyUI
             await video_workflow.upload_image(local_path, filename)
 
-            # Determine workflow name based on style
+            # Determine workflow name based on style (uses locale key from styles.py)
+            style_config = get_style(style)
             if self.translation_service:
-                workflow_name_map = {
-                    'style_a': self.translation_service.get(user_id, 'workflow.name_video_a'),
-                    'style_b': self.translation_service.get(user_id, 'workflow.name_video_b'),
-                    'style_c': self.translation_service.get(user_id, 'workflow.name_video_c')
-                }
+                workflow_name = self.translation_service.get(user_id, f'{style_config.locale_key}.name')
             else:
-                workflow_name_map = {
-                    'style_a': "脱衣+抖胸",
-                    'style_b': "脱衣+下体流精",
-                    'style_c': "脱衣+ 吃吊喝精"
-                }
-            workflow_name = workflow_name_map.get(style, "图片转视频")
+                # Fallback names
+                fallback_names = {'i2v_1': "脱衣+抖胸", 'i2v_2': "脱衣+下体流精", 'i2v_3': "脱衣+吃吊喝精"}
+                workflow_name = fallback_names.get(style, "图片转视频")
 
             # Store workflow details in state and show confirmation
             self.state_manager.update_state(
@@ -1351,7 +1387,7 @@ class WorkflowService:
                 state='waiting_for_credit_confirmation',
                 uploaded_file_path=local_path,
                 filename=filename,
-                workflow_type=f'video_{style}',  # e.g., 'video_style_a'
+                workflow_type=style_config.db_feature_type,  # e.g., 'video_style_a' for DB compatibility
                 video_style=style
             )
 
@@ -1360,7 +1396,7 @@ class WorkflowService:
                 context.bot,
                 user_id,
                 workflow_name=workflow_name,
-                workflow_type=f'video_{style}',
+                workflow_type=style_config.db_feature_type,
                 balance=balance,
                 cost=cost,
                 is_free_trial=False,
@@ -1546,7 +1582,8 @@ class WorkflowService:
                     if not success:
                         await bot.send_message(
                             chat_id=user_id,
-                            text="扣除积分失败，请重试"
+                            text="扣除积分失败，请重试",
+                            parse_mode='Markdown'
                         )
                         self.state_manager.reset_state(user_id)
                         return False

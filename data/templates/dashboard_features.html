@@ -134,7 +134,7 @@
 const currentDays = {{ window.days }};
 const currentOffset = {{ window.offset }};
 
-// Feature colors
+// Feature colors (using db_feature_type values)
 const FEATURE_COLORS = {
     'image_bra': {
         border: 'rgb(255, 192, 203)',
@@ -144,26 +144,26 @@ const FEATURE_COLORS = {
         border: 'rgb(255, 99, 132)',
         background: 'rgba(255, 99, 132, 0.1)'
     },
-    'video_a': {
+    'video_style_a': {
         border: 'rgb(54, 162, 235)',
         background: 'rgba(54, 162, 235, 0.1)'
     },
-    'video_b': {
+    'video_style_b': {
         border: 'rgb(75, 192, 192)',
         background: 'rgba(75, 192, 192, 0.1)'
     },
-    'video_c': {
+    'video_style_c': {
         border: 'rgb(153, 102, 255)',
         background: 'rgba(153, 102, 255, 0.1)'
     }
 };
 
 const FEATURE_NAMES = {
-    'image_bra': '📸 粉色蕾丝内衣',
-    'image_undress': '📸 脱到精光',
-    'video_a': '🎬 脱衣+抖胸',
-    'video_b': '🎬 脱衣+下体流精',
-    'video_c': '🎬 脱衣+吃吊喝精'
+    'image_bra': '📸 粉色蕾丝内衣 (i2i_1)',
+    'image_undress': '📸 脱到精光 (i2i_2)',
+    'video_style_a': '🎬 脱衣+抖胸 (i2v_1)',
+    'video_style_b': '🎬 脱衣+下体流精 (i2v_2)',
+    'video_style_c': '🎬 脱衣+吃吊喝精 (i2v_3)'
 };
 
 // Get data
@@ -176,7 +176,7 @@ const labels = dailyUsage.map(d => d.date);
 
 // Create datasets for each feature
 const datasets = [];
-['image_bra', 'image_undress', 'video_a', 'video_b', 'video_c'].forEach(featureType => {
+['image_bra', 'image_undress', 'video_style_a', 'video_style_b', 'video_style_c'].forEach(featureType => {
     datasets.push({
         label: FEATURE_NAMES[featureType],
         data: dailyUsage.map(d => d[featureType] || 0),

@@ -57,7 +57,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             help_text = """📖 使用帮助\n\n1️⃣ 图片脱衣\n   - 点击按钮后发送照片\n   - 支持格式：PNG, JPG, JPEG, WEBP\n   - 等待处理完成\n\n2️⃣ 图片转视频脱衣\n   - 功能开发中\n\n3️⃣ 查看队列\n   - 查看当前排队人数\n\n⏱️ 处理完成后，请在5分钟内保存图片。\n\n❓ 如有问题，请联系管理员。"""
 
-        await update.message.reply_text(help_text)
+        await update.message.reply_text(help_text, parse_mode='Markdown')
 
         logger.info(f"Help command processed for user {user_id}")
 

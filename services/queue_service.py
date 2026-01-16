@@ -174,14 +174,14 @@ class QueueService:
                         text = self.translation_service.get(user_id, 'processing.retrieving')
                     else:
                         text = "✨ 处理完成！正在为您准备作品..."
-                    await queue_message.edit_text(text)
+                    await queue_message.edit_text(text, parse_mode='Markdown')
                 else:
                     # Still processing (running)
                     if self.translation_service:
                         text = self.translation_service.get(user_id, 'processing.running')
                     else:
                         text = "🎨 AI正在精心处理您的照片...\n请稍候，好作品值得等待～"
-                    await queue_message.edit_text(text)
+                    await queue_message.edit_text(text, parse_mode='Markdown')
 
         except Exception as e:
             logger.error(f"Error refreshing queue position: {str(e)}")

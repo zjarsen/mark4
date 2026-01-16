@@ -10,19 +10,19 @@ logger = logging.getLogger('mark4_bot')
 class ComfyUIService:
     """Service for interacting with ComfyUI server API."""
 
-    def __init__(self, config, workflow_type: str):
+    def __init__(self, config, style_type: str):
         """
         Initialize ComfyUI service.
 
         Args:
             config: Configuration object
-            workflow_type: Workflow type ('image_undress', 'video_douxiong', 'video_liujing', 'video_shejing')
+            style_type: Style type ('i2i' or 'i2v')
         """
         self.config = config
-        self.workflow_type = workflow_type
+        self.style_type = style_type
 
-        # Get workflow-specific URLs
-        urls = config.get_workflow_urls(workflow_type)
+        # Get style-specific URLs
+        urls = config.get_workflow_urls(style_type)
         self.upload_url = urls['upload_url']
         self.prompt_url = urls['prompt_url']
         self.queue_url = urls['queue_url']
@@ -30,10 +30,7 @@ class ComfyUIService:
         self.view_url = urls['view_url']
 
         # Extract base server URL for other endpoints
-        self.server_url = config.COMFYUI_IMAGE_UNDRESS_SERVER if workflow_type == 'image_undress' else \
-                         config.COMFYUI_VIDEO_DOUXIONG_SERVER if workflow_type == 'video_douxiong' else \
-                         config.COMFYUI_VIDEO_LIUJING_SERVER if workflow_type == 'video_liujing' else \
-                         config.COMFYUI_VIDEO_SHEJING_SERVER
+        self.server_url = config.COMFYUI_I2I_SERVER if style_type == 'i2i' else config.COMFYUI_I2V_SERVER
 
     async def upload_image(self, local_path: str, filename: str) -> Dict:
         """

@@ -110,11 +110,14 @@ async def cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle video style selection button clicks.
+    Callback format: select_i2v_1, select_i2v_2, select_i2v_3
 
     Args:
         update: Telegram Update
         context: Telegram Context
     """
+    from core.styles import get_style, get_enabled_styles_by_type
+
     try:
         query = update.callback_query
         await query.answer()  # Acknowledge button click
@@ -130,8 +133,8 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await query.edit_message_text(msg)
             return
 
-        # Extract style from callback data (video_style_a, video_style_b, video_style_c)
-        if not query.data.startswith("video_"):
+        # Extract style from callback data (select_i2v_1, select_i2v_2, etc.)
+        if not query.data.startswith("select_i2v_"):
             if translation_service:
                 msg = translation_service.get(user_id, 'callbacks.invalid_selection')
             else:
@@ -139,23 +142,25 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await query.edit_message_text(msg)
             return
 
-        style = query.data  # Keep full format: "video_style_a"
+        # Extract style ID: "select_i2v_1" -> "i2v_1"
+        style_id = query.data.replace("select_", "")
 
-        # Map callback data to translated style names
+        # Validate style exists
+        style_config = get_style(style_id) if style_id in ['i2v_1', 'i2v_2', 'i2v_3'] else None
+        if not style_config:
+            if translation_service:
+                msg = translation_service.get(user_id, 'callbacks.invalid_style')
+            else:
+                msg = "无效的风格选择"
+            await query.edit_message_text(msg)
+            return
+
+        # Get style name from translations
         if translation_service:
-            style_map = {
-                'video_style_a': translation_service.get(user_id, 'video.style_a_name'),
-                'video_style_b': translation_service.get(user_id, 'video.style_b_name'),
-                'video_style_c': translation_service.get(user_id, 'video.style_c_name')
-            }
-            style_name = style_map.get(style, style)
+            style_name = translation_service.get(user_id, f'{style_config.locale_key}.name')
         else:
-            style_map = {
-                'video_style_a': '欧美风',
-                'video_style_b': '写实风',
-                'video_style_c': '真人风'
-            }
-            style_name = style_map.get(style, style)
+            fallback = {'i2v_1': '脱衣+抖胸', 'i2v_2': '脱衣+下体流精', 'i2v_3': '脱衣+吃吊喝精'}
+            style_name = fallback.get(style_id, style_id)
 
         # Check if already processing
         if state_manager.is_state(user_id, 'processing'):
@@ -166,24 +171,11 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await query.edit_message_text(msg)
             return
 
-        # Validate style
-        valid_styles = ['video_style_a', 'video_style_b', 'video_style_c']
-        if style not in valid_styles:
-            if translation_service:
-                msg = translation_service.get(user_id, 'callbacks.invalid_style')
-            else:
-                msg = "无效的风格选择"
-            await query.edit_message_text(msg)
-            return
-
-        # Convert to internal format: "style_a", "style_b", "style_c"
-        internal_style = style.replace("video_", "")
-
         # Update state to waiting for video with selected style
         state_manager.update_state(
             user_id,
             state='waiting_for_video',
-            video_style=internal_style,
+            video_style=style_id,  # Now uses style ID: i2v_1, i2v_2, i2v_3
             retry_count=0
         )
 
@@ -191,10 +183,10 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             prompt = translation_service.get(user_id, 'video.send_image_prompt')
             msg = translation_service.get(user_id, 'callbacks.style_selected_video', style_name=style_name, prompt=prompt)
         else:
-            msg = f"已选择 {style_name}\n\n请发送一张图片，我们将根据这张图片为您生成视频。\n\n*图片要求*：\n- 必须是单人全身照\n- 人物姿势：站立、双手自然下垂\n- 背景：纯色背景（白色或纯色）\n- 清晰度：高清、光线充足"
-        await query.edit_message_text(msg)
+            msg = f"已选择 {style_name}\n\n请发送一张图片，我们将根据这张图片为您生成视频。"
+        await query.edit_message_text(msg, parse_mode='Markdown')
 
-        logger.info(f"User {user_id} selected video style: {internal_style}")
+        logger.info(f"User {user_id} selected video style: {style_id}")
 
     except Exception as e:
         logger.error(f"Error handling video style callback: {str(e)}")
@@ -203,11 +195,14 @@ async def video_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle image style selection button clicks.
+    Callback format: select_i2i_1, select_i2i_2
 
     Args:
         update: Telegram Update
         context: Telegram Context
     """
+    from core.styles import get_style
+
     try:
         query = update.callback_query
         await query.answer()  # Acknowledge button click
@@ -223,8 +218,40 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await query.edit_message_text(msg)
             return
 
-        # Extract style from callback data (image_style_bra, image_style_undress)
-        if not query.data.startswith("image_style_"):
+        # Handle back to style selection
+        if query.data == "back_to_i2i_styles":
+            # Reset state
+            state_manager.reset_state(user_id)
+
+            # Show i2i style selection menu
+            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+            from core.styles import get_enabled_styles_by_type
+
+            i2i_styles = get_enabled_styles_by_type('i2i')
+
+            if translation_service:
+                back_button = translation_service.get(user_id, 'buttons.back_to_menu')
+                message = translation_service.get(user_id, 'image.style_selection')
+            else:
+                back_button = "🏠 返回主菜单"
+                message = "🎨 选择脱衣风格\n\n请选择您想要的风格："
+
+            keyboard = []
+            for idx, style in enumerate(i2i_styles, start=1):
+                if translation_service:
+                    button_text = f"{idx}. " + translation_service.get(user_id, f'{style.locale_key}.button')
+                else:
+                    button_text = f"{idx}. {style.id}"
+                keyboard.append([InlineKeyboardButton(button_text, callback_data=f"select_{style.id}")])
+
+            keyboard.append([InlineKeyboardButton(back_button, callback_data="back_to_menu")])
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+            return
+
+        # Extract style from callback data (select_i2i_1, select_i2i_2)
+        if not query.data.startswith("select_i2i_"):
             if translation_service:
                 msg = translation_service.get(user_id, 'callbacks.invalid_selection')
             else:
@@ -232,20 +259,18 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await query.edit_message_text(msg)
             return
 
-        style = query.data  # Keep full format: "image_style_bra" or "image_style_undress"
+        # Extract style ID: "select_i2i_1" -> "i2i_1"
+        style_id = query.data.replace("select_", "")
 
-        # Validate style
-        valid_styles = ['image_style_bra', 'image_style_undress']
-        if style not in valid_styles:
+        # Validate style exists (dynamically check - no hardcoded list)
+        style_config = get_style(style_id)
+        if not style_config or style_config.type != 'i2i':
             if translation_service:
                 msg = translation_service.get(user_id, 'callbacks.invalid_style')
             else:
                 msg = "无效的风格选择"
             await query.edit_message_text(msg)
             return
-
-        # Convert to internal format: "bra" or "undress"
-        internal_style = style.replace("image_style_", "")
 
         # Check if already processing
         if state_manager.is_state(user_id, 'processing'):
@@ -256,36 +281,37 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             await query.edit_message_text(msg)
             return
 
-        # Map callback data to translated style names
+        # Get style name from translations
         if translation_service:
-            style_map = {
-                'image_style_bra': translation_service.get(user_id, 'image.style_bra_name'),
-                'image_style_undress': translation_service.get(user_id, 'image.style_undress_name')
-            }
-            style_name = style_map.get(style, style)
+            style_name = translation_service.get(user_id, f'{style_config.locale_key}.name')
         else:
-            style_map = {
-                'image_style_bra': '内衣',
-                'image_style_undress': '裸体'
-            }
-            style_name = style_map.get(style, style)
+            # Fallback to style_id if no translation service
+            style_name = style_id
 
         # Update state to waiting for image with selected style
         state_manager.update_state(
             user_id,
             state='waiting_for_image',
-            image_style=internal_style,
+            image_style=style_id,  # Now uses style ID: i2i_1, i2i_2
             retry_count=0
         )
 
         if translation_service:
             prompt = translation_service.get(user_id, 'image.send_image_prompt')
             msg = translation_service.get(user_id, 'callbacks.style_selected_image', style_name=style_name, prompt=prompt)
+            back_button_text = translation_service.get(user_id, 'buttons.back_to_style_selection')
         else:
-            msg = f"已选择 {style_name}\n\n请发送一张图片，我们将为您处理。\n\n*图片要求*：\n- 必须是单人照片\n- 清晰度高\n- 光线充足"
-        await query.edit_message_text(msg, parse_mode='Markdown')
+            msg = f"已选择 {style_name}\n\n请发送一张图片，我们将为您处理。"
+            back_button_text = "🔙 返回选择风格"
 
-        logger.info(f"User {user_id} selected image style: {internal_style}")
+        # Add back button to return to style selection
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        keyboard = [[InlineKeyboardButton(back_button_text, callback_data="back_to_i2i_styles")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await query.edit_message_text(msg, reply_markup=reply_markup, parse_mode='Markdown')
+
+        logger.info(f"User {user_id} selected image style: {style_id}")
 
     except Exception as e:
         logger.error(f"Error handling image style callback: {str(e)}")
@@ -294,7 +320,7 @@ async def image_style_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             msg = translation_service.get(user_id, 'callbacks.style_selection_error')
         else:
             msg = "选择风格时发生错误，请重试"
-        await update.effective_chat.send_message(msg)
+        await update.effective_chat.send_message(msg, parse_mode='Markdown')
 
 
 async def credit_confirmation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -345,7 +371,8 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
                 msg = "操作已取消。您的积分未被扣除。"
             await context.bot.send_message(
                 chat_id=user_id,
-                text=msg
+                text=msg,
+                parse_mode='Markdown'
             )
 
             # Show main menu
@@ -386,7 +413,8 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
                     msg = "系统错误，请稍后重试"
                 await context.bot.send_message(
                     chat_id=user_id,
-                    text=msg
+                    text=msg,
+                    parse_mode='Markdown'
                 )
                 state_manager.reset_state(user_id)
                 return
@@ -432,7 +460,8 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
                     msg = "系统错误，请稍后重试"
                 await context.bot.send_message(
                     chat_id=user_id,
-                    text=msg
+                    text=msg,
+                    parse_mode='Markdown'
                 )
                 state_manager.reset_state(user_id)
 
@@ -444,7 +473,8 @@ async def credit_confirmation_callback(update: Update, context: ContextTypes.DEF
             msg = "处理确认时发生错误，请稍后重试"
         await context.bot.send_message(
             chat_id=user_id,
-            text=msg
+            text=msg,
+            parse_mode='Markdown'
         )
         state_manager.reset_state(user_id)
 
