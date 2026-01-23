@@ -3,6 +3,7 @@
 from telegram import Update
 from telegram.ext import (
     Application,
+    ApplicationHandlerStop,
     CommandHandler,
     MessageHandler,
     CallbackQueryHandler,
@@ -190,6 +191,9 @@ class BotApplication:
                 await update.message.reply_text(shutdown_message, parse_mode='Markdown')
         except Exception as e:
             logger.warning(f"Error sending shutdown message: {e}")
+
+        # Stop all other handlers from processing
+        raise ApplicationHandlerStop()
 
     def _register_handlers(self):
         """Register all handlers in correct priority order."""
