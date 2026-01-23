@@ -167,13 +167,13 @@ class BotApplication:
         if not update.effective_user:
             return
 
-        shutdown_message = """📢 *重要通知*
+        shutdown_message = """📢 重要通知
 
 亲爱的用户，
 
 感谢您一直以来对本机器人的支持与信任！
 
-由于系统升级，本机器人将*停止服务*。您的*所有数据*和*账户余额（积分/VIP状态）*将会*完整迁移*到我们的新机器人：
+由于系统升级，本机器人将停止服务。您的所有数据和账户余额（积分/VIP状态）将会完整迁移到我们的新机器人：
 
 👉 @Genesis_Main1_Bot
 
@@ -186,9 +186,9 @@ class BotApplication:
         try:
             if update.callback_query:
                 await update.callback_query.answer()
-                await update.callback_query.message.reply_text(shutdown_message, parse_mode='Markdown')
+                await update.callback_query.message.reply_text(shutdown_message)
             elif update.message:
-                await update.message.reply_text(shutdown_message, parse_mode='Markdown')
+                await update.message.reply_text(shutdown_message)
         except Exception as e:
             logger.warning(f"Error sending shutdown message: {e}")
 
