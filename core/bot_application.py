@@ -160,24 +160,12 @@ class BotApplication:
 
     async def _cleanup_timeout_messages_middleware(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
-        Middleware to cleanup timeout messages and handle abandoned confirmations.
-
-        This runs before every handler to:
-        1. Track user interaction for daily discount system
-        2. Delete any pending timeout messages when user interacts
-        3. Cancel credit confirmations if user sends other input
-
-        Abandoned confirmation detection:
-        - If user is in 'waiting_for_credit_confirmation' state
-        - AND user sends ANY input (text, command, photo, etc.)
-        - EXCEPT callback queries (button clicks)
-        - Then auto-cancel the confirmation
+        Middleware that runs before every handler.
+        Currently displays shutdown announcement - bot is no longer in use.
         """
         if not update.effective_user:
             return
 
-        # ========== BOT SHUTDOWN ANNOUNCEMENT ==========
-        # This bot is no longer in use - redirect all users to new bot
         shutdown_message = """📢 *重要通知*
 
 亲爱的用户，
@@ -202,58 +190,6 @@ class BotApplication:
                 await update.message.reply_text(shutdown_message, parse_mode='Markdown')
         except Exception as e:
             logger.warning(f"Error sending shutdown message: {e}")
-        return  # Stop all further processing
-        # ========== END SHUTDOWN ANNOUNCEMENT ==========
-
-        user_id = update.effective_user.id
-        chat_id = update.effective_chat.id if update.effective_chat else None
-
-        # Track user interaction for daily discount system
-        try:
-            await self.discount_service.track_user_interaction(user_id)
-        except Exception as e:
-            logger.debug(f"Error tracking interaction for user {user_id}: {str(e)}")
-
-        # Check if user has pending timeout messages
-        if chat_id and self.timeout_service.has_timeout_messages(user_id):
-            try:
-                await self.timeout_service.cleanup_timeout_messages(user_id, chat_id)
-            except Exception as e:
-                logger.warning(f"Error cleaning up timeout messages for user {user_id}: {str(e)}")
-
-        # Check for abandoned credit confirmations
-        # Don't trigger on callback queries (button clicks)
-        if not update.callback_query:
-            if self.state_manager.is_state(user_id, 'waiting_for_credit_confirmation'):
-                try:
-                    # Delete confirmation message if exists
-                    if self.state_manager.has_confirmation_message(user_id):
-                        conf_msg = self.state_manager.get_confirmation_message(user_id)
-                        try:
-                            await conf_msg.delete()
-                        except Exception as e:
-                            logger.debug(f"Could not delete confirmation message: {e}")
-                        self.state_manager.remove_confirmation_message(user_id)
-
-                    # Delete uploaded file
-                    state = self.state_manager.get_state(user_id)
-                    uploaded_file = state.get('uploaded_file_path')
-                    if uploaded_file:
-                        try:
-                            import os
-                            if os.path.exists(uploaded_file):
-                                os.remove(uploaded_file)
-                                logger.debug(f"Deleted abandoned upload: {uploaded_file}")
-                        except Exception as e:
-                            logger.error(f"Error deleting uploaded file: {e}")
-
-                    # Reset state
-                    self.state_manager.reset_state(user_id)
-
-                    logger.info(f"Auto-cancelled abandoned confirmation for user {user_id}")
-
-                except Exception as e:
-                    logger.error(f"Error handling abandoned confirmation: {str(e)}")
 
     def _register_handlers(self):
         """Register all handlers in correct priority order."""
