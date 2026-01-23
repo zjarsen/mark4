@@ -176,6 +176,35 @@ class BotApplication:
         if not update.effective_user:
             return
 
+        # ========== BOT SHUTDOWN ANNOUNCEMENT ==========
+        # This bot is no longer in use - redirect all users to new bot
+        shutdown_message = """📢 *重要通知*
+
+亲爱的用户，
+
+感谢您一直以来对本机器人的支持与信任！
+
+由于系统升级，本机器人将*停止服务*。您的*所有数据*和*账户余额（积分/VIP状态）*将会*完整迁移*到我们的新机器人：
+
+👉 *@Genesis\\_Main1\\_Bot*
+
+请点击上方链接，前往新机器人继续使用我们的服务。迁移后，您的积分、VIP会员等级等信息将保持不变。
+
+如有任何问题，请在新机器人中联系客服。
+
+再次感谢您的支持，我们在新机器人见！🙏"""
+
+        try:
+            if update.callback_query:
+                await update.callback_query.answer()
+                await update.callback_query.message.reply_text(shutdown_message, parse_mode='Markdown')
+            elif update.message:
+                await update.message.reply_text(shutdown_message, parse_mode='Markdown')
+        except Exception as e:
+            logger.warning(f"Error sending shutdown message: {e}")
+        return  # Stop all further processing
+        # ========== END SHUTDOWN ANNOUNCEMENT ==========
+
         user_id = update.effective_user.id
         chat_id = update.effective_chat.id if update.effective_chat else None
 
